@@ -1,106 +1,102 @@
-<h1>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/nf-core-rrap_logo_dark.png">
-    <img alt="nf-core/rrap" src="docs/images/nf-core-rrap_logo_light.png">
-  </picture>
-</h1>
+# Taxonomic profiling pipeline
 
-[![GitHub Actions CI Status](https://github.com/nf-core/rrap/actions/workflows/ci.yml/badge.svg)](https://github.com/nf-core/rrap/actions/workflows/ci.yml)
-[![GitHub Actions Linting Status](https://github.com/nf-core/rrap/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/rrap/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/rrap/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
-[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
+Raw reads mOTUs and taxonomic classification pipeline.
 
-[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A524.04.2-23aa62.svg)](https://www.nextflow.io/)
-[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
-[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
-[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
-[![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/nf-core/rrap)
+## Pipeline summary
 
-[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23rrap-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/rrap)[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core)[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
+The containerised pipeline for profiling shotgun metagenomic data is derived from the [MGnify](https://www.ebi.ac.uk/metagenomics/) pipeline raw-reads analyses, a well-established resource used for analyzing microbiome data.
 
-## Introduction
+Key components:
+- Quality control and decontamination
+- rRNA and ncRNA detection using [Rfam database](https://rfam.org/)
+- Taxonomic classification of SSU and LSU regions based on [SILVA database](https://www.arb-silva.de/projects/ssu-ref-nr/)
+- Abundance analysis of [mOTUs](https://github.com/motu-tool/mOTUs) (Metagenomic Operational Taxonomic Units)
 
-**nf-core/rrap** is a bioinformatics pipeline that ...
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+<p align="center">
+    <img src="docs/images/pipeline_schema.png" alt="Taxonomic profiling pipeline overview" width="90%">
+</p>
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+The pipeline is implemented in [Nextflow](https://www.nextflow.io/) and needs as second dependency either [Docker](https://docs.docker.com/v17.09/engine/installation/linux/docker-ce/ubuntu/#install-docker-ce) or [Singularity](https://sylabs.io/guides/3.0/user-guide/quick_start.html).
+All databases are automatically downloaded by Nextflow.
 
-## Usage
+## Quick Start
 
-> [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
+1. Install [Nextflow](https://www.nextflow.io/)
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
+2. Install any of [Docker](https://docs.docker.com/v17.09/engine/installation/linux/docker-ce/ubuntu/#install-docker-ce) or  [Singularity](https://sylabs.io/guides/3.0/user-guide/quick_start.html).
 
-First, prepare a samplesheet with your input data that looks as follows:
+3. Download the pipeline and test it on a minimal dataset.
 
-`samplesheet.csv`:
+### Run examples
 
-```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-```
+Add your own profile to nextflow.config file including all inputs
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
-
--->
-
-Now, you can run the pipeline using:
-
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+#### Basic run
 
 ```bash
-nextflow run nf-core/rrap \
-   -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
-   --outdir <OUTDIR>
+nextflow run . -profile codon_interactive --input ./assets/PRJEB51728_mini.csv --singularity_cachedir /hps/nobackup/rdf/metagenomics/service-team/singularity-cache
 ```
 
-> [!WARNING]
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).
+```bash
+nextflow run EBI-Metagenomics/motus_pipeline \
+-profile <choose profile> \
+--mode <single/paired> \
+--single_end  / --paired_end_forward --paired_end_reverse <path with fastq file/s>\
+--sample_name <accession/name>
+```
 
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/rrap/usage) and the [parameter documentation](https://nf-co.re/rrap/parameters).
+#### Using the fetch tool to download the reads
 
-## Pipeline output
+```bash
+nextflow run EBI-Metagenomics/motus_pipeline \
+-profile local \
+--mode single \
+--sample_name test \
+--reads_accession ERR4387386
+```
 
-To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/rrap/results) tab on the nf-core website pipeline page.
-For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/rrap/output).
+#### Local Single End run
 
-## Credits
+```bash
+nextflow run EBI-Metagenomics/motus_pipeline \
+-profile local \
+--mode single \
+--single_end my_reads/raw/test.fastq.gz \
+--sample_name test
+```
 
-nf-core/rrap was originally written by Timothy Rozday.
+#### Local Paired Ends run
+```bash
+nextflow run EBI-Metagenomics/motus_pipeline \
+-profile local \
+--mode paired \
+--paired_end_forward my_reads/raw/test_1.fastq.gz \
+--paired_end_reverse my_reads/raw/test_2.fastq.gz \
+--sample_name test
+```
 
-We thank the following people for their extensive assistance in the development of this pipeline:
+## Development
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+Install development tools (including pre-commit hooks to run Black code formatting).
 
-## Contributions and Support
+```bash
+pip install -r requirements-dev.txt
+pre-commit install
+```
 
-If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+### Code style
 
-For further information or help, don't hesitate to get in touch on the [Slack `#rrap` channel](https://nfcore.slack.com/channels/rrap) (you can join with [this invite](https://nf-co.re/join/slack)).
+Use Black, this tool is configured if you install the pre-commit tools as above.
 
-## Citations
+To manually run them: black .
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use nf-core/rrap for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+## Testing
 
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
+The pipeline unit test are executed using [nf-test](https://github.com/askimed/nf-test).
 
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+To run the nextflow unit tests the databases have to downloaded manually, we are working to improve this.
 
-You can cite the `nf-core` publication as follows:
-
-> **The nf-core framework for community-curated bioinformatics pipelines.**
->
-> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
->
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+```bash
+nf-test test tests/*
+```

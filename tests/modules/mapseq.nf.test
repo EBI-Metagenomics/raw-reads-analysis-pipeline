@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test module mapseq"
+    script "modules/mapseq.nf"
+    process "MAPSEQ"
+
+    test("mapseq") {
+
+        when {
+            params {
+                seq = "${baseDir}/tests/modules/fixtures/mapseq/test.SSU.fasta"
+                db = "${baseDir}/tests/modules/fixtures/mapseq/silva-SSU"
+            }
+            process {
+                """
+                input[0] = channel.fromPath("${params.seq}", checkIfExists: true)
+                input[1] = channel.fromPath("${params.db}", checkIfExists: true)
+                input[2] = channel.value("SSU.fasta")
+                input[3] = channel.value("slv_ssu_filtered2.txt")
+                input[4] = channel.value("SSU")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            // can not use snapshot as mapseq annotates one sequence in different way?
+            assert path(process.out.mapseq_result.get(0)).size() == 11163
+        }
+    }
+}
