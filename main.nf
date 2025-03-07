@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-include { PIPELINE } from './workflow/pipeline.nf'
+include { PIPELINE } from './workflows/rrap.nf'
 
 workflow {
     PIPELINE ()

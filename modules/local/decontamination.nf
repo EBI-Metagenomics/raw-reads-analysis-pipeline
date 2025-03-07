@@ -10,7 +10,7 @@ process DECONTAMINATION {
     tag "$meta.id"
 
     input:
-    tuple val(meta), val(fastp_d), val(sample_d)
+    tuple val(meta), val(fasta)
     tuple val(db_meta), val(host_genome_db)
 
     output:
@@ -19,8 +19,8 @@ process DECONTAMINATION {
     script:
     def input_reads = "";
     def bwa_index = "${host_genome_db}/${params.databases.host_genome.files.bwa_index_prefix}"
-    if (sample_d.mode == "single") {
-        input_reads = "${fastp_d.fastq}";
+    if (meta.mode == "single") {
+        input_reads = "${fasta}";
         """
         mkdir -p output_decontamination
 
@@ -42,11 +42,11 @@ process DECONTAMINATION {
         echo "compressing output file"
         gzip -c output_decontamination/${meta.id}_clean.fastq > ${meta.id}_clean.fastq.gz
         """
-    } else if ( sample_d.mode == "paired" ) {
-        if (fastp_d.fastq[0].name.contains("_1")) {
-            input_reads = "${fastp_d.fastq[0]} ${fastp_d.fastq[1]}"
+    } else if ( meta.mode == "paired" ) {
+        if (fasta[0].name.contains("_1")) {
+            input_reads = "${fasta[0]} ${fasta[1]}"
         } else {
-            input_reads = "${fastp_d.fastq[1]} ${fastp_d.fastq[0]}"
+            input_reads = "${fasta[1]} ${fasta[0]}"
         }
         """
         mkdir output_decontamination
@@ -91,7 +91,7 @@ process DECONTAMINATION_REPORT {
     container 'quay.io/microbiome-informatics/bwamem2:2.2.1'
 
     input:
-    tuple val(meta), val(cleaned_reads), val(sample_d)
+    tuple val(meta), val(cleaned_reads)
 
     output:
     tuple val(meta), path("decontamination_output_report.txt")
@@ -99,7 +99,7 @@ process DECONTAMINATION_REPORT {
     script:
     def input_f_reads = "";
     def input_r_reads = "";
-    if ( sample_d.mode == "paired" ) {
+    if ( meta.mode == "paired" ) {
         if (cleaned_reads[0].name.contains('_1')) {
             input_f_reads = cleaned_reads[0]
             input_r_reads = cleaned_reads[1]
@@ -111,12 +111,12 @@ process DECONTAMINATION_REPORT {
         zcat ${input_f_reads} | grep '@' | wc -l > decontamination_output_report.txt
         zcat ${input_r_reads} | grep '@' | wc -l >> decontamination_output_report.txt
         """
-    } else if ( sample_d.mode == "single" ) {
+    } else if ( meta.mode == "single" ) {
         """
         zcat ${cleaned_reads} | grep '@' | wc -l > decontamination_output_report.txt
         """
     } else {
-        error "Invalid mode: ${sample_d.mode}"
+        error "Invalid mode: ${meta.mode}"
     }
 }
 

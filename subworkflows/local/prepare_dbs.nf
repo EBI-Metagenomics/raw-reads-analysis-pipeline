@@ -3,13 +3,10 @@
      DBs
     ~~~~~~~~~~~~~~~~~~
 */
-include { GET_MAPSEQ_DB } from '../modules/local/download_dbs/mapseq_db'
-// include { GET_CMSEARCH_DB } from '../modules/cmsearch'
-// include { GET_REF_GENOME } from '../modules/decontamination'
-include { GET_REFERENCE_GENOME } from '../modules/local/download_dbs/reference_genome.nf'
-include { MOTUS_DOWNLOAD_DB } from '../modules/motus'
-include { GET_RFAM_DB } from '../modules/local/download_dbs/rfam_models'
-
+include { GET_RFAM_DB } from '../modules/local/download_dbs/rfam_models/main'
+include { MOTUS_DOWNLOAD_DB } from '../modules/nf-core/motus/download_db/main'
+include { GET_REFERENCE_GENOME } from '../modules/local/download_dbs/reference_genome/main'
+include { GET_MAPSEQ_DB } from '../modules/local/download_dbs/mapseq_db/main'
 
 workflow DOWNLOAD_RFAM {
     main:
@@ -34,6 +31,7 @@ workflow DOWNLOAD_RFAM {
     emit:
         rfam_db_dir
 }
+
 workflow DOWNLOAD_MOTUS_DB {
     main:
         def meta = [id: params.databases.motus.name]

@@ -5,6 +5,11 @@
         "git@github.com:EBI-Metagenomics/nf-modules.git": {
             "modules": {
                 "ebi-metagenomics": {
+                    "assessmcpproportions": {
+                        "branch": "main",
+                        "git_sha": "2c10a5c506ad200076d5fcc4581feb340e351e2f",
+                        "installed_by": ["reads_qc"]
+                    },
                     "bwamem2decontnobams": {
                         "branch": "main",
                         "git_sha": "32049180387cf2406254acf57882fc55915cb52e",
@@ -13,32 +18,76 @@
                     "cmsearchtbloutdeoverlap": {
                         "branch": "main",
                         "git_sha": "696324c637a7e0cf06fe331faffee42e36826898",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "rrna_extraction"]
                     },
                     "easel/eslsfetch": {
                         "branch": "main",
                         "git_sha": "f1bf089cb679ca1e363aa81c99a512114402472c",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "rrna_extraction"]
                     },
                     "extractcoords": {
                         "branch": "main",
                         "git_sha": "c249cf1afd1b7ceaacde6ba44fd9c919bf688c6d",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "rrna_extraction"]
+                    },
+                    "fastp": {
+                        "branch": "main",
+                        "git_sha": "d4edb49a9072e8dcfd0fd4bfb85be6c005f86409",
+                        "installed_by": ["reads_qc"]
+                    },
+                    "fastqsuffixheadercheck": {
+                        "branch": "main",
+                        "git_sha": "67a02223d9bd9f38750255250035dc1a8da0b5db",
+                        "installed_by": ["reads_qc"]
                     },
                     "infernal/cmsearch": {
                         "branch": "main",
                         "git_sha": "0ace42420d86877b6924ba21658aac540d9d900e",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "rrna_extraction"]
+                    },
+                    "krona/ktimporttext": {
+                        "branch": "main",
+                        "git_sha": "172e93318ac2e2db5f9885b07ffb80443e67848a",
+                        "installed_by": ["mapseq_otu_krona"]
                     },
                     "mapseq": {
                         "branch": "main",
                         "git_sha": "1375e8b3072c40346eb4f7d9c1ae15459c07b620",
-                        "installed_by": ["modules"]
+                        "installed_by": ["mapseq_otu_krona", "modules"]
                     },
                     "mapseq2biom": {
                         "branch": "main",
                         "git_sha": "fe16b0221649bc7ca3bfa69f722e8a89fab1de16",
-                        "installed_by": ["modules"]
+                        "installed_by": ["mapseq_otu_krona", "modules"]
+                    },
+                    "seqfu/check": {
+                        "branch": "main",
+                        "git_sha": "d1f512bffa29ba7a89468ce29e0153e11b57cc94",
+                        "installed_by": ["reads_qc"]
+                    },
+                    "seqtk/seq": {
+                        "branch": "main",
+                        "git_sha": "d4edb49a9072e8dcfd0fd4bfb85be6c005f86409",
+                        "installed_by": ["reads_qc"]
+                    }
+                }
+            },
+            "subworkflows": {
+                "ebi-metagenomics": {
+                    "mapseq_otu_krona": {
+                        "branch": "main",
+                        "git_sha": "cc01ecb29008656fce3b4899a588c3c8b79547d4",
+                        "installed_by": ["subworkflows"]
+                    },
+                    "reads_qc": {
+                        "branch": "main",
+                        "git_sha": "c6917c7d1ae059968317c6315f503a6e85d7aa2e",
+                        "installed_by": ["subworkflows"]
+                    },
+                    "rrna_extraction": {
+                        "branch": "main",
+                        "git_sha": "29fd1389152934e9ca5da16d4637fee44764d25d",
+                        "installed_by": ["subworkflows"]
                     }
                 }
             }
@@ -79,7 +128,13 @@
                 }
             },
             "subworkflows": {
-                "nf-core": {}
+                "nf-core": {
+                    "utils_nfcore_pipeline": {
+                        "branch": "master",
+                        "git_sha": "51ae5406a030d4da1e49e4dab49756844fdd6c7a",
+                        "installed_by": ["subworkflows"]
+                    }
+                }
             }
         }
     }
