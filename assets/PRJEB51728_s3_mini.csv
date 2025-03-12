@@ -1,0 +1,3 @@
+study_accession,reads_accession,fastq_1,fastq_2,library_layout,library_strategy,platform
+PRJEB51728,ERR10889056,s3://era-public/fastq/ERR108/056/ERR10889056/ERR10889056_1.fastq.gz,s3://era-public/fastq/ERR108/056/ERR10889056/ERR10889056_2.fastq.gz,paired,wgs,illumina
+PRJEB51728,ERR10889147,s3://era-public/fastq/ERR108/047/ERR10889147/ERR10889147_1.fastq.gz,s3://era-public/fastq/ERR108/047/ERR10889147/ERR10889147_2.fastq.gz,paired,wgs,illumina

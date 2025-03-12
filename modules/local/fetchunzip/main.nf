@@ -4,16 +4,16 @@ process FETCHUNZIP {
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/gnu-wget:1.18--hb829ee6_10':
-        'biocontainers/gnu-wget:1.18--hb829ee6_10' }"
+        'quay.io/biocontainers/gnu-wget:1.18--hb829ee6_10' }"
 
     publishDir "${params.databases.cache_path}", mode: 'copy'
     errorStrategy 'retry'
-    
+
     input:
     tuple val(meta), val(db_map)
-    
+
     output:
-    tuple val(meta), path("${db_map.name}") 
+    tuple val(meta), path("${db_map.name}")
 
     script:
     def fn = db_map.remote_path.tokenize('/').last()

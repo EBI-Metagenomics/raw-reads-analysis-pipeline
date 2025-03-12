@@ -1,4 +1,4 @@
-include { FASTP } from "${projectDir}/modules/ebi-metagenomics/fastp/main"
+include { FASTP } from '../../../../modules/ebi-metagenomics/fastp/main'
 
 workflow  READSTRIM {
 

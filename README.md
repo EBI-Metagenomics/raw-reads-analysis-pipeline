@@ -37,6 +37,9 @@ Add your own profile to nextflow.config file including all inputs
 ```bash
 nextflow run . -profile codon_interactive --input ./assets/PRJEB51728_mini.csv --singularity_cachedir /hps/nobackup/rdf/metagenomics/service-team/singularity-cache
 ```
+```bash
+nextflow run . -profile local --input ./assets/PRJEB51728_mini.csv
+```
 
 ```bash
 nextflow run EBI-Metagenomics/motus_pipeline \

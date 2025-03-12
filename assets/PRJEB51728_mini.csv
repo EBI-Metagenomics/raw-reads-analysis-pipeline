@@ -1,3 +1,3 @@
-sample,accession,fastq_1,fastq_2
-ERR10889188,PRJEB51728,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/088/ERR10889188/ERR10889188_1.fastq.gz,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/088/ERR10889188/ERR10889188_2.fastq.gz
-ERR10889197,PRJEB51728,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/097/ERR10889197/ERR10889197_1.fastq.gz,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/097/ERR10889197/ERR10889197_2.fastq.gz
+study_accession,reads_accession,fastq_1,fastq_2,library_layout,library_strategy,platform
+PRJEB51728,ERR10889188,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/088/ERR10889188/ERR10889188_1.fastq.gz,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/088/ERR10889188/ERR10889188_2.fastq.gz,paired,wgs,illumina
+PRJEB51728,ERR10889197,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/097/ERR10889197/ERR10889197_1.fastq.gz,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/097/ERR10889197/ERR10889197_2.fastq.gz,paired,wgs,illumina

@@ -1,52 +1,56 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ebi-metagenomics/motus_pipeline/master/assets/schema_input.json",
-  "title": "ebi-metagenomics/motus_pipeline pipeline - params.input schema",
-  "description": "Schema for the file provided with params.input",
-  "type": "array",
-  "items": {
-    "type": "object",
-    "properties": {
-      "sample": {
-        "type": "string",
-        "pattern": "^\\S+$",
-        "errorMessage": "Sample name must be provided and cannot contain spaces",
-        "meta": ["id"]
-      },
-      "accession": {
-        "type": "string",
-        "anyOf": [
-         {
-             "type": "string",
-            "pattern": "^\\S+$"
-         },
-         {
-             "type": "string",
-             "maxLength": 0
-         }
-        ],
-        "meta": ["accession"],
-        "errorMessage": "Optional accession for ownership of each of the runs"
-      },
-      "fastq_1": {
-        "type": "string",
-        "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-        "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
-      },
-      "fastq_2": {
-        "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'",
-        "anyOf": [
-          {
-            "type": "string",
-            "pattern": "^\\S+\\.f(ast)?q\\.gz$"
-          },
-          {
-            "type": "string",
-            "maxLength": 0
-          }
-        ]
-      }
-    },
-    "required": ["sample", "accession", "fastq_1", "fastq_2"]
-  }
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/ebi-metagenomics/rrap/master/assets/schema_input.json",
+    "title": "ebi-metagenomics/rrap pipeline - params.input schema",
+    "description": "Schema for the file provided with params.input",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "study_accession": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Study name must be provided and cannot contain spaces",
+                "minLength": 3
+            },
+            "reads_accession": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "minLength": 3
+            },
+            "fastq_1": {
+                "type": "string",
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
+                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+            },
+            "fastq_2": {
+                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'",
+                "anyOf": [
+                    {
+                        "type": "string",
+                        "pattern": "^\\S+\\.f(ast)?q\\.gz$"
+                    },
+                    {
+                        "type": "string",
+                        "maxLength": 0
+                    }
+                ]
+            },
+            "library_layout": {
+                "type": "string",
+                "enum": ["single", "paired"],
+                "errorMessage": "library_layout should be only 'single' or 'paired' value"
+            },
+            "library_strategy": {
+                "type": "string",
+                "enum": ["wgs", "metagenomic", "metatranscriptomic", "genomic", "transcriptomic", "other"],
+                "errorMessage": "library strategy should be only value from list: 'metagenomic', 'metatranscriptomic', 'genomic', 'transcriptomic', 'other'"
+            },
+            "platform": {
+                "type": "string"
+            },
+        },
+        "required": ["study_accession", "reads_accession", "fastq_1", "library_layout", "library_strategy"]
+    }
 }
