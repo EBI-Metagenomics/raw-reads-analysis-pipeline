@@ -5,10 +5,7 @@
 .nextflow*
 work/
 results/
-
 .nf-test/*
-
 .editorconfig
-nextflow-autodownload-databases/
-motus_pipeline_results/
 reads/
+
