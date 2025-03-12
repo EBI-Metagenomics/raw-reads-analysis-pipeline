@@ -8,24 +8,23 @@ workflow FETCHDB {
     main:
     // check if file is remote
     remote_ch = fetch_ch
-        .filter { _meta, m -> m.remote_path =~ /^[a-zA-Z]{2,}:\/\// }
-        .map { meta, m -> [meta, m, m.remote_path] }
+        .filter { _meta, db_map -> db_map.remote_path =~ /^[a-zA-Z]{2,}:\/\// }
+        .map { meta, db_map -> [meta, db_map, file(db_map.remote_path)] }
     local_ch = fetch_ch
-        .filter { _meta, m -> m.remote_path =~ /^[a-zA-Z]{2,}:\/\// }
-        .filter { _meta, m -> m.local_path =~ /^[a-zA-Z]{2,}:\/\// }
-        .map { meta, m -> [meta, m.local_path] }
+        .filter { _meta, db_map -> db_map.remote_path =~ /^[a-zA-Z]{2,}:\/\// }
+        .filter { _meta, db_map -> db_map.local_path =~ /^[a-zA-Z]{2,}:\/\// }
+        .map { meta, db_map -> [meta, file(db_map.local_path)] }
     // local_ch.view{ "local_ch - ${it}" }
 
-    cache_path_ch = remote_ch.map { meta, m, _fp ->
-        def fn = m.remote_path.tokenize('/').last()
-        [meta, m, file("${cache_path}/${meta.id}/${fn}")]
+    cache_path_ch = remote_ch.map { meta, db_map, _fp ->
+        [meta, db_map, file("${cache_path}/${meta.id}")]
     }
     download_ch = cache_path_ch
-        .filter { _meta, _m, cache_fp -> !cache_fp.exists() }
-        .map { meta, m, _cache_fp -> [meta, m] }
+        .filter { _meta, _db_map, cache_fp -> !cache_fp.exists() }
+        .map { meta, db_map, _cache_fp -> [meta, db_map, file(db_map.remote_path)] }
     cache_ch = cache_path_ch
-        .filter { _meta, _m, cache_fp -> cache_fp.exists() }
-        .map { meta, _m, cache_fp -> [meta, cache_fp] }
+        .filter { _meta, _db_map, cache_fp -> cache_fp.exists() }
+        .map { meta, _db_map, cache_fp -> [meta, cache_fp] }
     // cache_ch.view{ "cache_ch - ${it}" }
 
     FETCHUNZIP(download_ch)
