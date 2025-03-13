@@ -22,4 +22,3 @@ workflow QC {
     fastp_json = FASTP.out.json
     versions = ch_versions
 }
-

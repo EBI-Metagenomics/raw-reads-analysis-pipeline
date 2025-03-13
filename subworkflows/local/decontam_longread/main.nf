@@ -11,16 +11,14 @@ workflow DECONTAM_LONGREAD {
     MINIMAP2_ALIGN(
         input_reads,
         reference_genome,
-        "human",
-        "fastq",
         true,
         "bai",
         false,
         true,
     )
-    ch_versions = ch_versions.mix(MINIMAP2_ALIGN_HUMAN.out.versions)
+    ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
 
-    decontaminated_reads = MINIMAP2_ALIGN_HUMAN.out.filtered_output
+    decontaminated_reads = MINIMAP2_ALIGN.out.filtered_output
 
     emit:
     qc_reads = decontaminated_reads

@@ -8,4 +8,4 @@ results/
 .nf-test/*
 .editorconfig
 reads/
-
+download_cache/

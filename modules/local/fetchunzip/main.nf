@@ -10,24 +10,46 @@ process FETCHUNZIP {
     errorStrategy 'retry'
 
     input:
-    tuple val(meta), val(db_map), path(fp)
+    tuple val(meta), val(dir_name), path(fp)
 
     output:
-    tuple val(meta), path("${meta.id}")
+    tuple val(meta), path(dir_name)
 
     script:
-    def fn = fp.tokenize('/').last()
-    if (fn[-7..-1]=='.tar.gz') {
+    if (fp.name[-7..-1] == '.tar.gz') {
         """
         #!/bin/bash
-        # wget "${db_map.remote_path}"
-        tar -xvzf "${fp}"
-        # rm "${fn}"
+        mkdir "${dir_name}"
+        tar -xvzf "${fp.name}" -C "${dir_name}"
         """
-    } else {
+    }
+    else {
         """
         #!/bin/bash
-        cp "${fp}" .
+        mkdir "${dir_name}"
+        mv "${fp.name}" "${dir_name}/${fp.name}"
+        exit 0
+        """
+    }
+
+    stub:
+    db_files = meta.files.collect { _k, v -> v }
+    db_files_cmd = db_files.collect { fn ->
+        def new_fp = "${dir_name}/${meta.base_dir}/${fn}"
+        return "mkdir -p \"\$(dirname \"${new_fp}\")\" && touch \"${new_fp}\""
+    }.join('\n')
+    if (fp.name[-7..-1] == '.tar.gz') {
+        """
+        #!/bin/bash
+        mkdir -p "${dir_name}/${meta.base_dir}"
+        ${db_files_cmd}
+        """
+    }
+    else {
+        """
+        #!/bin/bash
+        mkdir "${dir_name}"
+        touch "${dir_name}/${fp.name}"
         """
     }
 }

@@ -3,107 +3,105 @@
      Imports
     ~~~~~~~~~~~~~~~~~~
 */
-// include { FETCHREADS              } from '../subworkflows/local/fetchreads/main'
 include { FETCHDB                 } from '../subworkflows/local/fetchdb/main'
 include { QC                      } from '../subworkflows/local/qc/main'
 include { READSMERGE              } from '../subworkflows/local/reads_qc/merge/main'
 include { DECONTAM_SHORTREAD      } from '../subworkflows/local/decontam_shortread/main'
 include { DECONTAM_LONGREAD       } from '../subworkflows/local/decontam_longread/main'
 
-include { KRONA_KTIMPORTTEXT      } from '../modules/ebi-metagenomics/krona/ktimporttext/main'
-include { MOTUS_PROFILE           } from '../modules/nf-core/motus/profile/main'
 include { RRNA_EXTRACTION         } from '../subworkflows/ebi-metagenomics/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA        } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
-// include { MULTIQC } from '../modules/nf-core/multiqc/main'
 include { softwareVersionsToYAML  } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-// Import samplesheetToList from nf-schema //
+include { KRONA_KTIMPORTTEXT      } from '../modules/ebi-metagenomics/krona/ktimporttext/main'
+include { MOTUS_PROFILE           } from '../modules/nf-core/motus/profile/main'
+include { FASTQC                  } from '../modules/nf-core/fastqc/main'
+// include { MULTIQC                 } from '../modules/nf-core/multiqc/main'
+
 include { samplesheetToList       } from 'plugin/nf-schema'
 
-include { FASTQC } from '../modules/nf-core/fastqc/main'
-/*
-    ~~~~~~~~~~~~~~~~~~
-     Run workflow
-    ~~~~~~~~~~~~~~~~~~
-*/
+
 workflow PIPELINE {
     main:
     ch_versions = Channel.empty()
 
-    // def groupReads = { study_accession, reads_accession, fq1, fq2, library_layout, library_strategy, platform -> [
-    //     ['id': reads_accession,
-    //      'study_accession': study_accession,
-    //      'single_end': (fq2 == []) ? true : false,
-    //      'library_layout': library_layout,
-    //      'library_strategy': library_strategy,
-    //      'platform': params.platform ?: platform,],
-    //     (fq2 == []) ? [fq1] : [fq1, fq2],
-    // ]}
-    // samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
+    def groupReads = { study_accession, reads_accession, fq1, fq2, library_layout, library_strategy, platform -> [
+        ['id': reads_accession,
+         'study_accession': study_accession,
+         'single_end': (fq2 == []) ? true : false,
+         'library_layout': library_layout,
+         'library_strategy': library_strategy,
+         'platform': params.platform ?: platform,],
+        (fq2 == []) ? [fq1] : [fq1, fq2],
+    ]}
+    samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
 
-    // // [ study, sample, read1, [read2], library_layout, library_strategy, platform]
-    // fetch_reads_transformed = samplesheet.map(groupReads)
+    // [ study, sample, read1, [read2], library_layout, library_strategy, platform]
+    fetch_reads_transformed = samplesheet.map(groupReads)
 
     // Fetch databases
-    // dbs = params.databases.collectEntries { db_id, db_data ->
-    //     if ((db_data instanceof Map) && db_data.containsKey('name')) {
-    //         return [db_id, [meta: [id: db_id] + db_data,
-    //                         file: file(db_data.path, checkIfExists: true)]]
-    //     }
-    // }
-
-    db_ch = Channel.from(params.databases.collect{ k,v ->
-        if((v instanceof Map) && (v.containsKey('name'))){
-            return [[id: k], v]
+    db_ch = Channel.from(params.databases.collect{ k, v ->
+        if((v instanceof Map) && (v.containsKey('base_dir'))){
+            return [id: k] + v
         }
     }).filter{ it }
-    db_ch.view{ "db_ch - ${it}" }
-    FETCHDB(db_ch, Channel.value(params.databases.cache_path))
-    dbs = FETCHDB.out.dbs
-    // dbs.view{ "dbs - ${it}" }
+    // db_ch.view{ "db_ch - ${it}" }
+    FETCHDB(db_ch, params.databases.cache_path)
+    dbs_path_ch = FETCHDB.out.dbs
+    // dbs_path_ch.view{ "dbs_path_ch - ${it}" }
 
-    // classified_reads = fetch_reads_transformed.map { meta, reads ->
-    //     // Long reads //
-    //     if ( ["ont", "pb"].contains( meta.platform ) ) {
-    //         return [ meta + [long_reads: true], reads]
-    //     // Short reads //
-    //     } else {
-    //         return [ meta + [short_reads: true], reads]
-    //     }
-    // }
+    dbs_path_ch.branch{ meta, _fp ->
+        motus: meta.id=='motus'
+        host_genome: meta.id=='host_genome'
+        host_genome_minimap2: meta.id=='host_genome_minimap2'
+        phix: meta.id=='phix'
+        rfam: meta.id=='rfam'
+        silva_ssu: meta.id=='silva_ssu'
+        silva_lsu: meta.id=='silva_lsu'
+    }.set{ dbs }
 
-    // // QC
-    // QC(classified_reads)
-    // ch_versions = ch_versions.mix(QC.out.versions)
+    dbs.motus.view{ "dbs.motus - ${ it }" }
+    dbs.host_genome.view{ "dbs.host_genome - ${ it }" }
+    dbs.host_genome_minimap2.view{ "dbs.host_genome_minimap2 - ${ it }" }
+    dbs.phix.view{ "dbs.phix - ${ it }" }
+    dbs.rfam.view{ "dbs.rfam - ${ it }" }
+    dbs.silva_ssu.view{ "dbs.silva_ssu - ${ it }" }
+    dbs.silva_lsu.view{ "dbs.silva_lsu - ${ it }" }
 
-    // // DECONTAMINATION
-    // QC.out.qc_reads.branch { meta, _reads ->
-    //         short_reads: meta.short_reads
-    //         long_reads: meta.long_reads
-    //     }
-    // .set { reads_to_analyse }
+    classified_reads = fetch_reads_transformed.map { meta, reads ->
+        // Long reads
+        if ( ["ont", "pb"].contains( meta.platform ) ) {
+            return [meta + [long_reads: true], reads]
+        // Short reads
+        } else {
+            return [meta + [short_reads: true], reads]
+        }
+    }
 
-    // db = dbs['host_genome']
-    // host_genome_db = [db.meta, "${db.file}/${db_meta.files.bwa_index_prefix}"]
-    // (db_meta, db_fp) = dbs['human_phix']
-    // human_phix_db = [db_meta, "${db_fp}/${db_meta.files.bwa_index_prefix}"]
+    // QC
+    QC(classified_reads)
+    ch_versions = ch_versions.mix(QC.out.versions)
 
-    // DECONTAM_SHORTREAD(
-    //     reads_to_analyse.short_reads,
-    //     Channel.value(host_genome_db),
-    //     Channel.value(human_phix_db)
-    // )
-    // ch_versions = ch_versions.mix(DECONTAM_SHORTREAD.out.versions)
+    // DECONTAMINATION
+    QC.out.qc_reads.branch { meta, _reads ->
+            short_reads: meta.short_reads
+            long_reads: meta.long_reads
+        }
+    .set { reads_to_analyse }
 
-    // db_meta, db_fp = dbs['host_genome_minimap2']
-    // // host_genome_minimap2_db = [db_meta, "${db_fp}/${db_meta.files.index}"]
-    // host_genome_minimap2_db = [db_meta, db_fp]
+    DECONTAM_SHORTREAD(
+        reads_to_analyse.short_reads,
+        dbs.host_genome,
+        dbs.phix
+    )
+    ch_versions = ch_versions.mix(DECONTAM_SHORTREAD.out.versions)
+
     // DECONTAM_LONGREAD(
     //     reads_to_analyse.long_reads,
-    //     Channel.value(host_genome_minimap2_db),
+    //     dbs.host_genome_minimap2,
     // )
-    // ch_versions = ch_versions.mix(LONG_READ_QC.out.versions)
+    // ch_versions = ch_versions.mix(DECONTAM_LONGREAD.out.versions)
 
-    // ch_qc_out = SHORT_READS_QC.out.mix(LONG_READ_QC.out)
+    // ch_qc_out = DECONTAM_SHORTREAD.out.mix(DECONTAM_LONGREAD.out)
 
     // FASTQC(
     //     ch_qc_out.qc_reads
