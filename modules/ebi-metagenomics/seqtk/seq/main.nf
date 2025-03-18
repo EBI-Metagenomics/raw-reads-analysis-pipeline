@@ -2,20 +2,20 @@
 // This is because there are not currently any nf-core ways of adding modules from more than one nf-core repo
 
 process SEQTK_SEQ {
-    tag "$meta.id"
+    tag "${meta.id}"
     label 'process_single'
 
     conda "bioconda::seqtk=1.4"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/seqtk:1.3--h5bf99c6_3' :
-        'biocontainers/seqtk:1.3--h5bf99c6_3' }"
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/seqtk:1.3--h5bf99c6_3'
+        : 'quay.io/biocontainers/seqtk:1.3--h5bf99c6_3'}"
 
     input:
     tuple val(meta), path(fastx)
 
     output:
-    tuple val(meta), path("*.gz")     , emit: fastx
-    path "versions.yml"               , emit: versions
+    tuple val(meta), path("*.gz"), emit: fastx
+    path "versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,14 +25,14 @@ process SEQTK_SEQ {
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     def extension = "fastq"
-    if ("$fastx" ==~ /.+\.fasta|.+\.fasta.gz|.+\.fa|.+\.fa.gz|.+\.fas|.+\.fas.gz|.+\.fna|.+\.fna.gz/ || "$args" ==~ /\-[aA]/ ) {
+    if ("${fastx}" ==~ /.+\.fasta|.+\.fasta.gz|.+\.fa|.+\.fa.gz|.+\.fas|.+\.fas.gz|.+\.fna|.+\.fna.gz/ || "${args}" ==~ /\-[aA]/) {
         extension = "fasta"
     }
     """
     seqtk \\
         seq \\
-        $args \\
-        $fastx | \\
+        ${args} \\
+        ${fastx} | \\
         gzip -c > ${prefix}.seqtk-seq.${extension}.gz
 
     cat <<-END_VERSIONS > versions.yml

@@ -1,12 +1,11 @@
-
 process MAPSEQ {
-    tag "$meta.id"
+    tag "${meta.id}"
     label 'process_single'
 
     conda "bioconda::mapseq=2.1.1"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/mapseq:2.1.1--ha34dc8c_0':
-        'biocontainers/mapseq:2.1.1--ha34dc8c_0' }"
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/mapseq:2.1.1--ha34dc8c_0'
+        : 'quay.io/biocontainers/mapseq:2.1.1--ha34dc8c_0'}"
 
     input:
     tuple val(meta), path(subunit_reads)
@@ -14,7 +13,7 @@ process MAPSEQ {
 
     output:
     tuple val(meta), path("*.mseq"), emit: mseq
-    path "versions.yml"           , emit: versions
+    path "versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,11 +24,11 @@ process MAPSEQ {
 
     """
     mapseq \\
-        $subunit_reads \\
-        $db_fasta \\
-        $db_tax \\
-        -nthreads $task.cpus \\
-        $args \\
+        ${subunit_reads} \\
+        ${db_fasta} \\
+        ${db_tax} \\
+        -nthreads ${task.cpus} \\
+        ${args} \\
         > ${prefix}.mseq
 
     cat <<-END_VERSIONS > versions.yml

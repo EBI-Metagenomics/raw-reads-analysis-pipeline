@@ -2,10 +2,10 @@ process FASTQC {
     tag "${meta.id}"
     label 'process_medium'
 
-    conda "${moduleDir}/environment.yml"
+    // conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fastqc:0.12.1--hdfd78af_0' :
-        'biocontainers/fastqc:0.12.1--hdfd78af_0' }"
+        'quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0' }"
 
     input:
     tuple val(meta), path(reads)

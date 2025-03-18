@@ -1,7 +1,7 @@
-include { BWAMEM2_MEM as BWAMEM2_ALIGN_PHIX } from '../../../modules/nf-core/bwamem2/mem'
-include { BWAMEM2_MEM as BWAMEM2_ALIGN_HOST } from '../../../modules/nf-core/bwamem2/mem'
-include { SAMTOOLS_BAM2FQ as SAMTOOLS_BAM2FQ_PHIX } from '../../../modules/ebi-metagenomics/samtools/bam2fq/main'
-include { SAMTOOLS_BAM2FQ as SAMTOOLS_BAM2FQ_HOST } from '../../../modules/ebi-metagenomics/samtools/bam2fq/main'
+include { BWAMEM2_MEM as BWAMEM2_ALIGN_PHIX } from '../../../modules/nf-core/bwamem2/mem/main'
+include { BWAMEM2_MEM as BWAMEM2_ALIGN_HOST } from '../../../modules/nf-core/bwamem2/mem/main'
+include { DECONTAMBAM as DECONTAMBAM_PHIX } from '../../../modules/local/decontambam/main'
+include { DECONTAMBAM as DECONTAMBAM_HOST } from '../../../modules/local/decontambam/main'
 
 workflow DECONTAM_SHORTREAD {
     take:
@@ -29,10 +29,10 @@ workflow DECONTAM_SHORTREAD {
               [meta, file("${fp}/${meta.base_dir}/${meta.files.genome}")] }
         .first()
 
-    phix_genome_index.view{ "phix_genome_index - ${it}" }
-    phix_genome_fasta.view{ "phix_genome_fasta - ${it}" }
-    reference_genome_index.view{ "reference_genome_index - ${it}" }
-    reference_genome_fasta.view{ "reference_genome_fasta - ${it}" }
+    // phix_genome_index.view{ "phix_genome_index - ${it}" }
+    // phix_genome_fasta.view{ "phix_genome_fasta - ${it}" }
+    // reference_genome_index.view{ "reference_genome_index - ${it}" }
+    // reference_genome_fasta.view{ "reference_genome_fasta - ${it}" }
 
     if (params.remove_human_phix) {
 
@@ -44,10 +44,12 @@ workflow DECONTAM_SHORTREAD {
         )
         ch_versions = ch_versions.mix(BWAMEM2_ALIGN_PHIX.out.versions)
 
-        SAMTOOLS_BAM2FQ_PHIX(BWAMEM2_ALIGN_PHIX.out.bam)
-        ch_versions = ch_versions.mix(SAMTOOLS_BAM2FQ_PHIX.out.versions)
+        DECONTAMBAM_PHIX(
+            BWAMEM2_ALIGN_PHIX.out.bam.map{ meta, bam -> [meta, bam, meta.single_end==false] }
+        )
+        ch_versions = ch_versions.mix(DECONTAMBAM_PHIX.out.versions)
 
-        decontaminated_reads = SAMTOOLS_BAM2FQ_PHIX.out.reads
+        decontaminated_reads = DECONTAMBAM_PHIX.out.unmapped_reads
     }
     else {
         decontaminated_reads = reads
@@ -63,13 +65,15 @@ workflow DECONTAM_SHORTREAD {
         )
         ch_versions = ch_versions.mix(BWAMEM2_ALIGN_HOST.out.versions)
 
-        SAMTOOLS_BAM2FQ_HOST(BWAMEM2_ALIGN_HOST.out.bam)
-        ch_versions = ch_versions.mix(SAMTOOLS_BAM2FQ_HOST.out.versions)
+        DECONTAMBAM_HOST(
+            BWAMEM2_ALIGN_HOST.out.bam.map{ meta, bam -> [meta, bam, meta.single_end==false] }
+        )
+        ch_versions = ch_versions.mix(DECONTAMBAM_HOST.out.versions)
 
-        decontaminated_reads = SAMTOOLS_BAM2FQ_HOST.out.reads
+        decontaminated_reads = DECONTAMBAM_HOST.out.unmapped_reads
     }
 
     emit:
-    qc_reads = decontaminated_reads
+    decontaminated_reads = decontaminated_reads
     versions = ch_versions
 }

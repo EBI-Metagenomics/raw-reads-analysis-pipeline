@@ -1,5 +1,7 @@
 study_accession,reads_accession,fastq_1,fastq_2,library_layout,library_strategy,platform
 PRJEB51728,ERR10889056,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889056_1.mini.fastq.gz,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889056_2.mini.fastq.gz,paired,wgs,illumina
 PRJEB51728,ERR10889147,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889147_1.mini.fastq.gz,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889147_2.mini.fastq.gz,paired,wgs,illumina
-PRJEB51728,ERR10889056,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889056_1.mini.fastq.gz,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889056_2.mini.fastq.gz,paired,wgs,illumina
-PRJEB51728,ERR10889147,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889147_1.mini.fastq.gz,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889147_2.mini.fastq.gz,paired,wgs,illumina
+PRJEB51728,ERR10889056,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889056_1.mini.fastq.gz,,paired,wgs,ont
+PRJEB51728,ERR10889147,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889147_1.mini.fastq.gz,,paired,wgs,ont
+PRJEB51728,ERR10889056,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889056_1.mini.fastq.gz,,paired,wgs,illumina
+PRJEB51728,ERR10889147,/Users/timrozday/Documents/Pipelines/rrap/reads/ERR10889147_1.mini.fastq.gz,,paired,wgs,illumina
