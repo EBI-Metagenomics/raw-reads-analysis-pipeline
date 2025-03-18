@@ -1,0 +1,44 @@
+{
+  "build": "h125f33a_5",
+  "build_number": 5,
+  "channel": "https://conda.anaconda.org/bioconda/linux-64",
+  "constrains": [],
+  "depends": [
+    "isa-l >=2.31.0,<3.0a0",
+    "libdeflate >=1.20,<1.24.0a0",
+    "libgcc-ng >=12",
+    "libstdcxx-ng >=12"
+  ],
+  "extracted_package_dir": "/hps/software/users/rdf/metagenomics/service-team/users/timrozday/miniforge/pkgs/fastp-0.23.4-h125f33a_5",
+  "files": [
+    "bin/fastp"
+  ],
+  "fn": "fastp-0.23.4-h125f33a_5.tar.bz2",
+  "license": "MIT",
+  "link": {
+    "source": "/hps/software/users/rdf/metagenomics/service-team/users/timrozday/miniforge/pkgs/fastp-0.23.4-h125f33a_5",
+    "type": 1
+  },
+  "md5": "9b7aada5acd9d2729a158fd06b101bde",
+  "name": "fastp",
+  "package_tarball_full_path": "/hps/software/users/rdf/metagenomics/service-team/users/timrozday/miniforge/pkgs/fastp-0.23.4-h125f33a_5.tar.bz2",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/fastp",
+        "path_type": "hardlink",
+        "sha256": "7c583f01f5049e04bb5cde6b0b17d7e6636b7d69a10efaed829867bb01d7b2b9",
+        "sha256_in_prefix": "7c583f01f5049e04bb5cde6b0b17d7e6636b7d69a10efaed829867bb01d7b2b9",
+        "size_in_bytes": 9001928
+      }
+    ],
+    "paths_version": 1
+  },
+  "requested_spec": "bioconda::fastp=0.23.4",
+  "sha256": "fa94d2faaa9f7526f0288697eaeb4c31d2cd3c102839ff73db9efbf5dee871df",
+  "size": 3190022,
+  "subdir": "linux-64",
+  "timestamp": 1721138470000,
+  "url": "https://conda.anaconda.org/bioconda/linux-64/fastp-0.23.4-h125f33a_5.tar.bz2",
+  "version": "0.23.4"
+}
