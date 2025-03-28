@@ -11,8 +11,8 @@ process SEQTK_SEQ {
     tuple val(meta), path(fastx)
 
     output:
-    tuple val(meta), path("*.gz")     , emit: fastx
-    path "versions.yml"               , emit: versions
+    tuple val(meta), path("*.gz"), emit: fastx
+    path "versions.yml"          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,18 +25,41 @@ process SEQTK_SEQ {
     if ("$fastx" ==~ /.+\.fasta|.+\.fasta.gz|.+\.fa|.+\.fa.gz|.+\.fas|.+\.fas.gz|.+\.fna|.+\.fna.gz/ || "$args" ==~ /\-[aA]/ ) {
         extension = "fasta"
     }
-    """
-    seqtk \\
-        seq \\
-        $args \\
-        $fastx | \\
-        gzip -c > ${prefix}.seqtk-seq.${extension}.gz
+    if("${meta.single_end}"==true) {
+        """
+        echo "meta.single_end: ${meta.single_end}"
+        seqtk \\
+            seq \\
+            $args \\
+            $fastx | \\
+            gzip -c > ${prefix}.seqtk-seq.${extension}.gz
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
-    END_VERSIONS
-    """
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
+        END_VERSIONS
+        """
+    } else {
+        """
+        echo "meta.single_end: ${meta.single_end}"
+        seqtk \\
+            seq \\
+            $args \\
+            ${fastx[0]} | \\
+            gzip -c > ${prefix}.1.seqtk-seq.${extension}.gz
+
+        seqtk \\
+            seq \\
+            $args \\
+            ${fastx[1]} | \\
+            gzip -c > ${prefix}.2.seqtk-seq.${extension}.gz
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
+        END_VERSIONS
+        """
+    }
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
@@ -45,12 +68,24 @@ process SEQTK_SEQ {
     if ("$fastx" ==~ /.+\.fasta|.+\.fasta.gz|.+\.fa|.+\.fa.gz|.+\.fas|.+\.fas.gz|.+\.fna|.+\.fna.gz/ || "$args" ==~ /\-[aA]/ ) {
         extension = "fasta"
     }
-    """
-    echo "" | gzip > ${prefix}.seqtk-seq.${extension}.gz
+    if("${meta.single_end}"==true) {
+        """
+        echo "" | gzip > ${prefix}.seqtk-seq.${extension}.gz
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
-    END_VERSIONS
-    """
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
+        END_VERSIONS
+        """
+    } else {
+        """
+        echo "" | gzip > ${prefix}.1.seqtk-seq.${extension}.gz
+        echo "" | gzip > ${prefix}.2.seqtk-seq.${extension}.gz
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
+        END_VERSIONS
+        """
+    }
 }

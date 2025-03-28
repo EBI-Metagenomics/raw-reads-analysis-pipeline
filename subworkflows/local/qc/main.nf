@@ -14,11 +14,10 @@ workflow QC {
         false,
         false,
     )
-
     ch_versions = ch_versions.mix(FASTP.out.versions)
 
     emit:
-    qc_reads = FASTP.out.reads
+    fastq = FASTP.out.reads
     fastp_json = FASTP.out.json
     versions = ch_versions
 }

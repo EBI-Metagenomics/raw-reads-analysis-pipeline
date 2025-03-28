@@ -1,4 +1,3 @@
-
 include { INFERNAL_CMSEARCH           } from '../../../modules/ebi-metagenomics/infernal/cmsearch/main'
 include { CMSEARCHTBLOUTDEOVERLAP     } from '../../../modules/ebi-metagenomics/cmsearchtbloutdeoverlap/main'
 include { EASEL_ESLSFETCH             } from '../../../modules/ebi-metagenomics/easel/eslsfetch/main'
@@ -12,17 +11,26 @@ workflow RRNA_EXTRACTION {
     claninfo     // file: claninfo for cmsearchtbloutdeoverlap
 
     main:
-
     ch_versions = Channel.empty()
 
+    ch_chunked_fasta = ch_fasta
+        .flatMap{ meta, fasta ->
+            def chunks = fasta.splitFasta(file: true, size: 1.MB)
+            chunks.collect{ chunk -> tuple(groupKey(meta, chunks.size()), chunk) }
+        }
+
     INFERNAL_CMSEARCH(
-        ch_fasta,
+        ch_chunked_fasta,
         rfam
     )
     ch_versions = ch_versions.mix(INFERNAL_CMSEARCH.out.versions.first())
 
+    COMBINEHMMSEARCHTBL(
+        INFERNAL_CMSEARCH.out.cmsearch_tbl.groupTuple()
+    )
+
     CMSEARCHTBLOUTDEOVERLAP(
-        INFERNAL_CMSEARCH.out.cmsearch_tbl,
+        COMBINEHMMSEARCHTBL.out.concatenated_result,
         claninfo
     )
     ch_versions = ch_versions.mix(CMSEARCHTBLOUTDEOVERLAP.out.versions.first())
@@ -30,9 +38,7 @@ workflow RRNA_EXTRACTION {
     ch_easel = ch_fasta
                 .join(CMSEARCHTBLOUTDEOVERLAP.out.cmsearch_tblout_deoverlapped)
 
-    EASEL_ESLSFETCH(
-        ch_easel
-    )
+    EASEL_ESLSFETCH(ch_easel)
     ch_versions = ch_versions.mix(EASEL_ESLSFETCH.out.versions.first())
 
     EXTRACTCOORDS(

@@ -48,7 +48,7 @@ process MOTUS_PROFILE {
     if [ "${db}" == "" ]; then
         VERSION=\$(echo \$(motus -h 2>&1) | sed 's/^.*Version: //; s/References.*\$//')
     else
-        VERSION=\$(grep motus ${db}/db_mOTU_versions | sed 's/motus\\t//g')
+        VERSION=\$(grep motus ./db_mOTU/db_mOTU_versions | sed 's/motus\\t//g')
     fi
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

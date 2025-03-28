@@ -4,8 +4,8 @@ process EXTRACTCOORDS {
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
-        ? 'https://depot.galaxyproject.org/singularity/mgnify-pipelines-toolkit:0.1.2--pyhdfd78af_0'
-        : 'quay.io/biocontainers/mgnify-pipelines-toolkit:0.1.2--pyhdfd78af_0'}"
+        ? 'https://depot.galaxyproject.org/singularity/mgnify-pipelines-toolkit:1.0.1--pyhdfd78af_0'
+        : 'quay.io/biocontainers/mgnify-pipelines-toolkit:1.0.1--pyhdfd78af_0'}"
 
     input:
     tuple val(meta), path(easel_coords_fasta)
@@ -25,6 +25,7 @@ process EXTRACTCOORDS {
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
+    #!/bin/bash
     get_subunits -i ${easel_coords_fasta} -n ${prefix}
     get_subunits_coords -i ${matched_seqs_with_coords} -s SSU -l LSU
     cat SSU_coords LSU_coords > ${prefix}_concat_SSU_LSU_coords.txt

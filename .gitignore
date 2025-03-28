@@ -9,3 +9,4 @@ results/
 .editorconfig
 reads/
 download_cache/
+conda_cache/

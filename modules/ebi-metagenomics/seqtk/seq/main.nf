@@ -28,16 +28,66 @@ process SEQTK_SEQ {
     if ("${fastx}" ==~ /.+\.fasta|.+\.fasta.gz|.+\.fa|.+\.fa.gz|.+\.fas|.+\.fas.gz|.+\.fna|.+\.fna.gz/ || "${args}" ==~ /\-[aA]/) {
         extension = "fasta"
     }
-    """
-    seqtk \\
-        seq \\
-        ${args} \\
-        ${fastx} | \\
-        gzip -c > ${prefix}.seqtk-seq.${extension}.gz
+    if ((fastx instanceof List) && (meta.single_end==false)) {
+        """
+        seqtk \\
+            seq \\
+            ${args} \\
+            ${fastx[0]} | \\
+            gzip -c > ${prefix}.1.seqtk-seq.${extension}.gz
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
-    END_VERSIONS
-    """
+        seqtk \\
+            seq \\
+            ${args} \\
+            ${fastx[1]} | \\
+            gzip -c > ${prefix}.2.seqtk-seq.${extension}.gz
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
+        END_VERSIONS
+        """
+    } else {
+        """
+        seqtk \\
+            seq \\
+            ${args} \\
+            ${fastx} | \\
+            gzip -c > ${prefix}.seqtk-seq.${extension}.gz
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
+        END_VERSIONS
+        """
+    }
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+
+    def extension = "fastq"
+    if ("${fastx}" ==~ /.+\.fasta|.+\.fasta.gz|.+\.fa|.+\.fa.gz|.+\.fas|.+\.fas.gz|.+\.fna|.+\.fna.gz/ || "${args}" ==~ /\-[aA]/) {
+        extension = "fasta"
+    }
+    if ((fastx instanceof List) && (meta.single_end==false)) {
+        """
+        echo "" | gzip > ${prefix}.seqtk-seq.${extension}.gz
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
+        END_VERSIONS
+        """
+    }
+    else {
+        """
+        echo "" | gzip > ${prefix}.1.seqtk-seq.${extension}.gz
+        echo "" | gzip > ${prefix}.2.seqtk-seq.${extension}.gz
+
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            seqtk: \$(echo \$(seqtk 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
+        END_VERSIONS
+        """
+    }
 }
