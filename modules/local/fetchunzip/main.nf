@@ -20,17 +20,25 @@ process FETCHUNZIP {
         """
         #!/bin/bash
         mkdir "${dir_name}"
-        tar -xvzf "${fp.name}" -C "${dir_name}"
+        tar -xvzf "\$(readlink ${fp.name})" -C "${dir_name}"
+        exit 0
         """
-    }
-    else {
+    } else {
+    if (fp.name[-3..-1] == '.gz') {
         """
         #!/bin/bash
         mkdir "${dir_name}"
-        mv "${fp.name}" "${dir_name}/${fp.name}"
+        gunzip -c "\$(readlink ${fp.name})" > "${dir_name}/${fp.name[0..-4]}"
         exit 0
         """
-    }
+    } else {
+        """
+        #!/bin/bash
+        mkdir "${dir_name}"
+        cp "\$(readlink ${fp.name})" "${dir_name}/${fp.name}"
+        exit 0
+        """
+    }}
 
     stub:
     db_files = meta.files.collect { _k, v -> v }

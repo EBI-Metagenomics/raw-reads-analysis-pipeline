@@ -16,7 +16,7 @@ workflow PROFILE_HMMSEARCH_PFAM {
 
     ch_chunked_pfam_in = SEQKIT_TRANSLATE.out.fastx
         .flatMap{ meta, fasta ->
-             def chunks = fasta.splitFasta(file: true, size: 1.MB)
+             def chunks = fasta.splitFasta(file: true, size: params.hmmsearch_chunksize)
              chunks.collect{ chunk -> tuple(groupKey(meta, chunks.size()), chunk) }
          }
         .combine(pfam_db)

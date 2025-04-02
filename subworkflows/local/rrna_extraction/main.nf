@@ -24,7 +24,7 @@ workflow RRNA_EXTRACTION {
 
     ch_chunked_fasta = ch_fasta
         .flatMap{ meta, fasta ->
-            def chunks = fasta.splitFasta(file: true, size: 1.MB)
+            def chunks = fasta.splitFasta(file: true, size: params.cmsearch_chunksize)
             chunks.collect{ chunk -> tuple(groupKey(meta, chunks.size()), chunk) }
         }
 

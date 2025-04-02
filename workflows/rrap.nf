@@ -39,6 +39,8 @@ workflow PIPELINE {
     dbs_path_ch = FETCHDB.out.dbs
     // dbs_path_ch.view{ "dbs_path_ch - ${it}" }
 
+    if (!params.download_dbs){
+
     dbs_path_ch
         .branch { meta, _fp ->
             motus: meta.id == 'motus'
@@ -309,8 +311,8 @@ workflow PIPELINE {
         )
         .set { collated_versions }
 
+    } // end download_dbs condition
+
     emit:
-    multiqc_report = MULTIQC.out.report.toList()
-    versions = ch_versions // channel: [ path(versions.yml) ]
-    collated_versions = collated_versions
+    versions = ch_versions  // channel: [ path(versions.yml) ]
 }

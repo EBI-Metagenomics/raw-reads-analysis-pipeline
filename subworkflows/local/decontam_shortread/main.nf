@@ -11,34 +11,38 @@ include { CHUNKFASTX as CHUNKFASTX_HOST } from '../../../modules/local/chunkfast
 
 workflow DECONTAM_SHORTREAD {
     take:
-    reads  // [ val(meta), path(reads) ]
-    host_genome  // [ val(meta2), path(reference_genome_index_root) ]
-    phix_genome  // [ val(meta3), path(phix_index_root) ]
+    reads // [ val(meta), path(reads) ]
+    host_genome // [ val(meta2), path(reference_genome_index_root) ]
+    phix_genome // [ val(meta3), path(phix_index_root) ]
 
     main:
     def ch_versions = Channel.empty()
 
     phix_genome_index = phix_genome
-        .map{ meta, fp ->
-              [meta, files("${fp}/${meta.base_dir}/${meta.files.bwa_index_prefix}.*")] }
+        .map { meta, fp ->
+            [meta, files("${fp}/${meta.base_dir}/${meta.files.bwa_index_prefix}.*")]
+        }
         .first()
     phix_genome_fasta = phix_genome
-        .map{ meta, fp ->
-              [meta, file("${fp}/${meta.base_dir}/${meta.files.genome}")] }
+        .map { meta, fp ->
+            [meta, file("${fp}/${meta.base_dir}/${meta.files.genome}")]
+        }
         .first()
     host_genome_index = host_genome
-        .map{ meta, fp ->
-              [meta, files("${fp}/${meta.base_dir}/${meta.files.bwa_index_prefix}.*")] }
+        .map { meta, fp ->
+            [meta, files("${fp}/${meta.base_dir}/${meta.files.bwa_index_prefix}.*")]
+        }
         .first()
     host_genome_fasta = host_genome
-        .map{ meta, fp ->
-              [meta, file("${fp}/${meta.base_dir}/${meta.files.genome}")] }
+        .map { meta, fp ->
+            [meta, file("${fp}/${meta.base_dir}/${meta.files.genome}")]
+        }
         .first()
 
     // phix_genome_index.view{ "phix_genome_index - ${it}" }
     // phix_genome_fasta.view{ "phix_genome_fasta - ${it}" }
-    // reference_genome_index.view{ "reference_genome_index - ${it}" }
-    // reference_genome_fasta.view{ "reference_genome_fasta - ${it}" }
+    // host_genome_index.view{ "host_genome_index - ${it}" }
+    // host_genome_fasta.view{ "host_genome_fasta - ${it}" }
 
     if (params.remove_phix) {
 
@@ -59,31 +63,31 @@ workflow DECONTAM_SHORTREAD {
 
         // SEQKIT_SPLIT2_PHIX(reads)
         CHUNKFASTX_PHIX(reads, file("${projectDir}/bin/chunk_fastx.py"))
-        chunked_reads = CHUNKFASTX_PHIX.out.reads
-            .flatMap{ meta, chunks ->
-                if (chunks instanceof List) {
-                    def grouped_chunks = [:]
-                    chunks.collect{
-                        chunk ->
-                        def part = (chunk.name =~ /\.(chunk-\d+)\./)[0][1]
-                        if (grouped_chunks.containsKey(part)) {
-                            grouped_chunks[part].add(chunk)
-                        } else {
-                            grouped_chunks[part] = [chunk]
-                        }
+        chunked_reads = CHUNKFASTX_PHIX.out.reads.flatMap { meta, chunks ->
+            if (chunks instanceof List) {
+                def grouped_chunks = [:]
+                chunks.collect { chunk ->
+                    def part = (chunk.name =~ /\.(chunk-\d+)\./)[0][1]
+                    if (grouped_chunks.containsKey(part)) {
+                        grouped_chunks[part].add(chunk)
                     }
-                    return grouped_chunks.collect{ _part, chunk -> tuple(groupKey(meta, grouped_chunks.size()), tuple(*chunk)) }
-                } else {
-                    return [tuple(groupKey(meta, 1), chunks)]
+                    else {
+                        grouped_chunks[part] = [chunk]
+                    }
                 }
+                return grouped_chunks.collect { _part, chunk -> tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk)) }
             }
+            else {
+                return [tuple(groupKey(meta, 1), chunks)]
+            }
+        }
         // chunked_reads.view{ "chunked_reads - ${it}" }
 
         BWAMEM2_ALIGN_PHIX(
             chunked_reads,
             phix_genome_index,
             phix_genome_fasta,
-            false
+            false,
         )
         ch_versions = ch_versions.mix(BWAMEM2_ALIGN_PHIX.out.versions)
 
@@ -92,8 +96,8 @@ workflow DECONTAM_SHORTREAD {
         )
 
         DECONTAMBAM_PHIX(
-            COMBINEBAM_PHIX.out.concatenated_result.map{ meta, bam ->
-                [meta, bam, meta.single_end==false, "short_read_phix"]
+            COMBINEBAM_PHIX.out.concatenated_result.map { meta, bam ->
+                [meta, bam, meta.single_end == false, "short_read_phix"]
             }
         )
         ch_versions = ch_versions.mix(DECONTAMBAM_PHIX.out.versions)
@@ -107,8 +111,8 @@ workflow DECONTAM_SHORTREAD {
         phix_stats = Channel.empty()
     }
 
-    decontaminated_reads = decontaminated_reads.map { meta, reads ->
-        [meta + ['decontam_phix_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+    decontaminated_reads = decontaminated_reads.map { meta, reads_ ->
+        [meta + ['decontam_phix_read_count': (meta.single_end ? reads_ : reads_[0]).countFastq()], reads_]
     }
     // decontaminated_reads.view{ meta, _reads -> "decontaminated_phix_reads - [${meta.id}, ${meta.platform}, ${meta.single_end}] - ${meta.decontam_phix_read_count}" }
     decontaminated_reads = decontaminated_reads.filter { meta, _reads ->
@@ -134,31 +138,31 @@ workflow DECONTAM_SHORTREAD {
 
         // SEQKIT_SPLIT2_HOST(decontaminated_reads)
         CHUNKFASTX_HOST(decontaminated_reads, file("${projectDir}/bin/chunk_fastx.py"))
-        chunked_decontaminated_reads = CHUNKFASTX_HOST.out.reads
-            .flatMap{ meta, chunks ->
-                if (chunks instanceof List) {
-                    def grouped_chunks = [:]
-                    chunks.collect{
-                        chunk ->
-                        def part = (chunk.name =~ /\.(chunk-\d+)\./)[0][1]
-                        if (grouped_chunks.containsKey(part)) {
-                            grouped_chunks[part].add(chunk)
-                        } else {
-                            grouped_chunks[part] = [chunk]
-                        }
+        chunked_decontaminated_reads = CHUNKFASTX_HOST.out.reads.flatMap { meta, chunks ->
+            if (chunks instanceof List) {
+                def grouped_chunks = [:]
+                chunks.collect { chunk ->
+                    def part = (chunk.name =~ /\.(chunk-\d+)\./)[0][1]
+                    if (grouped_chunks.containsKey(part)) {
+                        grouped_chunks[part].add(chunk)
                     }
-                    return grouped_chunks.collect{ _part, chunk -> tuple(groupKey(meta, grouped_chunks.size()), tuple(*chunk)) }
-                } else {
-                    return [tuple(groupKey(meta, 1), chunks)]
+                    else {
+                        grouped_chunks[part] = [chunk]
+                    }
                 }
+                return grouped_chunks.collect { _part, chunk -> tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk)) }
             }
+            else {
+                return [tuple(groupKey(meta, 1), chunks)]
+            }
+        }
         // chunked_decontaminated_reads.view{ "chunked_decontaminated_reads - ${it}" }
 
         BWAMEM2_ALIGN_HOST(
             chunked_decontaminated_reads,
             host_genome_index,
             host_genome_fasta,
-            false
+            false,
         )
         ch_versions = ch_versions.mix(BWAMEM2_ALIGN_HOST.out.versions)
 
@@ -167,8 +171,8 @@ workflow DECONTAM_SHORTREAD {
         )
 
         DECONTAMBAM_HOST(
-            COMBINEBAM_HOST.out.concatenated_result.map{ meta, bam ->
-                [meta, bam, meta.single_end==false, "short_read_host"]
+            COMBINEBAM_HOST.out.concatenated_result.map { meta, bam ->
+                [meta, bam, meta.single_end == false, "short_read_host"]
             }
         )
         ch_versions = ch_versions.mix(DECONTAMBAM_HOST.out.versions)
@@ -180,8 +184,8 @@ workflow DECONTAM_SHORTREAD {
         host_stats = Channel.empty()
     }
 
-    decontaminated_reads = decontaminated_reads.map { meta, reads ->
-        [meta + ['decontam_host_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+    decontaminated_reads = decontaminated_reads.map { meta, reads_ ->
+        [meta + ['decontam_host_read_count': (meta.single_end ? reads_ : reads_[0]).countFastq()], reads_]
     }
     // decontaminated_reads.view{ meta, _reads -> "decontaminated_host_reads - [${meta.id}, ${meta.platform}, ${meta.single_end}] - ${meta.decontam_host_read_count}" }
     decontaminated_reads = decontaminated_reads.filter { meta, _reads ->
@@ -190,7 +194,7 @@ workflow DECONTAM_SHORTREAD {
 
     emit:
     decontaminated_reads = decontaminated_reads
-    host_stats           = host_stats
-    phix_stats           = phix_stats
-    versions             = ch_versions
+    host_stats = host_stats
+    phix_stats = phix_stats
+    versions = ch_versions
 }
