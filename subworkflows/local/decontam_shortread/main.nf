@@ -8,6 +8,8 @@ include { COMBINEBAM as COMBINEBAM_HOST } from '../../../modules/local/combineba
 // include { SEQKIT_SPLIT2 as SEQKIT_SPLIT2_HOST } from '../../../modules/nf-core/seqkit/split2/main'
 include { CHUNKFASTX as CHUNKFASTX_PHIX } from '../../../modules/local/chunkfastx/main'
 include { CHUNKFASTX as CHUNKFASTX_HOST } from '../../../modules/local/chunkfastx/main'
+include { GZIPALL as GZIPALL_PHIX } from '../../../modules/local/gzipall/main'
+include { GZIPALL as GZIPALL_HOST } from '../../../modules/local/gzipall/main'
 
 workflow DECONTAM_SHORTREAD {
     take:
@@ -62,7 +64,10 @@ workflow DECONTAM_SHORTREAD {
         // chunked_reads.view{ "chunked_reads - ${it}" }
 
         // SEQKIT_SPLIT2_PHIX(reads)
-        CHUNKFASTX_PHIX(reads, file("${projectDir}/bin/chunk_fastx.py"))
+        CHUNKFASTX_PHIX(
+	    reads, 
+	    file("${projectDir}/bin/chunk_fastx.py")
+	)
         chunked_reads = CHUNKFASTX_PHIX.out.reads.flatMap { meta, chunks ->
             if (chunks instanceof List) {
                 def grouped_chunks = [:]
@@ -75,12 +80,24 @@ workflow DECONTAM_SHORTREAD {
                         grouped_chunks[part] = [chunk]
                     }
                 }
-                return grouped_chunks.collect { _part, chunk -> tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk)) }
+                return grouped_chunks.collect { _part, chunk -> 
+		    tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk)) 
+		}
             }
             else {
                 return [tuple(groupKey(meta, 1), chunks)]
             }
         }
+	chunked_reads = chunked_reads.map{ meta, reads_ -> 
+	                                   [meta, reads_, reads_[0].name.endsWith('.gz')] } 
+	    .branch{ meta, reads_, zip -> 
+	        to_zip: !zip
+	            return [meta, reads_]
+	        already_zip: zip
+	            return [meta, reads_] 
+	    } 
+	GZIPALL_PHIX(chunked_reads.to_zip)
+	chunked_reads = chunked_reads.already_zip.mix(GZIPALL_PHIX.out.files)
         // chunked_reads.view{ "chunked_reads - ${it}" }
 
         BWAMEM2_ALIGN_PHIX(
@@ -137,7 +154,10 @@ workflow DECONTAM_SHORTREAD {
         // chunked_decontaminated_reads.view{ "chunked_decontaminated_reads - ${it}" }
 
         // SEQKIT_SPLIT2_HOST(decontaminated_reads)
-        CHUNKFASTX_HOST(decontaminated_reads, file("${projectDir}/bin/chunk_fastx.py"))
+        CHUNKFASTX_HOST(
+	    decontaminated_reads, 
+	    file("${projectDir}/bin/chunk_fastx.py")
+	)
         chunked_decontaminated_reads = CHUNKFASTX_HOST.out.reads.flatMap { meta, chunks ->
             if (chunks instanceof List) {
                 def grouped_chunks = [:]
@@ -150,12 +170,24 @@ workflow DECONTAM_SHORTREAD {
                         grouped_chunks[part] = [chunk]
                     }
                 }
-                return grouped_chunks.collect { _part, chunk -> tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk)) }
+                return grouped_chunks.collect { _part, chunk -> 
+		    tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk)) 
+		}
             }
             else {
                 return [tuple(groupKey(meta, 1), chunks)]
             }
         }
+	chunked_decontaminated_reads = chunked_decontaminated_reads.map{ meta, reads_ -> 
+	                                   [meta, reads_, reads_[0].name.endsWith('.gz')] } 
+	    .branch{ meta, reads_, zip -> 
+	        to_zip: !zip
+	            return [meta, reads_]
+	        already_zip: zip
+	            return [meta, reads_] 
+	    } 
+	GZIPALL_HOST(chunked_decontaminated_reads.to_zip)
+	chunked_decontaminated_reads = chunked_decontaminated_reads.already_zip.mix(GZIPALL_HOST.out.files)
         // chunked_decontaminated_reads.view{ "chunked_decontaminated_reads - ${it}" }
 
         BWAMEM2_ALIGN_HOST(

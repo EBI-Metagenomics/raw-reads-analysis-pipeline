@@ -14,6 +14,10 @@ parser.add_argument('-2', "--input_fp2", type=str,
 parser.add_argument('-o', "--output_pattern", type=str,
                     required=True,
                     help="Output pattern (will take directory, basename and extension and add chunk number and paired-end number).")
+parser.add_argument('-z', "--output_gzip", action='store_true',
+                    help="Gzip the output chunks. If not specified then will only gzip when inputs are gzipped.")
+parser.add_argument('-c', "--no_output_gzip", action='store_false', dest='output_gzip',
+                    help="Don't gzip the output chunks. If not specified then will only gzip when inputs are gzipped.")
 parser.add_argument('-b', "--base_count_target", type=str,
                     default='', required=False,
                     help="Target number of bases in each chunk (rounded down). K, M, G and T suffixes available (e.g. 1.5K)")
@@ -61,7 +65,7 @@ if __name__ == '__main__':
 
     basename, extension = re.findall(r"^(.*)\.(f(ast)?[aq](\.gz)?)$", args.output_pattern)[0][:2]
     chunk_n = 1
-    out_gz = extension[-3:]=='.gz'
+    out_gz = (args.output_gzip) if (args.output_gzip is not None) else (extension[-3:]=='.gz')
     out_files = [None for _ in in_reads]
 
     size_suffix = {v:i for i,v in enumerate(["", "K", "M", "G", "T"])}

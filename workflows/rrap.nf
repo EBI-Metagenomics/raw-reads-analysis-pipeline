@@ -14,7 +14,7 @@ include { SEQTK_SEQ } from '../modules/ebi-metagenomics/seqtk/seq/main'
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { FASTQC } from '../modules/nf-core/fastqc/main'
+// include { FASTQC } from '../modules/nf-core/fastqc/main'
 include { MULTIQC } from '../modules/nf-core/multiqc/main'
 include { PROFILE_HMMSEARCH_PFAM } from '../subworkflows/local/profile_hmmsearch_pfam/main'
 include { samplesheetToList } from 'plugin/nf-schema'
@@ -104,12 +104,14 @@ workflow PIPELINE {
     // QC
     if (params.skip_qc) {
         classified_reads.set{ qc_reads }
+	qc_stats = Channel.empty()
     }
     else {
         QC(classified_reads)
         ch_versions = ch_versions.mix(QC.out.versions)
 
         qc_reads = QC.out.fastq
+        qc_stats = QC.out.fastp_json
     }
 
 
@@ -125,6 +127,7 @@ workflow PIPELINE {
     // DECONTAMINATION
     if (params.skip_decontam) {
         qc_reads.set { clean_reads }
+	decontam_stats = Channel.empty()
     }
     else {
         qc_reads
@@ -149,6 +152,10 @@ workflow PIPELINE {
 
         clean_reads = DECONTAM_SHORTREAD.out.decontaminated_reads
             .mix(DECONTAM_LONGREAD.out.decontaminated_reads)
+
+        decontam_stats = DECONTAM_SHORTREAD.out.phix_stats
+            .mix(DECONTAM_SHORTREAD.out.host_stats)
+            .mix(DECONTAM_LONGREAD.out.stats)
     }
 
     // // Get read count per fastq row
@@ -160,8 +167,8 @@ workflow PIPELINE {
     //     meta.clean_read_count > 0
     // }
 
-    FASTQC(clean_reads)
-    ch_versions = ch_versions.mix(FASTQC.out.versions)
+    // FASTQC(clean_reads)
+    // ch_versions = ch_versions.mix(FASTQC.out.versions)
 
     motus_db = dbs.motus
         .map { meta, fp ->
@@ -277,14 +284,10 @@ workflow PIPELINE {
         ? Channel.fromPath(params.multiqc_logo, checkIfExists: true)
         : Channel.empty()
 
-    decontam_stats = DECONTAM_SHORTREAD.out.phix_stats
-        .mix(DECONTAM_SHORTREAD.out.host_stats)
-        .mix(DECONTAM_LONGREAD.out.stats)
-
     trim_meta = { meta, v -> [[meta.id, meta.single_end, meta.platform], v] }
     // decontam_stats.map(trim_meta).view{ "decontam_stats - ${it}" }
     // QC.out.fastp_json.map(trim_meta).view{ "QC.out.fastp_json - ${it}" }
-    multiqc_ch = QC.out.fastp_json.map(trim_meta)
+    multiqc_ch = qc_stats.map(trim_meta)
         .join(decontam_stats.map(trim_meta), remainder: true)
         .multiMap { it ->
             names: it[0][0]

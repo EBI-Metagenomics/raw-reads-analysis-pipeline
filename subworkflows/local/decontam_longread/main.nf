@@ -3,6 +3,7 @@ include { DECONTAMBAM    } from '../../../modules/local/decontambam/main'
 include { COMBINEBAM } from '../../../modules/local/combinebam/main'
 // include { SEQKIT_SPLIT2 } from '../../../modules/nf-core/seqkit/split2/main'
 include { CHUNKFASTX } from '../../../modules/local/chunkfastx/main'
+include { GZIPALL } from '../../../modules/local/gzipall/main'
 
 workflow DECONTAM_LONGREAD {
     take:
@@ -27,7 +28,10 @@ workflow DECONTAM_LONGREAD {
     // chunked_reads.view{ "chunked_reads - ${it}" }
 
     // SEQKIT_SPLIT2(input_reads)
-    CHUNKFASTX(input_reads, file("${projectDir}/bin/chunk_fastx.py"))
+    CHUNKFASTX(
+        input_reads,
+        file("${projectDir}/bin/chunk_fastx.py")
+    )
     chunked_reads = CHUNKFASTX.out.reads
         .flatMap{ meta, chunks ->
             if (chunks instanceof List) {
@@ -36,6 +40,16 @@ workflow DECONTAM_LONGREAD {
                 return [tuple(groupKey(meta, 1), chunks)]
             }
         }
+    chunked_reads = chunked_reads.map{ meta, reads -> 
+                                       [meta, reads, reads[0].name.endsWith('.gz')] } 
+        .branch{ meta, reads, zip -> 
+            to_zip: !zip
+                return [meta, reads]
+            already_zip: zip
+                return [meta, reads] 
+        } 
+    GZIPALL(chunked_reads.to_zip)
+    chunked_reads = chunked_reads.already_zip.mix(GZIPALL.out.files)
     // chunked_reads.view{ "chunked_reads - ${it}" }
 
     MINIMAP2_ALIGN(
