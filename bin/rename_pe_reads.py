@@ -21,6 +21,10 @@ parser.add_argument('-d', "--suffix_delimeter", type=str,
 parser.add_argument('-e', "--encoding", type=str,
                     default='utf8', required=False,
                     help="Encoding for gzipped files.")
+parser.add_argument('-z', "--zip-output", dest='output_zip',
+                    action='store_true', help="Output to gzipped file.")
+parser.add_argument('-c', "--no-zip-output", dest='output_zip',
+                    action='store_false', help="Don't output to gzipped file.")
 
 args = parser.parse_args()
 
@@ -57,19 +61,39 @@ def rename_file_text(
         prev_line = line.strip()
 
 if __name__ == '__main__':
-    gzip_format = args.input_fp1[-3:] == '.gz'
+    in_gzip_format = args.input_fp1[-3:] == '.gz'
+    out_gzip_format = (args.output_fp1[-3:] == '.gz') if output_gzip is None else output_gzip
 
-    if gzip_format:
+    # this should be replaced with better use of file objects
+    if in_gzip_format:
         with gzip.open(args.input_fp1, 'rb') as in_f:
-            with gzip.open(args.output_fp1, 'wb') as out_f:
-                rename_file_gzip(in_f, out_f, '1', encoding=args.encoding)
+            if out_gzip_format:
+                with gzip.open(args.output_fp1, 'wb') as out_f:
+                    rename_file_gzip(in_f, out_f, '1', encoding=args.encoding)
+            else:
+                with open(args.output_fp1, 'wt') as out_f:
+                    rename_file_text(in_f, out_f, '1')
+
         with gzip.open(args.input_fp2, 'rb') as in_f:
-            with gzip.open(args.output_fp2, 'wb') as out_f:
-                rename_file_gzip(in_f, out_f, '2', encoding=args.encoding)
+            if out_gzip_format:
+                with gzip.open(args.output_fp2, 'wb') as out_f:
+                    rename_file_gzip(in_f, out_f, '2', encoding=args.encoding)
+            else:
+                with open(args.output_fp2, 'wt') as out_f:
+                    rename_file_text(in_f, out_f, '2')
     else:
         with open(args.input_fp1, 'rt') as in_f:
-            with open(args.output_fp1, 'wt') as out_f:
-                rename_file_text(in_f, out_f, '1')
+            if out_gzip_format:
+                with gzip.open(args.output_fp1, 'wb') as out_f:
+                    rename_file_gzip(in_f, out_f, '1', encoding=args.encoding)
+            else:
+                with open(args.output_fp1, 'wt') as out_f:
+                    rename_file_text(in_f, out_f, '1')
+
         with open(args.input_fp2, 'rt') as in_f:
-            with open(args.output_fp2, 'wt') as out_f:
-                rename_file_text(in_f, out_f, '2')
+            if out_gzip_format:
+                with gzip.open(args.output_fp2, 'wb') as out_f:
+                    rename_file_gzip(in_f, out_f, '2', encoding=args.encoding)
+            else:
+                with open(args.output_fp2, 'wt') as out_f:
+                    rename_file_text(in_f, out_f, '2')
