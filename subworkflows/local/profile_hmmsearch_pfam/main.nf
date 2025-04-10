@@ -1,4 +1,5 @@
 include { SEQKIT_TRANSLATE } from '../../../modules/nf-core/seqkit/translate/main'
+include { FASTAEMBEDLENGTH } from '../../../modules/local/fastaembedlengh/main'
 include { HMMER_HMMSEARCH } from '../../../modules/nf-core/hmmer/hmmsearch/main'
 include { PARSEHMMSEARCHCOVERAGE } from '../../../modules/local/parsehmmsearchcoverage/main'
 include { COMBINEHMMSEARCHTBL } from '../../../modules/local/combinehmmsearchtbl/main'
@@ -11,8 +12,8 @@ workflow PROFILE_HMMSEARCH_PFAM {
 
     main:
     ch_versions = Channel.empty()
-
-    SEQKIT_TRANSLATE(reads_fasta)
+    FASTAEMBEDLENGTH(reads_fasta)
+    SEQKIT_TRANSLATE(FASTAEMBEDLENGTH.fasta)
 
     ch_chunked_pfam_in = SEQKIT_TRANSLATE.out.fastx
         .flatMap{ meta, fasta ->

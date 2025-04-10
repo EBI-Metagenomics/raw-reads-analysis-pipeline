@@ -43,8 +43,12 @@ cols = [
 ]
 
 def extract_from_line(line_dict):
+    l, d, b, e = int(line_dict['read_length']), int(line_dict['read_frame']), int(line_dict['read_frame_begin']), int(line_dict['read_frame_end'])
+    if d<0:
+        b,e = l-e, l-b
+
     return {
-        'read_frame': int(line_dict['read_frame']),
+        'read_frame': (l,d,b,e),
         'query_accession': line_dict['query_accession'],
         'overall_score': float(line_dict['overall_score']),
         'overall_evalue': float(line_dict['overall_evalue']),
@@ -65,10 +69,13 @@ if __name__ == '__main__':
             continue
         line_dict = dict(zip(cols, [v.strip() for v in line.strip().split()]))
 
-        read_header_split = re.findall(r'^(.*)_frame=(-?\d+)_begin=(\d+)_end=(\d+)\s*$',
+        read_header_split = re.findall(r'^(.*)_length=(\d+)_frame=(-?\d+)_begin=(\d+)_end=(\d+)\s*$',
                                        line_dict['target_name'])[0]
-        line_dict['read_name'] = read_header_split[0]
-        line_dict['read_frame'] = read_header_split[1]
+        line_dict['read_length'] = read_header_split[0]
+        line_dict['read_name'] = read_header_split[1]
+        line_dict['read_frame'] = read_header_split[2]
+        line_dict['read_frame_begin'] = read_header_split[3]
+        line_dict['read_frame_end'] = read_header_split[4]
 
         read_hits[line_dict['read_name']].append(extract_from_line(line_dict))
 
@@ -81,11 +88,14 @@ if __name__ == '__main__':
     for k,vs in read_hits.items():
         # greedy resolution of overlaps
         deoverlapped = []
-        ali_coverage = {i:False for i in range(vs[0]['tlen'])}
+        ali_coverage = {i:False for i in range(vs[0]['read_frame'][0])}
         for d in sorted(vs, key=lambda x:x['overall_evalue']):
-            if not any([ali_coverage[i] for i in range(d['ali_coord_from'], d['ali_coord_to'])]):
+            direction = -1 if d['read_frame'][1]<0 else 1
+            start, end = d['read_frame'][2:4]
+            m = lambda (a,b):(start+direction*a*3, start+direction*b*3)
+            if not any([ali_coverage[i] for i in range(*m(d['ali_coord_from'], d['ali_coord_to']))]):
                 deoverlapped.append(d)
-                for i in range(d['ali_coord_from'], d['ali_coord_to']):
+                for i in range(*m(d['ali_coord_from']*3-min_i, d['ali_coord_to'])):
                     ali_coverage[i] = True
 
         top_read_hits[k] = list(deoverlapped)
