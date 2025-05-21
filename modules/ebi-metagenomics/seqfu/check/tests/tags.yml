@@ -1,2 +1,0 @@
-seqfu/check:
-  - "modules/ebi-metagenomics/seqfu/check/**"

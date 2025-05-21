@@ -2,8 +2,13 @@ process FASTAEMBEDLENGTH {
     tag "${meta.id}"
     label 'process_single'
 
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/python:3.13'
+        : 'quay.io/biocontainers/python:3.13'}"
+
     input:
     tuple val(meta), path(fasta)
+    path script
 
     output:
     tuple val(meta), path("${out_fn}"), emit: fasta
@@ -16,9 +21,7 @@ process FASTAEMBEDLENGTH {
     out_fn = "${base}.renamed.${ext}"
 
     """
-    awk '/^>/ { if (name) {printf("%s_length=%d\n%s", name, len, seq)} name=$0; seq=""; len = 0; next}
-    NF > 0 {seq = seq $0 "\n"; len += length()}
-    END { if (name) {printf("%s_length=%d\n%s", name, len, seq)} }' ${fasta} > ${out_fn}
+    python ${script} -i ${fasta} -o ${out_fn} --output_gzip
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -27,7 +30,6 @@ process FASTAEMBEDLENGTH {
     """
 
     stub:
-    def args = task.ext.args ?: ''
     def args = task.ext.args ?: ''
     def base = fasta.getName().tokenize('.')[0..-2].join('.')
     def ext = fasta.getName().tokenize('.')[-1]
