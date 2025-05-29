@@ -5,16 +5,6 @@
         "git@github.com:EBI-Metagenomics/nf-modules.git": {
             "modules": {
                 "ebi-metagenomics": {
-                    "assessmcpproportions": {
-                        "branch": "main",
-                        "git_sha": "2c10a5c506ad200076d5fcc4581feb340e351e2f",
-                        "installed_by": ["reads_qc"]
-                    },
-                    "bwamem2decontnobams": {
-                        "branch": "main",
-                        "git_sha": "32049180387cf2406254acf57882fc55915cb52e",
-                        "installed_by": ["modules"]
-                    },
                     "cmsearchtbloutdeoverlap": {
                         "branch": "main",
                         "git_sha": "696324c637a7e0cf06fe331faffee42e36826898",
@@ -29,16 +19,6 @@
                         "branch": "main",
                         "git_sha": "c249cf1afd1b7ceaacde6ba44fd9c919bf688c6d",
                         "installed_by": ["modules", "rrna_extraction"]
-                    },
-                    "fastp": {
-                        "branch": "main",
-                        "git_sha": "d4edb49a9072e8dcfd0fd4bfb85be6c005f86409",
-                        "installed_by": ["reads_qc"]
-                    },
-                    "fastqsuffixheadercheck": {
-                        "branch": "main",
-                        "git_sha": "67a02223d9bd9f38750255250035dc1a8da0b5db",
-                        "installed_by": ["reads_qc"]
                     },
                     "infernal/cmsearch": {
                         "branch": "main",
@@ -60,16 +40,6 @@
                         "git_sha": "fe16b0221649bc7ca3bfa69f722e8a89fab1de16",
                         "installed_by": ["mapseq_otu_krona", "modules"]
                     },
-                    "samtools/bam2fq": {
-                        "branch": "main",
-                        "git_sha": "88f2bfbe6f0ba858d0833db590e647c4678656a7",
-                        "installed_by": ["modules"]
-                    },
-                    "seqfu/check": {
-                        "branch": "main",
-                        "git_sha": "d1f512bffa29ba7a89468ce29e0153e11b57cc94",
-                        "installed_by": ["reads_qc"]
-                    },
                     "seqtk/seq": {
                         "branch": "main",
                         "git_sha": "d4edb49a9072e8dcfd0fd4bfb85be6c005f86409",
@@ -82,16 +52,6 @@
                     "mapseq_otu_krona": {
                         "branch": "main",
                         "git_sha": "cc01ecb29008656fce3b4899a588c3c8b79547d4",
-                        "installed_by": ["subworkflows"]
-                    },
-                    "reads_qc": {
-                        "branch": "main",
-                        "git_sha": "c6917c7d1ae059968317c6315f503a6e85d7aa2e",
-                        "installed_by": ["subworkflows"]
-                    },
-                    "rrna_extraction": {
-                        "branch": "main",
-                        "git_sha": "29fd1389152934e9ca5da16d4637fee44764d25d",
                         "installed_by": ["subworkflows"]
                     }
                 }
@@ -110,27 +70,12 @@
                         "git_sha": "df6f67c19f76671b42ffa395cd2fde8958111eba",
                         "installed_by": ["modules"]
                     },
-                    "fastqc": {
-                        "branch": "master",
-                        "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
-                        "installed_by": ["modules"]
-                    },
                     "hmmer/hmmsearch": {
                         "branch": "master",
                         "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
                         "installed_by": ["modules"]
                     },
-                    "krona/ktimporttext": {
-                        "branch": "master",
-                        "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
-                        "installed_by": ["modules"]
-                    },
                     "minimap2/align": {
-                        "branch": "master",
-                        "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
-                        "installed_by": ["modules"]
-                    },
-                    "motus/downloaddb": {
                         "branch": "master",
                         "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
                         "installed_by": ["modules"]
@@ -145,32 +90,7 @@
                         "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
                         "installed_by": ["modules"]
                     },
-                    "samtools/index": {
-                        "branch": "master",
-                        "git_sha": "b13f07be4c508d6ff6312d354d09f2493243e208",
-                        "installed_by": ["modules"]
-                    },
-                    "samtools/sort": {
-                        "branch": "master",
-                        "git_sha": "b7800db9b069ed505db3f9d91b8c72faea9be17b",
-                        "installed_by": ["modules"]
-                    },
-                    "seqkit/split2": {
-                        "branch": "master",
-                        "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
-                        "installed_by": ["modules"]
-                    },
                     "seqkit/translate": {
-                        "branch": "master",
-                        "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
-                        "installed_by": ["modules"]
-                    },
-                    "seqtk/mergepe": {
-                        "branch": "master",
-                        "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
-                        "installed_by": ["modules"]
-                    },
-                    "seqtk/seq": {
                         "branch": "master",
                         "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
                         "installed_by": ["modules"]

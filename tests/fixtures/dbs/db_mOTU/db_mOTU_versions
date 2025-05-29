@@ -1,0 +1,12 @@
+motus	2.6.0
+#	database
+nr	2.6.0
+cen	2.6.0
+#	scripts
+append	2.6.0
+map_genes_to_mOTUs	2.6.0
+map_mOTUs_to_LGs	2.6.0
+runBWA	2.6.0
+#	taxonomy
+specI_tax	2.6.0
+mOTULG_tax	2.6.0

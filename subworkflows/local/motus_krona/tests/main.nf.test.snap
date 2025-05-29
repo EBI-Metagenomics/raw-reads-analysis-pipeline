@@ -1,0 +1,82 @@
+{
+    "mini sample with no matches should match snapshot": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test1",
+                        "single_end": true,
+                        "platform": "wgs"
+                    },
+                    0
+                ]
+            ],
+            [
+                "versions.yml:md5,19340de5d0deb51f0cc3f587d46ec41f",
+                "versions.yml:md5,949ffb5623556e06c140de87118b5826",
+                "versions.yml:md5,952c72664172faa8c853678f69e005c3"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-29T13:32:18.369086315"
+    },
+    "mini sample paired end should match snapshot": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test1",
+                        "single_end": false,
+                        "platform": "wgs"
+                    },
+                    [
+                        "1.0\tk__Bacteria\tp__Actinobacteria\tc__Actinobacteria\to__Bifidobacteriales\tf__Bifidobacteriaceae\tg__Bifidobacterium\ts__Bifidobacterium longum [Bifidobacterium longum CAG:69/Bifidobacterium longum]",
+                        "1.0\tk__Bacteria\tp__Bacteroidetes\tc__Bacteroidia\to__Bacteroidales\tf__Bacteroidaceae\tg__Bacteroides\ts__Bacteroides thetaiotaomicron",
+                        "1.0\tk__Bacteria\tp__Firmicutes\tc__Bacilli\to__Lactobacillales\tf__Lactobacillaceae\tg__Lactobacillus\ts__Lactobacillus gasseri"
+                    ]
+                ]
+            ],
+            [
+                "versions.yml:md5,19340de5d0deb51f0cc3f587d46ec41f",
+                "versions.yml:md5,949ffb5623556e06c140de87118b5826",
+                "versions.yml:md5,952c72664172faa8c853678f69e005c3"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-29T13:27:00.810048403"
+    },
+    "mini sample single end should match snapshot": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test1",
+                        "single_end": true,
+                        "platform": "wgs"
+                    },
+                    [
+                        "2.0\tk__Bacteria\tp__Bacteroidetes\tc__Bacteroidia\to__Bacteroidales\tf__Bacteroidaceae\tg__Bacteroides\ts__Bacteroides thetaiotaomicron",
+                        "2.0\tk__Bacteria\tp__Firmicutes\tc__Bacilli\to__Lactobacillales\tf__Lactobacillaceae\tg__Lactobacillus\ts__Lactobacillus gasseri",
+                        "3.0\tk__Bacteria\tp__Actinobacteria\tc__Actinobacteria\to__Bifidobacteriales\tf__Bifidobacteriaceae\tg__Bifidobacterium\ts__Bifidobacterium longum [Bifidobacterium longum CAG:69/Bifidobacterium longum]"
+                    ]
+                ]
+            ],
+            [
+                "versions.yml:md5,19340de5d0deb51f0cc3f587d46ec41f",
+                "versions.yml:md5,949ffb5623556e06c140de87118b5826",
+                "versions.yml:md5,952c72664172faa8c853678f69e005c3"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-29T13:22:03.524822248"
+    }
+}

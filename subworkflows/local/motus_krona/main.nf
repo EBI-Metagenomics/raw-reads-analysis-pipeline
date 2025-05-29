@@ -27,5 +27,7 @@ workflow MOTUS_KRONA {
 
     emit:
     versions = ch_versions                     // channel: [ versions.yml ]
+    motus = MOTUS_PROFILE.out.out
+    krona = MOTUS2KRONA.out.krona
 }
 

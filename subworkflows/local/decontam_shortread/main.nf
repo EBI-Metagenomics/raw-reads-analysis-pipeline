@@ -4,8 +4,6 @@ include { DECONTAMBAM as DECONTAMBAM_PHIX } from '../../../modules/local/deconta
 include { DECONTAMBAM as DECONTAMBAM_HOST } from '../../../modules/local/decontambam/main'
 include { COMBINEBAM as COMBINEBAM_PHIX } from '../../../modules/local/combinebam/main'
 include { COMBINEBAM as COMBINEBAM_HOST } from '../../../modules/local/combinebam/main'
-// include { SEQKIT_SPLIT2 as SEQKIT_SPLIT2_PHIX } from '../../../modules/nf-core/seqkit/split2/main'
-// include { SEQKIT_SPLIT2 as SEQKIT_SPLIT2_HOST } from '../../../modules/nf-core/seqkit/split2/main'
 include { CHUNKFASTX as CHUNKFASTX_PHIX } from '../../../modules/local/chunkfastx/main'
 include { CHUNKFASTX as CHUNKFASTX_HOST } from '../../../modules/local/chunkfastx/main'
 include { GZIPALL as GZIPALL_PHIX } from '../../../modules/local/gzipall/main'

@@ -26,6 +26,10 @@ process MAPSEQ2BIOM {
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
+    touch ${prefix}.txt
+    touch ${prefix}.notaxid.tsv
+    touch ${prefix}.tsv
+
     mapseq2biom \
         ${args} \
         --krona ${prefix}.txt \

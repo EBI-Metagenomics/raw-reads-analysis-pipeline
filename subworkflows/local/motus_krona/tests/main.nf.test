@@ -1,5 +1,3 @@
-// TODO nf-core: Once you have added the required tests, please run the following command to build this file:
-// nf-core subworkflows test motus_krona
 nextflow_workflow {
 
     name "Test Subworkflow MOTUS_KRONA"
@@ -9,37 +7,98 @@ nextflow_workflow {
     tag "subworkflows"
     tag "subworkflows_"
     tag "subworkflows/motus_krona"
-    // TODO nf-core: Add tags for all modules used within this subworkflow. Example:
-    tag "samtools"
-    tag "samtools/sort"
-    tag "samtools/index"
 
 
-    // TODO nf-core: Change the test name preferably indicating the test-data and file-format used
-    test("sarscov2 - bam - single_end") {
+    test("mini sample single end should match snapshot") {
 
         when {
             workflow {
                 """
-                // TODO nf-core: define inputs of the workflow here. Example:
-                input[0] = [
-                    [ id:'test', single_end:false ], // meta map
-                    file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
-                ]
-                input[1] = [
-                    [ id:'genome' ],
-                    file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/bam/test.paired_end.sorted.bam', checkIfExists: true),
-                ]
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test1', 'single_end': true, 'platform': 'wgs'],
+	                file("${projectDir}/tests/fixtures/motus_krona/ERR10889056.fq", checkIfExists: true),
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/db_mOTU", checkIfExists: true)
+		    // file("${projectDir}/download_cache/databases/motus/db_mOTU", checkIfExists: true)
+		)
                 """
             }
         }
 
         then {
-            assertAll(
-                { assert workflow.success},
-                { assert snapshot(workflow.out).match()}
-                //TODO nf-core: Add all required assertions to verify the test output.
-            )
+	    def krona_out = workflow.out.krona.collect{ meta, fp -> [meta, file(fp).text.readLines().sort()] }
+
+            assert workflow.success
+            assert snapshot(
+                krona_out,
+		workflow.out.versions
+	    ).match()
+        }
+    }
+
+    test("mini sample paired end should match snapshot") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test1', 'single_end': false, 'platform': 'wgs'],
+	                [
+			    file("${projectDir}/tests/fixtures/motus_krona/ERR10889056.fq", checkIfExists: true),
+			    file("${projectDir}/tests/fixtures/motus_krona/ERR10889056_r.fq", checkIfExists: true),
+			]
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/db_mOTU", checkIfExists: true)
+		    // file("${projectDir}/download_cache/databases/motus/db_mOTU", checkIfExists: true)
+		)
+                """
+            }
+        }
+
+        then {
+	    def krona_out = workflow.out.krona.collect{ meta, fp -> [meta, file(fp).text.readLines().sort()] }
+
+            assert workflow.success
+            assert snapshot(
+                krona_out,
+		workflow.out.versions
+	    ).match()
+        }
+    }
+
+    test("mini sample with no matches should match snapshot") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test1', 'single_end': true, 'platform': 'wgs'],
+		        file("${projectDir}/tests/fixtures/motus_krona/ERR10889056_nomatch.fq", checkIfExists: true),
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/db_mOTU", checkIfExists: true)
+		    // file("${projectDir}/download_cache/databases/motus/db_mOTU", checkIfExists: true)
+		)
+                """
+            }
+        }
+
+        then {
+	    def krona_out = workflow.out.krona.collect{ meta, fp -> [meta, file(fp).text.readLines().size()] }
+
+            assert workflow.success
+            assert snapshot(
+                krona_out,
+		workflow.out.versions
+	    ).match()
         }
     }
 }

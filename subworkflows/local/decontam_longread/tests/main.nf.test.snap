@@ -1,0 +1,137 @@
+{
+    "mini ONT sample with added hg38 synthetic reads sample output should match snapshot": {
+        "content": [
+            [
+                "@ERR10889147.130806",
+                "@ERR10889147.150910",
+                "@ERR10889147.280640",
+                "@ERR10889147.350555",
+                "@ERR10889147.377961",
+                "@ERR10889147.421340",
+                "@ERR10889147.453562",
+                "@ERR10889147.483471",
+                "@ERR10889147.547797",
+                "@ERR10889147.55288",
+                "@ERR10889147.662821",
+                "@ERR10889147.77699",
+                "@ERR10889147.80480"
+            ],
+            [
+                "versions.yml:md5,1acf0fee10591fb9de26449d2bcc32a6",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-28T12:56:43.140639024"
+    },
+    "hg38 synthetic ONT reads sample output should match snapshot": {
+        "content": [
+            [
+                "versions.yml:md5,1acf0fee10591fb9de26449d2bcc32a6",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-28T12:58:01.737160022"
+    },
+    "mini PB sample output should match snapshot": {
+        "content": [
+            [
+                "@B@BB>GEGGGEE1>FDGC@1=EBFGDC@:B<E@>F>@@CFGCGE:B<C@:00=FGG0C=1<EFGE::<@E>FGGEE@:FG0C1FGD9EG/CD00F@D8D0FCFDDGG@088=FDGGCG/CE@",
+                "@ERR10889147.101689",
+                "@ERR10889147.130806",
+                "@ERR10889147.150910",
+                "@ERR10889147.239847",
+                "@ERR10889147.280640",
+                "@ERR10889147.313339",
+                "@ERR10889147.350555",
+                "@ERR10889147.374007",
+                "@ERR10889147.377961",
+                "@ERR10889147.398989",
+                "@ERR10889147.421340",
+                "@ERR10889147.421831",
+                "@ERR10889147.453562",
+                "@ERR10889147.483471",
+                "@ERR10889147.541000",
+                "@ERR10889147.547797",
+                "@ERR10889147.55288",
+                "@ERR10889147.56958",
+                "@ERR10889147.63497",
+                "@ERR10889147.646304",
+                "@ERR10889147.65722",
+                "@ERR10889147.662821",
+                "@ERR10889147.76311",
+                "@ERR10889147.77699",
+                "@ERR10889147.80480"
+            ],
+            [
+                "versions.yml:md5,1acf0fee10591fb9de26449d2bcc32a6",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-28T12:54:37.003929091"
+    },
+    "mini ONT sample output should match snapshot": {
+        "content": [
+            [
+                "@B@BCEG>FCG>GGGG@E99CEGBGB/BEC@G@FF@@G11C1EGGA9CFGGGGCF@=FCFGGGGGEGGGGG=DGB@/FGCGBC9EEEGG/9C/EGGGGGG/8E<.E@D/6.CGGC=D/C@CE6D6",
+                "@BBBBFFGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGFGGGGGGGGEGGGGGGGGGCFGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "@ERR10889147.101689",
+                "@ERR10889147.130806",
+                "@ERR10889147.150910",
+                "@ERR10889147.239847",
+                "@ERR10889147.280640",
+                "@ERR10889147.313339",
+                "@ERR10889147.350555",
+                "@ERR10889147.374007",
+                "@ERR10889147.377961",
+                "@ERR10889147.398989",
+                "@ERR10889147.421340",
+                "@ERR10889147.421831",
+                "@ERR10889147.453562",
+                "@ERR10889147.483471",
+                "@ERR10889147.541000",
+                "@ERR10889147.547797",
+                "@ERR10889147.55288",
+                "@ERR10889147.56958",
+                "@ERR10889147.63497",
+                "@ERR10889147.646304",
+                "@ERR10889147.65722",
+                "@ERR10889147.662821",
+                "@ERR10889147.76311",
+                "@ERR10889147.77699",
+                "@ERR10889147.80480"
+            ],
+            [
+                "versions.yml:md5,1acf0fee10591fb9de26449d2bcc32a6",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e",
+                "versions.yml:md5,9cbaa7bfcef359f47b9565b7d0eb999e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-28T12:51:53.117587708"
+    }
+}

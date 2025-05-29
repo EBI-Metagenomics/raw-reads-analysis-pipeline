@@ -45,7 +45,8 @@ cols = [
 def extract_from_line(line_dict):
     l, d, b, e = int(line_dict['read_length']), int(line_dict['read_frame']), int(line_dict['read_frame_begin']), int(line_dict['read_frame_end'])
     if d<0:
-        b,e = l-e, l-b
+        b = l-b
+        e = l-e
 
     return {
         'read_frame': (l,d,b,e),
@@ -69,20 +70,15 @@ if __name__ == '__main__':
             continue
         line_dict = dict(zip(cols, [v.strip() for v in line.strip().split()]))
 
-        read_header_split = re.findall(r'^(.*)_length=(\d+)_frame=(-?\d+)_begin=(\d+)_end=(\d+)\s*$',
+        read_header_split = re.findall(r'^([^_]*)_length=(\d+)_frame=(-?\d+)_begin=(\d+)_end=(\d+)\s*$',
                                        line_dict['target_name'])[0]
-        line_dict['read_length'] = read_header_split[0]
-        line_dict['read_name'] = read_header_split[1]
+        line_dict['read_name'] = read_header_split[0]
+        line_dict['read_length'] = read_header_split[1]
         line_dict['read_frame'] = read_header_split[2]
         line_dict['read_frame_begin'] = read_header_split[3]
         line_dict['read_frame_end'] = read_header_split[4]
 
         read_hits[line_dict['read_name']].append(extract_from_line(line_dict))
-
-    # choose reading frame for each read based on top match
-    top_read_frame = {k: [d[k_] for k_ in ['read_frame','tlen']]
-                      for k, vs in read_hits.items()
-                      for d in [sorted(vs, key=lambda x:x['overall_evalue'])[0]]}
 
     top_read_hits = {}
     for k,vs in read_hits.items():
@@ -90,12 +86,17 @@ if __name__ == '__main__':
         deoverlapped = []
         ali_coverage = {i:False for i in range(vs[0]['read_frame'][0])}
         for d in sorted(vs, key=lambda x:x['overall_evalue']):
-            direction = -1 if d['read_frame'][1]<0 else 1
+            phase = d['read_frame'][1]
+            direction = -1 if phase<0 else 1
             start, end = d['read_frame'][2:4]
-            m = lambda (a,b):(start+direction*a*3, start+direction*b*3)
-            if not any([ali_coverage[i] for i in range(*m(d['ali_coord_from'], d['ali_coord_to']))]):
+
+            f_sort = lambda a,b: (b,a) if a>b else (a,b)
+            m = lambda x: (start-1)+direction*(x-1)*3 + ((phase*direction)-1)
+            nt_base_idxs = list(range(*f_sort(m(d['ali_coord_from']), m(d['ali_coord_to']))))
+
+            if not any([ali_coverage[i] for i in nt_base_idxs]):
                 deoverlapped.append(d)
-                for i in range(*m(d['ali_coord_from']*3-min_i, d['ali_coord_to'])):
+                for i in nt_base_idxs:
                     ali_coverage[i] = True
 
         top_read_hits[k] = list(deoverlapped)
@@ -107,16 +108,21 @@ if __name__ == '__main__':
         for d in vs:
             hmm_hit_count[d['query_accession']] += 1
             if not d['query_accession'] in hmm_hits_coverage:
-                hmm_hits_coverage[d['query_accession']] = {i:0 for i in range(d['qlen'])}
+                hmm_hits_coverage[d['query_accession']] = {i+1:0 for i in range(d['qlen'])}
             for i in range(d['hmm_coord_from'], d['hmm_coord_to']):
                 hmm_hits_coverage[d['query_accession']][i] += 1
 
     # Collect and write
     hmm_hits_coverage_stats = {}
     for k,d in hmm_hits_coverage.items():
+        if not len(d)>0:
+            continue
         depth = sum(list(d.values()))/len(d)
         breadth = sum([v>0 for _,v in d.items()])/len(d)
-        expected = 1-(1/math.log2(1+math.exp(depth)))
+        
+        depth_ = 709 if depth>709 else depth  # prevents and float overflow with math.exp
+        expected = 1-(1/math.log2(1+math.exp(depth_)))
+
         hmm_hits_coverage_stats[k] = {
             'depth': depth,
             'breadth': breadth,

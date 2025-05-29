@@ -17,10 +17,6 @@ workflow RRNA_EXTRACTION {
     ch_fasta = ch_fasta.map { meta, reads ->
         [meta + ['fasta_read_count': reads.countFasta()], reads]
     }
-    // ch_fasta.view{ meta, _reads -> "ch_fasta - [${meta.id}, ${meta.platform}, ${meta.single_end}] - ${meta.fasta_read_count}" }
-    // decontaminated_reads = decontaminated_reads.filter { meta, _reads ->
-    //     meta.decontam_host_read_count > 0
-    // }
 
     ch_chunked_fasta = ch_fasta
         .flatMap{ meta, fasta ->
