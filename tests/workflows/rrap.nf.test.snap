@@ -1,0 +1,272 @@
+{
+    "Should run without failures": {
+        "content": [
+            [
+                [
+                    "\"PIPELINE:RRNA_EXTRACTION:INFERNAL_CMSEARCH\":",
+                    "    cmsearch: 1.1.5"
+                ],
+                [
+                    "\"PIPELINE:MAPSEQ_OTU_KRONA:KRONA_KTIMPORTTEXT\":",
+                    "    krona: 2.8.1 "
+                ],
+                [
+                    "\"PIPELINE:MOTUS_KRONA:MOTUS_PROFILE\":",
+                    "    motus: 2.6.0"
+                ],
+                [
+                    "\"PIPELINE:DECONTAM_SHORTREAD:DECONTAMBAM_PHIX\":",
+                    "    samtools: 1.21 "
+                ],
+                [
+                    "\"PIPELINE:RRNA_EXTRACTION:EXTRACTCOORDS\":",
+                    "    extractcoords: 0.1.2"
+                ],
+                [
+                    "\"PIPELINE:MOTUS_KRONA:MOTUS2KRONA\":",
+                    "    python: 3.13.2"
+                ],
+                [
+                    "\"PIPELINE:READSMERGE:SEQTK_SEQ\":",
+                    "    seqtk: 1.3-r106"
+                ],
+                [
+                    "\"PIPELINE:READSMERGE:FASTP\":",
+                    "    fastp: 0.23.4"
+                ],
+                [
+                    "\"PIPELINE:QC:FASTP\":",
+                    "    fastp: 0.23.4"
+                ],
+                [
+                    "\"PIPELINE:MAPSEQ_OTU_KRONA:MAPSEQ\":",
+                    "    mapseq: 1.2.6"
+                ],
+                [
+                    "\"PIPELINE:DECONTAM_SHORTREAD:BWAMEM2_ALIGN_PHIX\":",
+                    "    bwamem2: 2.2.1",
+                    "    samtools: 1.19.2 "
+                ],
+                [
+                    "\"PIPELINE:PROFILE_HMMSEARCH_PFAM:HMMER_HMMSEARCH\":",
+                    "    hmmer: 3.4"
+                ],
+                [
+                    "\"PIPELINE:RRNA_EXTRACTION:EASEL_ESLSFETCH\":",
+                    "    easel: 0.49"
+                ],
+                [
+                    "\"PIPELINE:DECONTAM_SHORTREAD:DECONTAMBAM_HOST\":",
+                    "    samtools: 1.21 "
+                ],
+                [
+                    "\"PIPELINE:RRNA_EXTRACTION:CMSEARCHTBLOUTDEOVERLAP\":",
+                    "    cmsearch_tblout_deoverlap: v0.09"
+                ],
+                [
+                    "\"PIPELINE:MAPSEQ_OTU_KRONA:MAPSEQ2BIOM\":",
+                    "    mapseq2biom: 0.1.1"
+                ],
+                [
+                    "\"PIPELINE:DECONTAM_SHORTREAD:BWAMEM2_ALIGN_HOST\":",
+                    "    bwamem2: 2.2.1",
+                    "    samtools: 1.19.2 "
+                ],
+                [
+                    "\"PIPELINE:PROFILE_HMMSEARCH_PFAM:PARSEHMMSEARCHCOVERAGE\":",
+                    "    parsehmmsearchcoverage: Python 3.13.2"
+                ],
+                [
+                    "\"PIPELINE:MOTUS_KRONA:KRONA_KTIMPORTTEXT\":",
+                    "    krona: 2.8.1 "
+                ]
+            ],
+            [
+                [
+                    {
+                        "groupSize": 1,
+                        "groupTarget": {
+                            "id": "test_sample",
+                            "study_accession": "test_study",
+                            "single_end": false,
+                            "library_layout": "paired",
+                            "library_strategy": "wgs",
+                            "platform": "illumina",
+                            "short_reads": true,
+                            "read_count": 1,
+                            "qc_read_count": 1006,
+                            "decontam_phix_read_count": 1006,
+                            "decontam_host_read_count": 978
+                        }
+                    },
+                    [
+                        "# Query Accession\tRead Count\tCoverage Depth\tCoverage Breadth\tExpected Coverage Breadth\tObserved:Expected Coverage Breadth Ratio",
+                        "PF00004.35\t12\t3.0\t0.7175572519083969\t0.7726333213965055\t0.9287164195966067",
+                        "PF00198.28\t13\t2.189655172413793\t0.8836206896551724\t0.6980770691703568\t1.2657924585681184",
+                        "PF00389.36\t14\t3.8358208955223883\t0.6567164179104478\t0.8202966673894672\t0.800584037480487",
+                        "PF00393.24\t15\t1.8724137931034484\t0.8241379310344827\t0.6560802850348313\t1.2561540863718064",
+                        "PF01367.25\t4\t1.597938144329897\t0.5257731958762887\t0.6110690124861431\t0.8604154115705734",
+                        "PF02096.25\t3\t0.8220858895705522\t0.4171779141104294\t0.4157516769221272\t1.0034305025510921",
+                        "PF02737.24\t11\t2.1666666666666665\t0.6833333333333333\t0.6953367055951092\t0.9827373239968648",
+                        "PF02739.22\t4\t1.146341463414634\t0.42073170731707316\t0.512658605105416\t0.8206859362685616",
+                        "PF02826.25\t43\t9.162921348314606\t0.9606741573033708\t0.9243539017012045\t1.039292586459928",
+                        "PF02872.23\t3\t0.6075949367088608\t0.43670886075949367\t0.33504572556865386\t1.3034306288142994",
+                        "PF03061.28\t7\t3.0126582278481013\t0.9620253164556962\t0.7735293354975419\t1.2436830412345148",
+                        "PF04463.17\t2\t0.5531914893617021\t0.3546099290780142\t0.31202467374011655\t1.1364804097940238",
+                        "PF06439.18\t2\t0.39037433155080214\t0.37433155080213903\t0.23600245339422588\t1.5861341499566697",
+                        "PF06725.17\t1\t0.4444444444444444\t0.4444444444444444\t0.2624996803309244\t1.6931237549857143",
+                        "PF06750.18\t1\t0.42857142857142855\t0.42857142857142855\t0.254855513859219\t1.6816250984005368",
+                        "PF07724.20\t12\t2.63855421686747\t0.7650602409638554\t0.7439975854948551\t1.0283101126665497",
+                        "PF07726.17\t6\t1.6717557251908397\t0.6564885496183206\t0.6240979589051776\t1.0518998504176558",
+                        "PF09820.15\t7\t0.8960573476702509\t0.5806451612903226\t0.4402666359321351\t1.3188488836111265",
+                        "PF09821.14\t1\t0.31932773109243695\t0.31932773109243695\t0.19913997334881972\t1.6035340656247485",
+                        "PF10417.14\t5\t3.292682926829268\t0.7317073170731707\t0.7917953849695608\t0.9241116214655632",
+                        "PF12846.13\t2\t0.22099447513812154\t0.22099447513812154\t0.14398464627951812\t1.534847505261803",
+                        "PF13173.12\t10\t2.7829457364341086\t0.8914728682170543\t0.7561885551630875\t1.17890288358674",
+                        "PF13245.12\t1\t0.2835820895522388\t0.2835820895522388\t0.17966580348201655\t1.5783865602483649",
+                        "PF13304.12\t5\t0.5723684210526315\t0.2894736842105263\t0.32026735568446085\t0.9038501085815516",
+                        "PF13476.12\t6\t0.9154228855721394\t0.22885572139303484\t0.4464313623298377\t0.5126336111304585",
+                        "PF13555.12\t3\t1.1639344262295082\t0.5573770491803278\t0.5171999349243717\t1.0776819785598604",
+                        "PF13604.12\t1\t0.19895287958115182\t0.19895287958115182\t0.13091887127109814\t1.519665405372869",
+                        "PF13614.12\t15\t3.0338983050847457\t0.807909604519774\t0.7750182252477599\t1.0424394913571218",
+                        "PF16193.11\t1\t0.43209876543209874\t0.43209876543209874\t0.25656373903783714\t1.6841770666913078",
+                        "PF17862.7\t2\t1.511111111111111\t0.8222222222222222\t0.5947708293352654\t1.38241854117352",
+                        "PF20789.3\t4\t1.1285714285714286\t0.39285714285714285\t0.508004088548435\t0.773334608348701"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample",
+                        "study_accession": "test_study",
+                        "single_end": false,
+                        "library_layout": "paired",
+                        "library_strategy": "wgs",
+                        "platform": "illumina",
+                        "short_reads": true,
+                        "read_count": 1,
+                        "qc_read_count": 1006,
+                        "decontam_phix_read_count": 1006,
+                        "decontam_host_read_count": 978
+                    },
+                    [
+                        "# call: python /usr/local/bin/motus profile -c -p -q -f test_sample_short_read_host_unmapped_1.fq.gz -r test_sample_short_read_host_unmapped_2.fq.gz -db db_mOTU -t 1 -n test_sample -o test_sample.out",
+                        "# git tag version 2.6.0 |  motus version 2.6.0 | map_tax 2.6.0 | gene database: nr2.6.0 | calc_mgc 2.6.0 -y insert.scaled_counts -l 75 | calc_motu 2.6.0 -k mOTU -C no_CAMI -g 3 -c -p | taxonomy: ref_mOTU_2.6.0 meta_mOTU_2.6.0",
+                        "#mOTU\tconsensus_taxonomy\tNCBI_tax_id\ttest_sample",
+                        "ref_mOTU_v3_00900\tk__Bacteria|p__Firmicutes|c__Bacilli|o__Lactobacillales|f__Streptococcaceae|g__Streptococcus|s__Streptococcus sp. [Streptococcus equinus/Streptococcus pasteurianus/Streptococcus gallolyticus/Streptococcus macedonicus]\t2|1239|91061|186826|1300|1301|NA\t0",
+                        "ref_mOTU_v3_01039\tk__Bacteria|p__Firmicutes|c__Bacilli|o__Lactobacillales|f__Lactobacillaceae|g__Lactobacillus|s__Lactobacillus gasseri\t2|1239|91061|186826|33958|1578|1596\t1",
+                        "ref_mOTU_v3_01099\tk__Bacteria|p__Actinobacteria|c__Actinobacteria|o__Bifidobacteriales|f__Bifidobacteriaceae|g__Bifidobacterium|s__Bifidobacterium longum [Bifidobacterium longum CAG:69/Bifidobacterium longum]\t2|201174|1760|85004|31953|1678|216816\t2",
+                        "ref_mOTU_v3_01349\tk__Bacteria|p__Firmicutes|c__Bacilli|o__Lactobacillales|f__Streptococcaceae|g__Streptococcus|s__Streptococcus salivarius [Streptococcus salivarius/Streptococcus sp. HSISS2/Streptococcus sp. HSISS3/Streptococcus sp. C150]\t2|1239|91061|186826|1300|1301|1304\t0",
+                        "ref_mOTU_v3_01657\tk__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales|f__Bacteroidaceae|g__Bacteroides|s__Bacteroides thetaiotaomicron\t2|976|200643|171549|815|816|818\t1"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample",
+                        "study_accession": "test_study",
+                        "single_end": false,
+                        "library_layout": "paired",
+                        "library_strategy": "wgs",
+                        "platform": "illumina",
+                        "short_reads": true,
+                        "read_count": 1,
+                        "qc_read_count": 1006,
+                        "decontam_phix_read_count": 1006,
+                        "decontam_host_read_count": 978,
+                        "fasta_read_count": 1826,
+                        "db_label": "ssu"
+                    },
+                    [
+                        "# Constructed from biom file",
+                        "# OTU ID\tsilva_lsu\ttaxonomy",
+                        "34148\t2.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobacteriales;f__Bifidobacteriaceae;g__Bifidobacterium;s__Bifidobacterium_longum",
+                        "35957\t2.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobacteriales;f__Bifidobacteriaceae;g__Bifidobacterium;s__Bifidobacterium_breve"
+                    ]
+                ],
+                [
+                    {
+                        "id": "test_sample",
+                        "study_accession": "test_study",
+                        "single_end": false,
+                        "library_layout": "paired",
+                        "library_strategy": "wgs",
+                        "platform": "illumina",
+                        "short_reads": true,
+                        "read_count": 1,
+                        "qc_read_count": 1006,
+                        "decontam_phix_read_count": 1006,
+                        "decontam_host_read_count": 978,
+                        "fasta_read_count": 1826,
+                        "db_label": "lsu"
+                    },
+                    [
+                        "# Constructed from biom file",
+                        "# OTU ID\tsilva_ssu\ttaxonomy",
+                        "116768\t4.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobacteriales;f__Bifidobacteriaceae;g__Bifidobacterium;s__Bifidobacterium_breve",
+                        "232685\t18.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobacteriales;f__Bifidobacteriaceae;g__Bifidobacterium;s__Bifidobacterium_longum"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "groupSize": 1,
+                        "groupTarget": {
+                            "id": "test_sample",
+                            "study_accession": "test_study",
+                            "single_end": false,
+                            "library_layout": "paired",
+                            "library_strategy": "wgs",
+                            "platform": "illumina",
+                            "short_reads": true,
+                            "read_count": 1,
+                            "qc_read_count": 1006,
+                            "decontam_phix_read_count": 1006
+                        }
+                    },
+                    "test_sample_short_read_host_all_summary_stats.txt:md5,bbe1649559dbc3e39f893ae2b3db8b57"
+                ],
+                [
+                    {
+                        "groupSize": 1,
+                        "groupTarget": {
+                            "id": "test_sample",
+                            "study_accession": "test_study",
+                            "single_end": false,
+                            "library_layout": "paired",
+                            "library_strategy": "wgs",
+                            "platform": "illumina",
+                            "short_reads": true,
+                            "read_count": 1,
+                            "qc_read_count": 1006
+                        }
+                    },
+                    "test_sample_short_read_phix_all_summary_stats.txt:md5,0baa45437a51776a3b02f8d8550574fd"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample",
+                        "study_accession": "test_study",
+                        "single_end": false,
+                        "library_layout": "paired",
+                        "library_strategy": "wgs",
+                        "platform": "illumina",
+                        "short_reads": true,
+                        "read_count": 1
+                    },
+                    "test_sample.fastp.json:md5,8ba518feb9c7b2cb169fb4b77e3f8361"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-06-10T13:08:40.138553381"
+    }
+}

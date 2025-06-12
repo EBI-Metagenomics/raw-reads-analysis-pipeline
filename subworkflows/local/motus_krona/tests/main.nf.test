@@ -21,8 +21,7 @@ nextflow_workflow {
 		    ]
 		)
 		input[1] = Channel.value(
-		    file("${projectDir}/tests/fixtures/dbs/db_mOTU", checkIfExists: true)
-		    // file("${projectDir}/download_cache/databases/motus/db_mOTU", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/motus_mini/db_mOTU", checkIfExists: true)
 		)
                 """
             }
@@ -54,8 +53,7 @@ nextflow_workflow {
 		    ]
 		)
 		input[1] = Channel.value(
-		    file("${projectDir}/tests/fixtures/dbs/db_mOTU", checkIfExists: true)
-		    // file("${projectDir}/download_cache/databases/motus/db_mOTU", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/motus_mini/db_mOTU", checkIfExists: true)
 		)
                 """
             }
@@ -84,8 +82,7 @@ nextflow_workflow {
 		    ]
 		)
 		input[1] = Channel.value(
-		    file("${projectDir}/tests/fixtures/dbs/db_mOTU", checkIfExists: true)
-		    // file("${projectDir}/download_cache/databases/motus/db_mOTU", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/motus_mini/db_mOTU", checkIfExists: true)
 		)
                 """
             }

@@ -132,8 +132,8 @@ if __name__ == '__main__':
         }
 
     outfile = sys.stdout if args.output_fp=='-' else open(args.output_fp, 'wt')
-    outfile.write(f"# Query Accession\tRead Count\tCoverage Depth\tCoverage Breadth\tExpected Coverage Breadth\tObserved:Expected Coverage Breadth Ratio\n")
+    outfile.write(f"# Query Accession\tRead Count\tCoverage Depth\tCoverage Breadth\n")
     for k,d in sorted(hmm_hits_coverage_stats.items(), key=lambda x:-x[1]['depth']):
-        outfile.write(f"{k}\t{d['count']}\t{d['depth']}\t{d['breadth']}\t{d['expected_breadth']}\t{d['ratio']}\n")
+        outfile.write(f"{k}\t{d['count']}\t{d['depth']}\t{d['breadth']}\n")
     outfile.close()
 

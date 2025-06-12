@@ -34,7 +34,7 @@ workflow PIPELINE {
         )
         .filter { it }
     // db_ch.view{ "db_ch - ${it}" }
-    FETCHDB(db_ch, params.databases.cache_path)
+    FETCHDB(db_ch, "${projectDir}/${params.databases.cache_path}")
     dbs_path_ch = FETCHDB.out.dbs
     // dbs_path_ch.view{ "dbs_path_ch - ${it}" }
 
@@ -240,8 +240,12 @@ workflow PIPELINE {
         .first()
     // ssu_db.view{ "ssu_db - ${it}" }
 
-    lsu_ch = RRNA_EXTRACTION.out.lsu_fasta.combine(lsu_db)
-    ssu_ch = RRNA_EXTRACTION.out.ssu_fasta.combine(ssu_db)
+    lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
+        .map { meta, fp -> [meta+['db_label': 'SILVA-LSU'], fp]}
+        .combine(lsu_db)
+    ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
+        .map { meta, fp -> [meta+['db_label': 'SILVA-SSU'], fp]}
+        .combine(ssu_db)
     rrna_ch = lsu_ch.mix(ssu_ch)
     rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
         seqs: [meta, seqs]
@@ -316,5 +320,10 @@ workflow PIPELINE {
     } // end download_dbs condition
 
     emit:
-    versions = ch_versions  // channel: [ path(versions.yml) ]
+    versions = ch_versions                             // channel: [ path(versions.yml) ]
+    pfam_profile = PROFILE_HMMSEARCH_PFAM.out.profile  // channel: [ meta, path ]
+    rrna_profile = MAPSEQ_OTU_KRONA.out.biom_out       // channel: [ meta, path ]
+    motus_profile = MOTUS_KRONA.out.motus              // channel: [ meta, path ]    
+    decontam_stats = decontam_stats                    // channel: [ meta, path ]
+    qc_stats = qc_stats                                // channel: [ meta, path ]
 }

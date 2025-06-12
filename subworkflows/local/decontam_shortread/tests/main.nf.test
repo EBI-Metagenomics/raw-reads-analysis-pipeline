@@ -27,11 +27,11 @@ nextflow_workflow {
 		])
 		input[1] = Channel.of([
 		    ['id': 'host_genome', 'base_dir': '.', 'files': ['bwa_index_prefix': 'hg38_mini.fa', 'genome': 'hg38_mini.fa']],
-		    file("${projectDir}/tests/fixtures/dbs/hg38_mini", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/host_genome_mini/hg38", checkIfExists: true)
 		])
 		input[2] = Channel.of([
 		    ['id': 'phix', 'base_dir': '.', 'files': ['bwa_index_prefix': 'MN385565.fasta', 'genome': 'MN385565.fasta']],
-		    file("${projectDir}/tests/fixtures/dbs/phix", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/phix/phix", checkIfExists: true)
 		])
                 """
             }
@@ -84,11 +84,11 @@ nextflow_workflow {
 		])
 		input[1] = Channel.of([
 		    ['id': 'host_genome', 'base_dir': '.', 'files': ['bwa_index_prefix': 'hg38_mini.fa', 'genome': 'hg38_mini.fa']],
-		    file("${projectDir}/tests/fixtures/dbs/hg38_mini", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/host_genome_mini/hg38", checkIfExists: true)
 		])
 		input[2] = Channel.of([
 		    ['id': 'phix', 'base_dir': '.', 'files': ['bwa_index_prefix': 'MN385565.fasta', 'genome': 'MN385565.fasta']],
-		    file("${projectDir}/tests/fixtures/dbs/phix", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/phix/phix", checkIfExists: true)
 		])
                 """
             }
@@ -134,11 +134,11 @@ nextflow_workflow {
 		])
 		input[1] = Channel.of([
 		    ['id': 'host_genome', 'base_dir': '.', 'files': ['bwa_index_prefix': 'hg38_mini.fa', 'genome': 'hg38_mini.fa']],
-		    file("${projectDir}/tests/fixtures/dbs/hg38_mini", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/host_genome_mini/hg38", checkIfExists: true)
 		])
 		input[2] = Channel.of([
 		    ['id': 'phix', 'base_dir': '.', 'files': ['bwa_index_prefix': 'MN385565.fasta', 'genome': 'MN385565.fasta']],
-		    file("${projectDir}/tests/fixtures/dbs/phix", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/phix/phix", checkIfExists: true)
 		])
                 """
             }
@@ -194,11 +194,11 @@ nextflow_workflow {
 		])
 		input[1] = Channel.of([
 		    ['id': 'host_genome', 'base_dir': '.', 'files': ['bwa_index_prefix': 'hg38_mini.fa', 'genome': 'hg38_mini.fa']],
-		    file("${projectDir}/tests/fixtures/dbs/hg38_mini", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/host_genome_mini/hg38", checkIfExists: true)
 		])
 		input[2] = Channel.of([
 		    ['id': 'phix', 'base_dir': '.', 'files': ['bwa_index_prefix': 'MN385565.fasta', 'genome': 'MN385565.fasta']],
-		    file("${projectDir}/tests/fixtures/dbs/phix", checkIfExists: true)
+		    file("${projectDir}/tests/fixtures/dbs/phix/phix", checkIfExists: true)
 		])
                 """
             }
