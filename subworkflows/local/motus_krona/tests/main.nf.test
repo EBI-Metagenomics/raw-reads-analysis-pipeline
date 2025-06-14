@@ -1,0 +1,101 @@
+nextflow_workflow {
+
+    name "Test Subworkflow MOTUS_KRONA"
+    script "../main.nf"
+    workflow "MOTUS_KRONA"
+
+    tag "subworkflows"
+    tag "subworkflows_"
+    tag "subworkflows/motus_krona"
+
+
+    test("mini sample single end should match snapshot") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test1', 'single_end': true, 'platform': 'wgs'],
+	                file("${projectDir}/tests/fixtures/motus_krona/ERR10889056.fq", checkIfExists: true),
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/motus_mini/db_mOTU", checkIfExists: true)
+		)
+                """
+            }
+        }
+
+        then {
+	    def krona_out = workflow.out.krona.collect{ meta, fp -> [meta, file(fp).text.readLines().sort()] }
+
+            assert workflow.success
+            assert snapshot(
+                krona_out,
+		workflow.out.versions
+	    ).match()
+        }
+    }
+
+    test("mini sample paired end should match snapshot") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test1', 'single_end': false, 'platform': 'wgs'],
+	                [
+			    file("${projectDir}/tests/fixtures/motus_krona/ERR10889056.fq", checkIfExists: true),
+			    file("${projectDir}/tests/fixtures/motus_krona/ERR10889056_r.fq", checkIfExists: true),
+			]
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/motus_mini/db_mOTU", checkIfExists: true)
+		)
+                """
+            }
+        }
+
+        then {
+	    def krona_out = workflow.out.krona.collect{ meta, fp -> [meta, file(fp).text.readLines().sort()] }
+
+            assert workflow.success
+            assert snapshot(
+                krona_out,
+		workflow.out.versions
+	    ).match()
+        }
+    }
+
+    test("mini sample with no matches should match snapshot") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test1', 'single_end': true, 'platform': 'wgs'],
+		        file("${projectDir}/tests/fixtures/motus_krona/ERR10889056_nomatch.fq", checkIfExists: true),
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/motus_mini/db_mOTU", checkIfExists: true)
+		)
+                """
+            }
+        }
+
+        then {
+	    def krona_out = workflow.out.krona.collect{ meta, fp -> [meta, file(fp).text.readLines().size()] }
+
+            assert workflow.success
+            assert snapshot(
+                krona_out,
+		workflow.out.versions
+	    ).match()
+        }
+    }
+}

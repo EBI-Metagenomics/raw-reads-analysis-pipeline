@@ -1,2 +1,0 @@
-fastqsuffixheadercheck:
-  - "modules/ebi-metagenomics/fastqsuffixheadercheck/**"

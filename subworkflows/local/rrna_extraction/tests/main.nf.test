@@ -1,0 +1,140 @@
+nextflow_workflow {
+
+    name "Test Subworkflow RRNA_EXTRACTION"
+    script "../main.nf"
+    workflow "RRNA_EXTRACTION"
+
+    tag "subworkflows"
+    tag "subworkflows_"
+    tag "subworkflows/rrna_extraction"
+
+    test("mini sample 1 with some matches should match snapshot") {
+
+        when {
+            workflow {
+		// file("${projectDir}/download_cache/databases/rfam/rfam_models/ribosomal_models/ribo.cm", checkIfExists: true)
+		// file("${projectDir}/download_cache/databases/rfam/rfam_models/ribosomal_models/ribo.claninfo", checkIfExists: true)
+                """
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test1', 'single_end': false, 'platform': 'wgs'],
+	                file("${projectDir}/tests/fixtures/rrna_extraction/ERR10889147.fasta", checkIfExists: true),
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/rfam_mini/rfam_models/ribosomal_models/ribo.cm", checkIfExists: true)
+		)
+		input[2] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/rfam_mini/rfam_models/ribosomal_models/ribo.claninfo", checkIfExists: true)
+		)
+                """
+            }
+        }
+
+        then {
+	    def lsu_ssu = workflow.out.concat_ssu_lsu_coords.collect{ meta, fp -> [meta, file(fp).text.readLines().sort()] }
+
+            assert workflow.success
+            assert snapshot(
+                lsu_ssu,
+		workflow.out.versions
+	    ).match()
+        }
+    }
+
+    test("mini sample 2 with some matches should match snapshot") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test2', 'single_end': false, 'platform': 'wgs'],
+	                file("${projectDir}/tests/fixtures/rrna_extraction/ERR10889056.fasta", checkIfExists: true),
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/rfam_mini/rfam_models/ribosomal_models/ribo.cm", checkIfExists: true)
+		)
+		input[2] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/rfam_mini/rfam_models/ribosomal_models/ribo.claninfo", checkIfExists: true)
+		)
+                """
+            }
+        }
+
+        then {
+	    def lsu_ssu = workflow.out.concat_ssu_lsu_coords.collect{ meta, fp -> [meta, file(fp).text.readLines().sort()] }
+
+            assert workflow.success
+            assert snapshot(
+                lsu_ssu,
+		workflow.out.versions
+	    ).match()
+        }
+    }
+
+    test("mini sample 1 with no matches should match snapshot") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test1', 'single_end': false, 'platform': 'wgs'],
+	                file("${projectDir}/tests/fixtures/rrna_extraction/ERR10889147_nomatch.fasta", checkIfExists: true),
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/rfam_mini/rfam_models/ribosomal_models/ribo.cm", checkIfExists: true)
+		)
+		input[2] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/rfam_mini/rfam_models/ribosomal_models/ribo.claninfo", checkIfExists: true)
+		)
+                """
+            }
+        }
+
+        then {
+	    def lsu_ssu = workflow.out.concat_ssu_lsu_coords.collect{ meta, fp -> [meta, file(fp).text.readLines().size()] }
+
+            assert workflow.success
+            assert snapshot(
+                lsu_ssu,
+		workflow.out.versions
+	    ).match()
+        }
+    }
+
+    test("mini sample 2 with no matches should match snapshot") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+		    [
+		        ['id': 'test2', 'single_end': false, 'platform': 'wgs'],
+	                file("${projectDir}/tests/fixtures/rrna_extraction/ERR10889056_nomatch.fasta", checkIfExists: true),
+		    ]
+		)
+		input[1] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/rfam_mini/rfam_models/ribosomal_models/ribo.cm", checkIfExists: true)
+		)
+		input[2] = Channel.value(
+		    file("${projectDir}/tests/fixtures/dbs/rfam_mini/rfam_models/ribosomal_models/ribo.claninfo", checkIfExists: true)
+		)
+                """
+            }
+        }
+
+        then {
+	    def lsu_ssu = workflow.out.concat_ssu_lsu_coords.collect{ meta, fp -> [meta, file(fp).text.readLines().size()] }
+
+            assert workflow.success
+            assert snapshot(
+                lsu_ssu,
+		workflow.out.versions
+	    ).match()
+        }
+    }
+}

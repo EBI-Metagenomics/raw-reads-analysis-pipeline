@@ -1,0 +1,111 @@
+{
+    "mini bam should match snapshot": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "test_test_prefix_mapped_1.fq.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test_test_prefix_mapped_2.fq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "test_test_prefix_unmapped_1.fq.gz:md5,43986effab9cde0f7a8b94b7f1129104",
+                            "test_test_prefix_unmapped_2.fq.gz:md5,1ed5f437da92c48e29a5f6def30c57ed"
+                        ]
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_test_prefix_all_summary_stats.txt:md5,afb7839147f6fd34068446fc4b46707d"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_test_prefix_mapped_summary_stats.txt:md5,811a771d4ed803ef1bc2aadeee4030b4"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_test_prefix_unmapped_summary_stats.txt:md5,ac9d67b5a61d9424cb7838e124d8de9a"
+                    ]
+                ],
+                "5": [
+                    "versions.yml:md5,3aefe6330e07b09a8c472e5296ee11c8"
+                ],
+                "mapped_reads": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "test_test_prefix_mapped_1.fq.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "test_test_prefix_mapped_2.fq.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "mapped_stats": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_test_prefix_mapped_summary_stats.txt:md5,811a771d4ed803ef1bc2aadeee4030b4"
+                    ]
+                ],
+                "stats": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_test_prefix_all_summary_stats.txt:md5,afb7839147f6fd34068446fc4b46707d"
+                    ]
+                ],
+                "unmapped_reads": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "test_test_prefix_unmapped_1.fq.gz:md5,43986effab9cde0f7a8b94b7f1129104",
+                            "test_test_prefix_unmapped_2.fq.gz:md5,1ed5f437da92c48e29a5f6def30c57ed"
+                        ]
+                    ]
+                ],
+                "unmapped_stats": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_test_prefix_unmapped_summary_stats.txt:md5,ac9d67b5a61d9424cb7838e124d8de9a"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,3aefe6330e07b09a8c472e5296ee11c8"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.2"
+        },
+        "timestamp": "2025-05-20T13:00:01.591054112"
+    }
+}

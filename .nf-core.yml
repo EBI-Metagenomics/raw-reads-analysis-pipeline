@@ -7,8 +7,7 @@ lint: {}
 template:
   org: nf-core
   name: rrap
-  description: Raw Reads Analysis Pipeline - taxonomic and functional analysis of
-    raw reads.
+  description: Raw Reads Analysis Pipeline - taxonomic and functional analysis of raw reads.
   author: Timothy Rozday
   version: 1.0.0dev
   force: true
