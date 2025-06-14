@@ -1,0 +1,86 @@
+nextflow_process {
+
+    name "Test Process COMBINEBAM"
+    script "../main.nf"
+    process "COMBINEBAM"
+
+    tag "modules"
+    tag "modules_"
+    tag "combinebam"
+
+    test("one BAM should match snapshot") {
+
+        when {
+            process {
+                """
+                input[0] = [
+		    ['id': 'test'],
+		    [
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		    ]
+		]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+    test("two BAMs should match snapshot") {
+
+        when {
+            process {
+                """
+                input[0] = [
+		    ['id': 'test'],
+		    [
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		    ]
+		]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+    test("10 BAMs should match snapshot") {
+
+        when {
+            process {
+                """
+                input[0] = [
+		    ['id': 'test'],
+		    [
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		        file("${projectDir}/tests/fixtures/combinebam/ERR10889188_mini.bam", checkIfExists: true),
+		    ]
+		]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+}

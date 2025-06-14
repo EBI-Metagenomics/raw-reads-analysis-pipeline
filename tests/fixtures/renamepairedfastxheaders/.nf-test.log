@@ -1,0 +1,8 @@
+May-20 10:16:21.476 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.2
+May-20 10:16:21.515 [main] INFO  com.askimed.nf.test.App - Arguments: [test, modules/local/renamepairedfastxheaders/tests/main.nf.test, --profile, singularity, --wipe-snapshot]
+May-20 10:16:23.112 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 24.10.2
+May-20 10:16:23.117 [main] WARN  com.askimed.nf.test.commands.RunTestsCommand - No nf-test config file found.
+May-20 10:16:23.154 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 0 files from directory /hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/tests/fixtures/renamepairedfastxheaders in 0.035 sec
+May-20 10:16:23.158 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 0 files containing tests.
+May-20 10:16:23.159 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: []
+May-20 10:16:23.161 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 0 tests to execute.

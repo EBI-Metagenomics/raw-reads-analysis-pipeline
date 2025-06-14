@@ -1,0 +1,145 @@
+{
+    "mini sample 2 with some matches should match snapshot": {
+        "content": [
+            [
+                [
+                    {
+                        "groupSize": 1,
+                        "groupTarget": {
+                            "id": "test2",
+                            "single_end": false,
+                            "platform": "wgs",
+                            "fasta_read_count": 25
+                        }
+                    },
+                    [
+                        "ERR10889056.1033653.1-SSU_rRNA_bacteria/1-125 1 125 ERR10889056.1033653.1",
+                        "ERR10889056.1033653.2-SSU_rRNA_bacteria/125-1 125 1 ERR10889056.1033653.2",
+                        "ERR10889056.1074258.1-LSU_rRNA_bacteria/1-125 1 125 ERR10889056.1074258.1",
+                        "ERR10889056.1129341.2-LSU_rRNA_bacteria/1-125 1 125 ERR10889056.1129341.2",
+                        "ERR10889056.113454.1-LSU_rRNA_bacteria/125-1 125 1 ERR10889056.113454.1",
+                        "ERR10889056.113454.2-LSU_rRNA_bacteria/20-125 20 125 ERR10889056.113454.2",
+                        "ERR10889056.1221297.1-SSU_rRNA_bacteria/1-125 1 125 ERR10889056.1221297.1",
+                        "ERR10889056.1284882.1-LSU_rRNA_bacteria/37-125 37 125 ERR10889056.1284882.1",
+                        "ERR10889056.1284882.2-LSU_rRNA_bacteria/125-1 125 1 ERR10889056.1284882.2",
+                        "ERR10889056.1513927.1-LSU_rRNA_bacteria/125-1 125 1 ERR10889056.1513927.1",
+                        "ERR10889056.1513927.2-LSU_rRNA_bacteria/1-125 1 125 ERR10889056.1513927.2"
+                    ]
+                ]
+            ],
+            [
+                "versions.yml:md5,1cd8a1b942aaba58bd5d6ab9c4f3f9b2",
+                "versions.yml:md5,806197e595b66087d0516d78eb48ed73",
+                "versions.yml:md5,986b50b86874f29db48120870f7ac4f6",
+                "versions.yml:md5,d1294ff919ea50bc3a41ddc5a88ab3de"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-29T08:47:41.505679132"
+    },
+    "mini sample 1 with no matches should match snapshot": {
+        "content": [
+            [
+                [
+                    {
+                        "groupSize": 1,
+                        "groupTarget": {
+                            "id": "test1",
+                            "single_end": false,
+                            "platform": "wgs",
+                            "fasta_read_count": 13
+                        }
+                    },
+                    2
+                ]
+            ],
+            [
+                "versions.yml:md5,1cd8a1b942aaba58bd5d6ab9c4f3f9b2",
+                "versions.yml:md5,806197e595b66087d0516d78eb48ed73",
+                "versions.yml:md5,986b50b86874f29db48120870f7ac4f6",
+                "versions.yml:md5,d1294ff919ea50bc3a41ddc5a88ab3de"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-29T08:49:43.849082108"
+    },
+    "mini sample 2 with no matches should match snapshot": {
+        "content": [
+            [
+                [
+                    {
+                        "groupSize": 1,
+                        "groupTarget": {
+                            "id": "test2",
+                            "single_end": false,
+                            "platform": "wgs",
+                            "fasta_read_count": 14
+                        }
+                    },
+                    0
+                ]
+            ],
+            [
+                "versions.yml:md5,1cd8a1b942aaba58bd5d6ab9c4f3f9b2",
+                "versions.yml:md5,806197e595b66087d0516d78eb48ed73",
+                "versions.yml:md5,986b50b86874f29db48120870f7ac4f6",
+                "versions.yml:md5,d1294ff919ea50bc3a41ddc5a88ab3de"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-29T08:51:39.539640567"
+    },
+    "mini sample 1 with some matches should match snapshot": {
+        "content": [
+            [
+                [
+                    {
+                        "groupSize": 1,
+                        "groupTarget": {
+                            "id": "test1",
+                            "single_end": false,
+                            "platform": "wgs",
+                            "fasta_read_count": 25
+                        }
+                    },
+                    [
+                        "ERR10889147.10145.1-LSU_trypano_mito/124-1 124 1 ERR10889147.10145.1",
+                        "ERR10889147.10145.1-LSU_trypano_mito/22-125 22 125 ERR10889147.10145.1",
+                        "ERR10889147.10145.2-LSU_rRNA_bacteria/1-125 1 125 ERR10889147.10145.2",
+                        "ERR10889147.102662.1-LSU_rRNA_bacteria/1-123 1 123 ERR10889147.102662.1",
+                        "ERR10889147.108896.1-LSU_rRNA_bacteria/125-1 125 1 ERR10889147.108896.1",
+                        "ERR10889147.108896.2-LSU_rRNA_bacteria/1-125 1 125 ERR10889147.108896.2",
+                        "ERR10889147.111147.1-LSU_rRNA_bacteria/1-125 1 125 ERR10889147.111147.1",
+                        "ERR10889147.111147.2-LSU_rRNA_bacteria/124-1 124 1 ERR10889147.111147.2",
+                        "ERR10889147.112245.2-LSU_rRNA_bacteria/124-1 124 1 ERR10889147.112245.2",
+                        "ERR10889147.120419.1-LSU_rRNA_bacteria/125-24 125 24 ERR10889147.120419.1",
+                        "ERR10889147.120419.2-LSU_rRNA_bacteria/1-125 1 125 ERR10889147.120419.2",
+                        "ERR10889147.121522.1-LSU_rRNA_bacteria/125-1 125 1 ERR10889147.121522.1",
+                        "ERR10889147.121522.2-LSU_rRNA_bacteria/1-111 1 111 ERR10889147.121522.2",
+                        "ERR10889147.55288.2-LSU_trypano_mito/125-1 125 1 ERR10889147.55288.2"
+                    ]
+                ]
+            ],
+            [
+                "versions.yml:md5,1cd8a1b942aaba58bd5d6ab9c4f3f9b2",
+                "versions.yml:md5,806197e595b66087d0516d78eb48ed73",
+                "versions.yml:md5,986b50b86874f29db48120870f7ac4f6",
+                "versions.yml:md5,d1294ff919ea50bc3a41ddc5a88ab3de"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-29T08:43:40.141287196"
+    }
+}

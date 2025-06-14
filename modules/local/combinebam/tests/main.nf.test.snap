@@ -1,0 +1,101 @@
+{
+    "10 BAMs should match snapshot": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "ERR10889188_mini.bam:md5,080e32ac1e5b403e5dac7c1bd0f6263f"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,4ec4b3de4a6329dd6acc3e3f4ff6f815"
+                ],
+                "concatenated_result": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "ERR10889188_mini.bam:md5,080e32ac1e5b403e5dac7c1bd0f6263f"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,4ec4b3de4a6329dd6acc3e3f4ff6f815"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.2"
+        },
+        "timestamp": "2025-05-20T13:52:44.711904316"
+    },
+    "two BAMs should match snapshot": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "ERR10889188_mini.bam:md5,8f9919214c80a9656959862891e12b7b"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,4ec4b3de4a6329dd6acc3e3f4ff6f815"
+                ],
+                "concatenated_result": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "ERR10889188_mini.bam:md5,8f9919214c80a9656959862891e12b7b"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,4ec4b3de4a6329dd6acc3e3f4ff6f815"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.2"
+        },
+        "timestamp": "2025-05-20T13:52:23.280267236"
+    },
+    "one BAM should match snapshot": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "ERR10889188_mini.bam:md5,78d513132a0c933891c9bbf194b7ce34"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,4ec4b3de4a6329dd6acc3e3f4ff6f815"
+                ],
+                "concatenated_result": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "ERR10889188_mini.bam:md5,78d513132a0c933891c9bbf194b7ce34"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,4ec4b3de4a6329dd6acc3e3f4ff6f815"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.2"
+        },
+        "timestamp": "2025-05-20T13:51:55.320399855"
+    }
+}

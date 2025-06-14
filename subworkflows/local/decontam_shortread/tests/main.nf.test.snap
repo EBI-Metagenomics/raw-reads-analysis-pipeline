@@ -1,0 +1,192 @@
+{
+    "mini single-end sample output should match snapshot": {
+        "content": [
+            [
+                "@B@BCEG>FCG>GGGG@E99CEGBGB/BEC@G@FF@@G11C1EGGA9CFGGGGCF@=FCFGGGGGEGGGGG=DGB@/FGCGBC9EEEGG/9C/EGGGGGG/8E<.E@D/6.CGGC=D/C@CE6D6",
+                "@BBBBFFGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGFGGGGGGGGEGGGGGGGGGCFGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "@ERR10889147.101689",
+                "@ERR10889147.130806",
+                "@ERR10889147.150910",
+                "@ERR10889147.239847",
+                "@ERR10889147.280640",
+                "@ERR10889147.313339",
+                "@ERR10889147.350555",
+                "@ERR10889147.374007",
+                "@ERR10889147.377961",
+                "@ERR10889147.398989",
+                "@ERR10889147.421340",
+                "@ERR10889147.421831",
+                "@ERR10889147.453562",
+                "@ERR10889147.483471",
+                "@ERR10889147.541000",
+                "@ERR10889147.547797",
+                "@ERR10889147.55288",
+                "@ERR10889147.56958",
+                "@ERR10889147.63497",
+                "@ERR10889147.646304",
+                "@ERR10889147.65722",
+                "@ERR10889147.662821",
+                "@ERR10889147.76311",
+                "@ERR10889147.77699",
+                "@ERR10889147.80480"
+            ],
+            [
+                "versions.yml:md5,d82afcd54b2afe327671878ed9827d52",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-28T13:03:47.401674437"
+    },
+    "mini paired-end sample output should match snapshot": {
+        "content": [
+            [
+                "@B@BCEG>FCG>GGGG@E99CEGBGB/BEC@G@FF@@G11C1EGGA9CFGGGGCF@=FCFGGGGGEGGGGG=DGB@/FGCGBC9EEEGG/9C/EGGGGGG/8E<.E@D/6.CGGC=D/C@CE6D6",
+                "@BBBBFFGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGFGGGGGGGGEGGGGGGGGGCFGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+                "@ERR10889147.101689",
+                "@ERR10889147.130806",
+                "@ERR10889147.150910",
+                "@ERR10889147.239847",
+                "@ERR10889147.280640",
+                "@ERR10889147.313339",
+                "@ERR10889147.350555",
+                "@ERR10889147.374007",
+                "@ERR10889147.377961",
+                "@ERR10889147.398989",
+                "@ERR10889147.421340",
+                "@ERR10889147.421831",
+                "@ERR10889147.453562",
+                "@ERR10889147.483471",
+                "@ERR10889147.541000",
+                "@ERR10889147.547797",
+                "@ERR10889147.55288",
+                "@ERR10889147.56958",
+                "@ERR10889147.63497",
+                "@ERR10889147.646304",
+                "@ERR10889147.65722",
+                "@ERR10889147.662821",
+                "@ERR10889147.76311",
+                "@ERR10889147.77699",
+                "@ERR10889147.80480"
+            ],
+            [
+                "@B@BB>GEGGGEE1>FDGC@1=EBFGDC@:B<E@>F>@@CFGCGE:B<C@:00=FGG0C=1<EFGE::<@E>FGGEE@:FG0C1FGD9EG/CD00F@D8D0FCFDDGG@088=FDGGCG/CE@",
+                "@ERR10889147.101689",
+                "@ERR10889147.130806",
+                "@ERR10889147.150910",
+                "@ERR10889147.239847",
+                "@ERR10889147.280640",
+                "@ERR10889147.313339",
+                "@ERR10889147.350555",
+                "@ERR10889147.374007",
+                "@ERR10889147.377961",
+                "@ERR10889147.398989",
+                "@ERR10889147.421340",
+                "@ERR10889147.421831",
+                "@ERR10889147.453562",
+                "@ERR10889147.483471",
+                "@ERR10889147.541000",
+                "@ERR10889147.547797",
+                "@ERR10889147.55288",
+                "@ERR10889147.56958",
+                "@ERR10889147.63497",
+                "@ERR10889147.646304",
+                "@ERR10889147.65722",
+                "@ERR10889147.662821",
+                "@ERR10889147.76311",
+                "@ERR10889147.77699",
+                "@ERR10889147.80480"
+            ],
+            [
+                "versions.yml:md5,2754cc3b6e8cabeda717483392df165e",
+                "versions.yml:md5,a50f344db10ec06ebc0ff5f4f247bf6e",
+                "versions.yml:md5,a50f344db10ec06ebc0ff5f4f247bf6e",
+                "versions.yml:md5,a50f344db10ec06ebc0ff5f4f247bf6e",
+                "versions.yml:md5,a50f344db10ec06ebc0ff5f4f247bf6e",
+                "versions.yml:md5,d82afcd54b2afe327671878ed9827d52",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-28T13:00:37.281796561"
+    },
+    "mini sample with added hg38 synthetic reads output should match snapshot": {
+        "content": [
+            [
+                "@ERR10889147.130806",
+                "@ERR10889147.150910",
+                "@ERR10889147.280640",
+                "@ERR10889147.350555",
+                "@ERR10889147.377961",
+                "@ERR10889147.421340",
+                "@ERR10889147.453562",
+                "@ERR10889147.483471",
+                "@ERR10889147.547797",
+                "@ERR10889147.55288",
+                "@ERR10889147.662821",
+                "@ERR10889147.77699",
+                "@ERR10889147.80480"
+            ],
+            [
+                "@ERR10889147.130806",
+                "@ERR10889147.150910",
+                "@ERR10889147.280640",
+                "@ERR10889147.350555",
+                "@ERR10889147.377961",
+                "@ERR10889147.421340",
+                "@ERR10889147.453562",
+                "@ERR10889147.483471",
+                "@ERR10889147.547797",
+                "@ERR10889147.55288",
+                "@ERR10889147.662821",
+                "@ERR10889147.77699",
+                "@ERR10889147.80480"
+            ],
+            [
+                "versions.yml:md5,2754cc3b6e8cabeda717483392df165e",
+                "versions.yml:md5,a50f344db10ec06ebc0ff5f4f247bf6e",
+                "versions.yml:md5,a50f344db10ec06ebc0ff5f4f247bf6e",
+                "versions.yml:md5,a50f344db10ec06ebc0ff5f4f247bf6e",
+                "versions.yml:md5,a50f344db10ec06ebc0ff5f4f247bf6e",
+                "versions.yml:md5,d82afcd54b2afe327671878ed9827d52",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-28T13:06:22.346410691"
+    },
+    "hg38 synthetic reads output should match snapshot and not fail": {
+        "content": [
+            [
+                "versions.yml:md5,d82afcd54b2afe327671878ed9827d52",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3",
+                "versions.yml:md5,f2f76a6c8010db22d8e4a1f4e48334d3"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-05-28T13:08:08.993013794"
+    }
+}

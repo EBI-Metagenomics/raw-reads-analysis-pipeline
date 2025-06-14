@@ -1,0 +1,317 @@
+Jun-11 12:44:13.894 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.2
+Jun-11 12:44:13.933 [main] INFO  com.askimed.nf.test.App - Arguments: [test, tests/workflows/rrap.nf.test, --profile, singularity]
+Jun-11 12:44:15.593 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 24.10.4
+Jun-11 12:44:15.595 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Load config from file /hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/nf-test.config...
+Jun-11 12:44:28.799 [main] WARN  com.askimed.nf.test.nextflow.NextflowScript - Module /hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/subworkflows/local/utils_nfcore_rrap_pipeline/main.nf: Dependency '/hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/subworkflows/local/utils_nfcore_rrap_pipeline/../../nf-core/utils_nfschema_plugin.nf' not found.
+Jun-11 12:44:28.803 [main] WARN  com.askimed.nf.test.nextflow.NextflowScript - Module /hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/subworkflows/local/utils_nfcore_rrap_pipeline/main.nf: Dependency '/hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/subworkflows/local/utils_nfcore_rrap_pipeline/../../nf-core/utils_nextflow_pipeline.nf' not found.
+Jun-11 12:44:29.033 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 102 files from directory /hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap in 12.422 sec
+Jun-11 12:44:29.035 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 1 files containing tests.
+Jun-11 12:44:29.035 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: [/hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/tests/workflows/rrap.nf.test]
+Jun-11 12:44:30.042 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 1 tests to execute.
+Jun-11 12:44:30.043 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Started test plan
+Jun-11 12:44:30.043 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Test Workflow PIPELINE' from file '/hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/tests/workflows/rrap.nf.test'.
+Jun-11 12:44:30.043 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '7ca5d295: Should run without failures'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+Jun-11 13:07:08.399 [main] DEBUG com.askimed.nf.test.lang.extensions.SnapshotFile - Load snapshots from file '/hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/tests/workflows/rrap.nf.test.snap'
+Jun-11 13:07:08.580 [main] DEBUG com.askimed.nf.test.lang.extensions.Snapshot - Snapshots 'Should run without failures' do not match.
+Jun-11 13:07:08.583 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '7ca5d295: Should run without failures' finished. status: FAILED
+java.lang.RuntimeException: Different Snapshot:
+[													[
+    [													    [
+        [												        [
+            "\"PIPELINE:RRNA_EXTRACTION:INFERNAL_CMSEARCH\":",						            "\"PIPELINE:RRNA_EXTRACTION:INFERNAL_CMSEARCH\":",
+            "    cmsearch: 1.1.5"									            "    cmsearch: 1.1.5"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:MAPSEQ_OTU_KRONA:KRONA_KTIMPORTTEXT\":",					            "\"PIPELINE:MAPSEQ_OTU_KRONA:KRONA_KTIMPORTTEXT\":",
+            "    krona: 2.8.1 "										            "    krona: 2.8.1 "
+        ],												        ],
+        [												        [
+            "\"PIPELINE:MOTUS_KRONA:MOTUS_PROFILE\":",							            "\"PIPELINE:MOTUS_KRONA:MOTUS_PROFILE\":",
+            "    motus: 2.6.0"										            "    motus: 2.6.0"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:DECONTAM_SHORTREAD:DECONTAMBAM_PHIX\":",					            "\"PIPELINE:DECONTAM_SHORTREAD:DECONTAMBAM_PHIX\":",
+            "    samtools: 1.21 "									            "    samtools: 1.21 "
+        ],												        ],
+        [												        [
+            "\"PIPELINE:RRNA_EXTRACTION:EXTRACTCOORDS\":",						            "\"PIPELINE:RRNA_EXTRACTION:EXTRACTCOORDS\":",
+            "    extractcoords: 0.1.2"									            "    extractcoords: 0.1.2"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:MOTUS_KRONA:MOTUS2KRONA\":",							            "\"PIPELINE:MOTUS_KRONA:MOTUS2KRONA\":",
+            "    python: 3.13.2"									            "    python: 3.13.2"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:READSMERGE:SEQTK_SEQ\":",							            "\"PIPELINE:READSMERGE:SEQTK_SEQ\":",
+            "    seqtk: 1.3-r106"									            "    seqtk: 1.3-r106"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:READSMERGE:FASTP\":",								            "\"PIPELINE:READSMERGE:FASTP\":",
+            "    fastp: 0.23.4"										            "    fastp: 0.23.4"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:QC:FASTP\":",									            "\"PIPELINE:QC:FASTP\":",
+            "    fastp: 0.23.4"										            "    fastp: 0.23.4"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:MAPSEQ_OTU_KRONA:MAPSEQ\":",							            "\"PIPELINE:MAPSEQ_OTU_KRONA:MAPSEQ\":",
+            "    mapseq: 1.2.6"										            "    mapseq: 1.2.6"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:DECONTAM_SHORTREAD:BWAMEM2_ALIGN_PHIX\":",					            "\"PIPELINE:DECONTAM_SHORTREAD:BWAMEM2_ALIGN_PHIX\":",
+            "    bwamem2: 2.2.1",									            "    bwamem2: 2.2.1",
+            "    samtools: 1.19.2 "									            "    samtools: 1.19.2 "
+        ],												        ],
+        [												        [
+            "\"PIPELINE:PROFILE_HMMSEARCH_PFAM:HMMER_HMMSEARCH\":",					            "\"PIPELINE:PROFILE_HMMSEARCH_PFAM:HMMER_HMMSEARCH\":",
+            "    hmmer: 3.4"										            "    hmmer: 3.4"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:RRNA_EXTRACTION:EASEL_ESLSFETCH\":",						            "\"PIPELINE:RRNA_EXTRACTION:EASEL_ESLSFETCH\":",
+            "    easel: 0.49"										            "    easel: 0.49"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:DECONTAM_SHORTREAD:DECONTAMBAM_HOST\":",					            "\"PIPELINE:DECONTAM_SHORTREAD:DECONTAMBAM_HOST\":",
+            "    samtools: 1.21 "									            "    samtools: 1.21 "
+        ],												        ],
+        [												        [
+            "\"PIPELINE:RRNA_EXTRACTION:CMSEARCHTBLOUTDEOVERLAP\":",					            "\"PIPELINE:RRNA_EXTRACTION:CMSEARCHTBLOUTDEOVERLAP\":",
+            "    cmsearch_tblout_deoverlap: v0.09"							            "    cmsearch_tblout_deoverlap: v0.09"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:MAPSEQ_OTU_KRONA:MAPSEQ2BIOM\":",						            "\"PIPELINE:MAPSEQ_OTU_KRONA:MAPSEQ2BIOM\":",
+            "    mapseq2biom: 0.1.1"									            "    mapseq2biom: 0.1.1"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:DECONTAM_SHORTREAD:BWAMEM2_ALIGN_HOST\":",					            "\"PIPELINE:DECONTAM_SHORTREAD:BWAMEM2_ALIGN_HOST\":",
+            "    bwamem2: 2.2.1",									            "    bwamem2: 2.2.1",
+            "    samtools: 1.19.2 "									            "    samtools: 1.19.2 "
+        ],												        ],
+        [												        [
+            "\"PIPELINE:PROFILE_HMMSEARCH_PFAM:PARSEHMMSEARCHCOVERAGE\":",				            "\"PIPELINE:PROFILE_HMMSEARCH_PFAM:PARSEHMMSEARCHCOVERAGE\":",
+            "    parsehmmsearchcoverage: Python 3.13.2"							            "    parsehmmsearchcoverage: Python 3.13.2"
+        ],												        ],
+        [												        [
+            "\"PIPELINE:MOTUS_KRONA:KRONA_KTIMPORTTEXT\":",						            "\"PIPELINE:MOTUS_KRONA:KRONA_KTIMPORTTEXT\":",
+            "    krona: 2.8.1 "										            "    krona: 2.8.1 "
+        ]												        ]
+    ],													    ],
+    [													    [
+        [												        [
+            {												            {
+                "groupSize": 1,										                "groupSize": 1,
+                "groupTarget": {									                "groupTarget": {
+                    "id": "test_sample",								                    "id": "test_sample",
+                    "study_accession": "test_study",							                    "study_accession": "test_study",
+                    "single_end": false,								                    "single_end": false,
+                    "library_layout": "paired",								                    "library_layout": "paired",
+                    "library_strategy": "wgs",								                    "library_strategy": "wgs",
+                    "platform": "illumina",								                    "platform": "illumina",
+                    "short_reads": true,								                    "short_reads": true,
+                    "read_count": 1,									                    "read_count": 1,
+                    "qc_read_count": 1006,								                    "qc_read_count": 1006,
+                    "decontam_phix_read_count": 1006,							                    "decontam_phix_read_count": 1006,
+                    "decontam_host_read_count": 978							                    "decontam_host_read_count": 978
+                }											                }
+            },												            },
+            [												            [
+                "# Query Accession\tRead Count\tCoverage Depth\tCoverage Breadth\tExpected Cover   |	                "# Query Accession\tRead Count\tCoverage Depth\tCoverage Breadth",
+                "PF00004.35\t12\t3.0\t0.7175572519083969\t0.7726333213965055\t0.9287164195966067   |	                "PF00004.35\t12\t3.0\t0.7175572519083969",
+                "PF00198.28\t13\t2.189655172413793\t0.8836206896551724\t0.6980770691703568\t1.26   |	                "PF00198.28\t13\t2.189655172413793\t0.8836206896551724",
+                "PF00389.36\t14\t3.8358208955223883\t0.6567164179104478\t0.8202966673894672\t0.8   |	                "PF00389.36\t14\t3.8358208955223883\t0.6567164179104478",
+                "PF00393.24\t15\t1.8724137931034484\t0.8241379310344827\t0.6560802850348313\t1.2   |	                "PF00393.24\t15\t1.8724137931034484\t0.8241379310344827",
+                "PF01367.25\t4\t1.597938144329897\t0.5257731958762887\t0.6110690124861431\t0.860   |	                "PF01367.25\t4\t1.597938144329897\t0.5257731958762887",
+                "PF02096.25\t3\t0.8220858895705522\t0.4171779141104294\t0.4157516769221272\t1.00   |	                "PF02096.25\t3\t0.8220858895705522\t0.4171779141104294",
+                "PF02737.24\t11\t2.1666666666666665\t0.6833333333333333\t0.6953367055951092\t0.9   |	                "PF02737.24\t11\t2.1666666666666665\t0.6833333333333333",
+                "PF02739.22\t4\t1.146341463414634\t0.42073170731707316\t0.512658605105416\t0.820   |	                "PF02739.22\t4\t1.146341463414634\t0.42073170731707316",
+                "PF02826.25\t43\t9.162921348314606\t0.9606741573033708\t0.9243539017012045\t1.03   |	                "PF02826.25\t43\t9.162921348314606\t0.9606741573033708",
+                "PF02872.23\t3\t0.6075949367088608\t0.43670886075949367\t0.33504572556865386\t1.   |	                "PF02872.23\t3\t0.6075949367088608\t0.43670886075949367",
+                "PF03061.28\t7\t3.0126582278481013\t0.9620253164556962\t0.7735293354975419\t1.24   |	                "PF03061.28\t7\t3.0126582278481013\t0.9620253164556962",
+                "PF04463.17\t2\t0.5531914893617021\t0.3546099290780142\t0.31202467374011655\t1.1   |	                "PF04463.17\t2\t0.5531914893617021\t0.3546099290780142",
+                "PF06439.18\t2\t0.39037433155080214\t0.37433155080213903\t0.23600245339422588\t1   |	                "PF06439.18\t2\t0.39037433155080214\t0.37433155080213903",
+                "PF06725.17\t1\t0.4444444444444444\t0.4444444444444444\t0.2624996803309244\t1.69   |	                "PF06725.17\t1\t0.4444444444444444\t0.4444444444444444",
+                "PF06750.18\t1\t0.42857142857142855\t0.42857142857142855\t0.254855513859219\t1.6   |	                "PF06750.18\t1\t0.42857142857142855\t0.42857142857142855",
+                "PF07724.20\t12\t2.63855421686747\t0.7650602409638554\t0.7439975854948551\t1.028   |	                "PF07724.20\t12\t2.63855421686747\t0.7650602409638554",
+                "PF07726.17\t6\t1.6717557251908397\t0.6564885496183206\t0.6240979589051776\t1.05   |	                "PF07726.17\t6\t1.6717557251908397\t0.6564885496183206",
+                "PF09820.15\t7\t0.8960573476702509\t0.5806451612903226\t0.4402666359321351\t1.31   |	                "PF09820.15\t7\t0.8960573476702509\t0.5806451612903226",
+                "PF09821.14\t1\t0.31932773109243695\t0.31932773109243695\t0.19913997334881972\t1   |	                "PF09821.14\t1\t0.31932773109243695\t0.31932773109243695",
+                "PF10417.14\t5\t3.292682926829268\t0.7317073170731707\t0.7917953849695608\t0.924   |	                "PF10417.14\t5\t3.292682926829268\t0.7317073170731707",
+                "PF12846.13\t2\t0.22099447513812154\t0.22099447513812154\t0.14398464627951812\t1   |	                "PF12846.13\t2\t0.22099447513812154\t0.22099447513812154",
+                "PF13173.12\t10\t2.7829457364341086\t0.8914728682170543\t0.7561885551630875\t1.1   |	                "PF13173.12\t10\t2.7829457364341086\t0.8914728682170543",
+                "PF13245.12\t1\t0.2835820895522388\t0.2835820895522388\t0.17966580348201655\t1.5   |	                "PF13245.12\t1\t0.2835820895522388\t0.2835820895522388",
+                "PF13304.12\t5\t0.5723684210526315\t0.2894736842105263\t0.32026735568446085\t0.9   |	                "PF13304.12\t5\t0.5723684210526315\t0.2894736842105263",
+                "PF13476.12\t6\t0.9154228855721394\t0.22885572139303484\t0.4464313623298377\t0.5   |	                "PF13476.12\t6\t0.9154228855721394\t0.22885572139303484",
+                "PF13555.12\t3\t1.1639344262295082\t0.5573770491803278\t0.5171999349243717\t1.07   |	                "PF13555.12\t3\t1.1639344262295082\t0.5573770491803278",
+                "PF13604.12\t1\t0.19895287958115182\t0.19895287958115182\t0.13091887127109814\t1   |	                "PF13604.12\t1\t0.19895287958115182\t0.19895287958115182",
+                "PF13614.12\t15\t3.0338983050847457\t0.807909604519774\t0.7750182252477599\t1.04   |	                "PF13614.12\t15\t3.0338983050847457\t0.807909604519774",
+                "PF16193.11\t1\t0.43209876543209874\t0.43209876543209874\t0.25656373903783714\t1   |	                "PF16193.11\t1\t0.43209876543209874\t0.43209876543209874",
+                "PF17862.7\t2\t1.511111111111111\t0.8222222222222222\t0.5947708293352654\t1.3824   |	                "PF17862.7\t2\t1.511111111111111\t0.8222222222222222",
+                "PF20789.3\t4\t1.1285714285714286\t0.39285714285714285\t0.508004088548435\t0.773   |	                "PF20789.3\t4\t1.1285714285714286\t0.39285714285714285"
+            ]												            ]
+        ]												        ]
+    ],													    ],
+    [													    [
+        [												        [
+            {												            {
+                "id": "test_sample",									                "id": "test_sample",
+                "study_accession": "test_study",							                "study_accession": "test_study",
+                "single_end": false,									                "single_end": false,
+                "library_layout": "paired",								                "library_layout": "paired",
+                "library_strategy": "wgs",								                "library_strategy": "wgs",
+                "platform": "illumina",									                "platform": "illumina",
+                "short_reads": true,									                "short_reads": true,
+                "read_count": 1,									                "read_count": 1,
+                "qc_read_count": 1006,									                "qc_read_count": 1006,
+                "decontam_phix_read_count": 1006,							                "decontam_phix_read_count": 1006,
+                "decontam_host_read_count": 978								                "decontam_host_read_count": 978
+            },												            },
+            [												            [
+                "# call: python /usr/local/bin/motus profile -c -p -q -f test_sample_short_read_	                "# call: python /usr/local/bin/motus profile -c -p -q -f test_sample_short_read_
+                "# git tag version 2.6.0 |  motus version 2.6.0 | map_tax 2.6.0 | gene database:	                "# git tag version 2.6.0 |  motus version 2.6.0 | map_tax 2.6.0 | gene database:
+                "#mOTU\tconsensus_taxonomy\tNCBI_tax_id\ttest_sample",					                "#mOTU\tconsensus_taxonomy\tNCBI_tax_id\ttest_sample",
+                "ref_mOTU_v3_00900\tk__Bacteria|p__Firmicutes|c__Bacilli|o__Lactobacillales|f__S	                "ref_mOTU_v3_00900\tk__Bacteria|p__Firmicutes|c__Bacilli|o__Lactobacillales|f__S
+                "ref_mOTU_v3_01039\tk__Bacteria|p__Firmicutes|c__Bacilli|o__Lactobacillales|f__L	                "ref_mOTU_v3_01039\tk__Bacteria|p__Firmicutes|c__Bacilli|o__Lactobacillales|f__L
+                "ref_mOTU_v3_01099\tk__Bacteria|p__Actinobacteria|c__Actinobacteria|o__Bifidobac	                "ref_mOTU_v3_01099\tk__Bacteria|p__Actinobacteria|c__Actinobacteria|o__Bifidobac
+                "ref_mOTU_v3_01349\tk__Bacteria|p__Firmicutes|c__Bacilli|o__Lactobacillales|f__S	                "ref_mOTU_v3_01349\tk__Bacteria|p__Firmicutes|c__Bacilli|o__Lactobacillales|f__S
+                "ref_mOTU_v3_01657\tk__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales	                "ref_mOTU_v3_01657\tk__Bacteria|p__Bacteroidetes|c__Bacteroidia|o__Bacteroidales
+            ]												            ]
+        ]												        ]
+    ],													    ],
+    [													    [
+        [												        [
+            {												            {
+                "id": "test_sample",									                "id": "test_sample",
+                "study_accession": "test_study",							                "study_accession": "test_study",
+                "single_end": false,									                "single_end": false,
+                "library_layout": "paired",								                "library_layout": "paired",
+                "library_strategy": "wgs",								                "library_strategy": "wgs",
+                "platform": "illumina",									                "platform": "illumina",
+                "short_reads": true,									                "short_reads": true,
+                "read_count": 1,									                "read_count": 1,
+                "qc_read_count": 1006,									                "qc_read_count": 1006,
+                "decontam_phix_read_count": 1006,							                "decontam_phix_read_count": 1006,
+                "decontam_host_read_count": 978,							                "decontam_host_read_count": 978,
+                "fasta_read_count": 1826,								                "fasta_read_count": 1826,
+                "db_label": "ssu"								   |	                "db_label": "SILVA-SSU"
+            },												            },
+            [												            [
+                "# Constructed from biom file",								                "# Constructed from biom file",
+                "# OTU ID\tsilva_lsu\ttaxonomy",						   |	                "# OTU ID\tsilva_ssu\ttaxonomy",
+                "34148\t2.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobacte   |	                "116768\t1.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobact
+                "35957\t2.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobacte   |	                "232685\t3.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobact
+            ]												            ]
+        ],												        ],
+        [												        [
+            {												            {
+                "id": "test_sample",									                "id": "test_sample",
+                "study_accession": "test_study",							                "study_accession": "test_study",
+                "single_end": false,									                "single_end": false,
+                "library_layout": "paired",								                "library_layout": "paired",
+                "library_strategy": "wgs",								                "library_strategy": "wgs",
+                "platform": "illumina",									                "platform": "illumina",
+                "short_reads": true,									                "short_reads": true,
+                "read_count": 1,									                "read_count": 1,
+                "qc_read_count": 1006,									                "qc_read_count": 1006,
+                "decontam_phix_read_count": 1006,							                "decontam_phix_read_count": 1006,
+                "decontam_host_read_count": 978,							                "decontam_host_read_count": 978,
+                "fasta_read_count": 1826,								                "fasta_read_count": 1826,
+                "db_label": "lsu"								   |	                "db_label": "SILVA-LSU"
+            },												            },
+            [												            [
+                "# Constructed from biom file",								                "# Constructed from biom file",
+                "# OTU ID\tsilva_ssu\ttaxonomy",						   |	                "# OTU ID\tsilva_lsu\ttaxonomy",
+                "116768\t4.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobact   |	                "34148\t17.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobact
+                "232685\t18.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobac   |	                "35957\t5.0\tsk__Bacteria;k__;p__Actinobacteria;c__Actinobacteria;o__Bifidobacte
+            ]												            ]
+        ]												        ]
+    ],													    ],
+    [													    [
+        [												        [
+            {												            {
+                "groupSize": 1,										                "groupSize": 1,
+                "groupTarget": {									                "groupTarget": {
+                    "id": "test_sample",								                    "id": "test_sample",
+                    "study_accession": "test_study",							                    "study_accession": "test_study",
+                    "single_end": false,								                    "single_end": false,
+                    "library_layout": "paired",								                    "library_layout": "paired",
+                    "library_strategy": "wgs",								                    "library_strategy": "wgs",
+                    "platform": "illumina",								                    "platform": "illumina",
+                    "short_reads": true,								                    "short_reads": true,
+                    "read_count": 1,									                    "read_count": 1,
+                    "qc_read_count": 1006,								                    "qc_read_count": 1006,
+                    "decontam_phix_read_count": 1006							                    "decontam_phix_read_count": 1006
+                }											                }
+            },												            },
+            "test_sample_short_read_host_all_summary_stats.txt:md5,bbe1649559dbc3e39f893ae2b3db8	            "test_sample_short_read_host_all_summary_stats.txt:md5,bbe1649559dbc3e39f893ae2b3db8
+        ],												        ],
+        [												        [
+            {												            {
+                "groupSize": 1,										                "groupSize": 1,
+                "groupTarget": {									                "groupTarget": {
+                    "id": "test_sample",								                    "id": "test_sample",
+                    "study_accession": "test_study",							                    "study_accession": "test_study",
+                    "single_end": false,								                    "single_end": false,
+                    "library_layout": "paired",								                    "library_layout": "paired",
+                    "library_strategy": "wgs",								                    "library_strategy": "wgs",
+                    "platform": "illumina",								                    "platform": "illumina",
+                    "short_reads": true,								                    "short_reads": true,
+                    "read_count": 1,									                    "read_count": 1,
+                    "qc_read_count": 1006								                    "qc_read_count": 1006
+                }											                }
+            },												            },
+            "test_sample_short_read_phix_all_summary_stats.txt:md5,0baa45437a51776a3b02f8d855057	            "test_sample_short_read_phix_all_summary_stats.txt:md5,0baa45437a51776a3b02f8d855057
+        ]												        ]
+    ],													    ],
+    [													    [
+        [												        [
+            {												            {
+                "id": "test_sample",									                "id": "test_sample",
+                "study_accession": "test_study",							                "study_accession": "test_study",
+                "single_end": false,									                "single_end": false,
+                "library_layout": "paired",								                "library_layout": "paired",
+                "library_strategy": "wgs",								                "library_strategy": "wgs",
+                "platform": "illumina",									                "platform": "illumina",
+                "short_reads": true,									                "short_reads": true,
+                "read_count": 1										                "read_count": 1
+            },												            },
+            "test_sample.fastp.json:md5,8ba518feb9c7b2cb169fb4b77e3f8361"				            "test_sample.fastp.json:md5,8ba518feb9c7b2cb169fb4b77e3f8361"
+        ]												        ]
+    ]													    ]
+]													]
+
+	at com.askimed.nf.test.lang.extensions.SnapshotFileItem.equals(SnapshotFileItem.java:69)
+	at com.askimed.nf.test.lang.extensions.Snapshot.match(Snapshot.java:57)
+	at com.askimed.nf.test.lang.extensions.Snapshot.match(Snapshot.java:27)
+	at com.askimed.nf.test.lang.extensions.Snapshot$match.call(Unknown Source)
+	at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:47)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:125)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:130)
+	at rrap_nf$_run_closure1$_closure2$_closure4.doCall(rrap.nf.test:124)
+	at rrap_nf$_run_closure1$_closure2$_closure4.doCall(rrap.nf.test)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:107)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:323)
+	at org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:274)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1030)
+	at groovy.lang.Closure.call(Closure.java:427)
+	at groovy.lang.Closure.call(Closure.java:406)
+	at com.askimed.nf.test.lang.TestCode.execute(TestCode.java:16)
+	at com.askimed.nf.test.lang.workflow.WorkflowTest.execute(WorkflowTest.java:178)
+	at com.askimed.nf.test.core.TestExecutionEngine.execute(TestExecutionEngine.java:165)
+	at com.askimed.nf.test.commands.RunTestsCommand.execute(RunTestsCommand.java:298)
+	at com.askimed.nf.test.commands.AbstractCommand.call(AbstractCommand.java:43)
+	at com.askimed.nf.test.commands.AbstractCommand.call(AbstractCommand.java:18)
+	at picocli.CommandLine.executeUserObject(CommandLine.java:1953)
+	at picocli.CommandLine.access$1300(CommandLine.java:145)
+	at picocli.CommandLine$RunLast.executeUserObjectOfLastSubcommandWithSameParent(CommandLine.java:2352)
+	at picocli.CommandLine$RunLast.handle(CommandLine.java:2346)
+	at picocli.CommandLine$RunLast.handle(CommandLine.java:2311)
+	at picocli.CommandLine$AbstractParseResultHandler.execute(CommandLine.java:2179)
+	at picocli.CommandLine.execute(CommandLine.java:2078)
+	at com.askimed.nf.test.App.run(App.java:39)
+	at com.askimed.nf.test.App.main(App.java:46)
+Jun-11 13:07:08.602 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Test Workflow PIPELINE' finished. snapshot file: true, skipped tests: false, failed tests: true
+Jun-11 13:07:08.603 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Executed 1 tests. 1 tests failed. Done!

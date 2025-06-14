@@ -8,4 +8,6 @@ results/
 .nf-test/*
 .editorconfig
 reads/
-
+download_cache/
+conda_cache/
+singularity_cache/

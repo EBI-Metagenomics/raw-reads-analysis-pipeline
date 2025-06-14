@@ -1,0 +1,134 @@
+nextflow_workflow {
+
+    name "Test Workflow PIPELINE"
+    script "workflows/rrap.nf"
+    workflow "PIPELINE"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+	        samplesheet = "${projectDir}/tests/fixtures/rrap/samplesheet_basic.csv"
+		outdir = "results"
+                force_download_dbs = true
+                download_dbs = false
+
+                databases {
+                    cache_path = "download_cache/databases"
+
+                    motus {
+                        base_dir = 'motus_mini/db_mOTU'
+                        remote_path = "${projectDir}/tests/fixtures/dbs/motus_mini.tar.gz"
+                        local_path = ''
+                    }
+
+                    host_genome {
+                        base_dir = 'host_genome_mini/hg38'
+                        remote_path = "${projectDir}/tests/fixtures/dbs/host_genome_mini.tar.gz"
+                        local_path = ''
+                        files {
+                            genome = 'hg38_mini.fa'
+                            bwa_index_prefix = 'hg38_mini.fa'
+                        }
+                    }
+
+                    host_genome_minimap2 {
+                        base_dir = 'hg38_mini_minimap2'
+                        remote_path = "${projectDir}/tests/fixtures/dbs/hg38_mini_minimap2.tar.gz"
+                        local_path = ''
+                        files {
+                            index = 'hg38_mini.mmi'
+                        }
+                    }
+
+                    phix {
+                        base_dir = 'phix/phix'
+                        remote_path = "${projectDir}/tests/fixtures/dbs/phix.tar.gz"
+                        local_path = ''
+                        files {
+                            genome = 'MN385565.fasta'
+                            bwa_index_prefix = 'MN385565.fasta'
+                        }
+                    }
+
+                    rfam {
+                        base_dir = 'rfam_mini/rfam_models'
+                        remote_path = "${projectDir}/tests/fixtures/dbs/rfam_mini.tar.gz"
+                        local_path = ''
+                        files {
+                            ribosomal_models_folder = 'ribosomal_models'
+                            ribosomal_models_file = 'ribosomal_models/ribo.cm'
+                            ribosomal_claninfo_file = 'ribosomal_models/ribo.claninfo'
+                            other_models_folder = 'other_models'
+                            other_models_file = 'other_models/other.cm'
+                            other_claninfo_file = 'other_models/other.claninfo'
+                        }
+                    }
+
+                    silva_ssu {
+                        base_dir = 'silva_ssu_mini/silva_ssu-20200130'
+                        remote_path = "${projectDir}/tests/fixtures/dbs/silva_ssu_mini.tar.gz"
+                        local_path = ''
+                        files {
+                            fasta = "SSU.mini.fasta"
+                            tax = "slv_ssu_filtered2.mini.txt"
+                            otu = "ssu2.mini.otu"
+                        }
+                        variables {
+                            label = 'SSU'
+                        }
+                    }
+
+                    silva_lsu {
+                        base_dir = 'silva_lsu_mini/silva_lsu-20200130'
+                        remote_path = "${projectDir}/tests/fixtures/dbs/silva_lsu_mini.tar.gz"
+                        local_path = ''
+                        files {
+                            fasta = "LSU.mini.fasta"
+                            tax = "slv_lsu_filtered2.mini.txt"
+                            otu = "lsu2.mini.otu"
+                        }
+                        variables {
+                            label = 'LSU'
+                        }
+                    }
+
+                    pfam {
+                        base_dir = 'pfam_mini'
+                        remote_path = "${projectDir}/tests/fixtures/dbs/pfam_mini.tar.gz"
+                        local_path = ''
+                        files {
+                            hmm = "Pfam-A.hmm"
+                        }
+                        variables {
+                            num_models = 21979
+                        }
+                    }
+                }
+            }
+        }
+
+        then {
+	        def pfam_profile = workflow.out.pfam_profile
+		    .collect{ meta, fp -> [meta, file(fp).text.readLines().sort()] }
+	        def motus_profile = workflow.out.motus_profile
+		    .collect{ meta, fp -> [meta, file(fp).text.readLines().sort()] }
+	        def rrna_profile = workflow.out.rrna_profile
+		    .collect{ meta, fp -> [meta, file(fp).text.readLines().sort()] }
+		    .sort()
+	        def versions = workflow.out.versions
+		    .collect{ fp -> file(fp).text.readLines() }
+		    .sort()
+
+                assert workflow.success
+                assert snapshot(
+		    versions, 
+		    pfam_profile, motus_profile, rrna_profile,
+		    workflow.out.decontam_stats, 
+		    workflow.out.qc_stats,
+		).match()
+        }
+
+    }
+
+}

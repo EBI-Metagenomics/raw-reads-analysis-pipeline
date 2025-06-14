@@ -1,0 +1,2 @@
+study_accession,reads_accession,fastq_1,fastq_2,library_layout,library_strategy,platform
+test_study,test_sample,/hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/tests/fixtures/rrap/reads_1.fastq.gz,/hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/tests/fixtures/rrap/reads_2.fastq.gz,paired,wgs,illumina
