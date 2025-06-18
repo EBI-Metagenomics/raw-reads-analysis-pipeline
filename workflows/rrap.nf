@@ -1,4 +1,4 @@
-/*
+*
     ~~~~~~~~~~~~~~~~~~
      Imports
     ~~~~~~~~~~~~~~~~~~
@@ -157,14 +157,14 @@ workflow PIPELINE {
             .mix(DECONTAM_LONGREAD.out.stats)
     }
 
-    // // Get read count per fastq row
-    // clean_reads = clean_reads.map { meta, reads ->
-    //     [meta + ['clean_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
-    // }
+    // Get read count per fastq row
+    clean_reads = clean_reads.map { meta, reads ->
+        [meta + ['clean_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+    }
     // clean_reads.view{ meta, _reads -> "clean_reads - [${meta.id}, ${meta.platform}, ${meta.single_end}] - ${meta.clean_read_count}" }
-    // clean_reads = clean_reads.filter { meta, _reads ->
-    //     meta.clean_read_count > 0
-    // }
+    clean_reads = clean_reads.filter { meta, _reads ->
+        meta.clean_read_count > 0
+    }
 
     // FASTQC(clean_reads)
     // ch_versions = ch_versions.mix(FASTQC.out.versions)
@@ -319,11 +319,112 @@ workflow PIPELINE {
 
     } // end download_dbs condition
 
+    reads_status = classified_reads
+        .map{ meta, _reads -> [meta.id, meta.read_count > 0] }
+    // reads_status.view { "reads_status - ${it}" }
+
+    qc_status = qc_reads
+        .map{ meta, _reads -> [meta.id, meta.qc_read_count > 0] }
+    // qc_status.view { "qc_status - ${it}" }
+
+    decontam_status = clean_reads
+        .map{ meta, _reads -> [meta.id, meta.clean_read_count > 0] }
+    // decontam_status.view { "decontam_status - ${it}" }
+
+    motus_status = MOTUS_KRONA.out.motus
+        .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+    // motus_status.view { "motus_status - ${it}" }
+
+    silvassu_status = MAPSEQ_OTU_KRONA.out.biom_out
+        .filter{ meta, _fp -> meta.db_label=='SILVA-SSU' }
+	.map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+    // silvassu_status.view { "silvassu_status - ${it}" }
+
+    silvalsu_status = MAPSEQ_OTU_KRONA.out.biom_out
+        .filter{ meta, _fp -> meta.db_label=='SILVA-LSU' }
+        .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+    // silvalsu_status.view { "silvalsu_status - ${it}" }
+
+    pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
+        .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+    // pfam_status.view { "pfam_status - ${it}" }
+
+    run_status = reads_status
+        .join( qc_status, remainder: true )
+        .join( decontam_status, remainder: true )
+        .join( motus_status, remainder: true )
+        .join( silvassu_status, remainder: true )
+        .join( silvalsu_status, remainder: true )
+        .join( pfam_status, remainder: true )
+        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
+	        def status = "all_results"
+	        if (decontam == false) {
+	            status = "no_reads"
+	        }
+	        if (![motus, silvassu, silvalsu, pfam].any()) {
+	            status = "no_results"
+	        }
+	        if (![motus, silvassu, silvalsu, pfam].every()) {
+	            status = "missing_results"
+	        }
+	        return "${meta_id},${status},${reads ? "reads_yes":"read_no"},${qc ? "qc_yes":"qc_no"},${decontam ? "decontam_yes":"decontam_no"},${motus ? "motus_yes":"motus_no"},${silvassu ? "silva-ssu_yes":"silva-ssu_no"},${silvalsu ? "silva-lsu_yes":"silva-lsu_no"},${pfam ? "pfam_yes":"pfam_no"}"
+	    }}
+
+    run_status
+        .filter{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> qc }
+        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
+	        def status = "all_results"
+	        if (decontam == false) {
+	            status = "no_reads"
+	        }
+	        if (![motus, silvassu, silvalsu, pfam].any()) {
+	            status = "no_results"
+	        }
+	        if (![motus, silvassu, silvalsu, pfam].every()) {
+	            status = "missing_results"
+	        }
+	        return "${meta_id},${status}"
+	    }}
+        .collectFile(name: "qc_passed.csv", storeDir: params.outdir, newLine: true, cache: false)
+
+    run_status
+        .filter{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> !qc }
+        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
+	        def status = "all_results"
+	        if (decontam == false) {
+	            status = "no_reads"
+	        }
+	        if (![motus, silvassu, silvalsu, pfam].any()) {
+	            status = "no_results"
+	        }
+	        if (![motus, silvassu, silvalsu, pfam].every()) {
+	            status = "missing_results"
+	        }
+	        return "${meta_id},${status}"
+	    }}
+        .collectFile(name: "qc_failed.csv", storeDir: params.outdir, newLine: true, cache: false)
+
+    run_status
+        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
+	        def status = "all_results"
+	        if (decontam == false) {
+	            status = "no_reads"
+	        }
+	        if (![motus, silvassu, silvalsu, pfam].any()) {
+	            status = "no_results"
+	        }
+	        if (![motus, silvassu, silvalsu, pfam].every()) {
+	            status = "missing_results"
+	        }
+	        return "${meta_id},${status},${reads ? "reads_yes":"read_no"},${qc ? "qc_yes":"qc_no"},${decontam ? "decontam_yes":"decontam_no"},${motus ? "motus_yes":"motus_no"},${silvassu ? "silva-ssu_yes":"silva-ssu_no"},${silvalsu ? "silva-lsu_yes":"silva-lsu_no"},${pfam ? "pfam_yes":"pfam_no"}"
+	    }}
+        .collectFile(name: "run_status.csv", storeDir: params.outdir, newLine: true, cache: false)
+
     emit:
     versions = ch_versions                             // channel: [ path(versions.yml) ]
     pfam_profile = PROFILE_HMMSEARCH_PFAM.out.profile  // channel: [ meta, path ]
     rrna_profile = MAPSEQ_OTU_KRONA.out.biom_out       // channel: [ meta, path ]
-    motus_profile = MOTUS_KRONA.out.motus              // channel: [ meta, path ]    
+    motus_profile = MOTUS_KRONA.out.motus              // channel: [ meta, path ]
     decontam_stats = decontam_stats                    // channel: [ meta, path ]
     qc_stats = qc_stats                                // channel: [ meta, path ]
 }
