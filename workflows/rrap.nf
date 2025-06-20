@@ -385,7 +385,7 @@ workflow PIPELINE {
 	        }
 	        return "${meta_id},${status}"
 	    }}
-        .collectFile(name: "qc_passed.csv", storeDir: params.outdir, newLine: true, cache: false)
+        .collectFile(name: "qc_passed_runs.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     run_status
         .filter{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> !qc }
@@ -402,7 +402,7 @@ workflow PIPELINE {
 	        }
 	        return "${meta_id},${status}"
 	    }}
-        .collectFile(name: "qc_failed.csv", storeDir: params.outdir, newLine: true, cache: false)
+        .collectFile(name: "qc_failed_runs.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     run_status
         .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
