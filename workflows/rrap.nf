@@ -1,4 +1,4 @@
-*
+/*
     ~~~~~~~~~~~~~~~~~~
      Imports
     ~~~~~~~~~~~~~~~~~~
@@ -63,27 +63,27 @@ workflow PIPELINE {
     // dbs.pfam.view{ "dbs.pfam - ${ it }" }
 
     // Parse samplesheet and fetch reads
-    def groupReads = { study_accession, reads_accession, fq1, fq2, library_layout, library_strategy, platform ->
+    def groupReads = { study, sample, fq1, fq2, library_layout, library_strategy, instrument_platform ->
         [
             [
-                'id': reads_accession,
-                'study_accession': study_accession,
+                'id': sample,
+                'study': study,
                 'single_end': fq2 == [] ? true : false,
                 'library_layout': library_layout,
                 'library_strategy': library_strategy,
-                'platform': platform
+                'instrument_platform': instrument_platform
             ],
             fq2 == [] ? file(fq1) : [file(fq1), file(fq2)]
         ]
     }
     samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
 
-    // [ study, sample, read1, [read2], library_layout, library_strategy, platform]
+    // [ study, sample, read1, [read2], library_layout, library_strategy, instrument_platform]
     fetch_reads_transformed = samplesheet.map(groupReads)
 
     classified_reads = fetch_reads_transformed.map { meta, reads ->
         // Long reads
-        if (["ont", "pb"].contains(meta.platform)) {
+        if (["ONT", "PB"].contains(meta.instrument_platform)) {
             return [meta + [long_reads: true], reads]
         }
         else {
@@ -161,7 +161,7 @@ workflow PIPELINE {
     clean_reads = clean_reads.map { meta, reads ->
         [meta + ['clean_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
     }
-    // clean_reads.view{ meta, _reads -> "clean_reads - [${meta.id}, ${meta.platform}, ${meta.single_end}] - ${meta.clean_read_count}" }
+    // clean_reads.view{ meta, _reads -> "clean_reads - [${meta.id}, ${meta.instrument_platform}, ${meta.single_end}] - ${meta.clean_read_count}" }
     clean_reads = clean_reads.filter { meta, _reads ->
         meta.clean_read_count > 0
     }
@@ -255,7 +255,7 @@ workflow PIPELINE {
     // ch_test = rrna_chs.seqs.map { meta, reads ->
     //     [meta + ['rrna_read_count': reads.countFasta()], reads]
     // }
-    // ch_test.view{ meta, _reads -> "ch_test - [${meta.id}, ${meta.platform}, ${meta.single_end}] - ${meta.rrna_read_count}" }
+    // ch_test.view{ meta, _reads -> "ch_test - [${meta.id}, ${meta.instrument_platform}, ${meta.single_end}] - ${meta.rrna_read_count}" }
 
     MAPSEQ_OTU_KRONA(rrna_chs.seqs, rrna_chs.db)
     ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
@@ -287,7 +287,7 @@ workflow PIPELINE {
         ? Channel.fromPath(params.multiqc_logo, checkIfExists: true)
         : Channel.empty()
 
-    trim_meta = { meta, v -> [[meta.id, meta.single_end, meta.platform], v] }
+    trim_meta = { meta, v -> [[meta.id, meta.single_end, meta.instrument_platform], v] }
     // decontam_stats.map(trim_meta).view{ "decontam_stats - ${it}" }
     // QC.out.fastp_json.map(trim_meta).view{ "QC.out.fastp_json - ${it}" }
     multiqc_ch = qc_stats.map(trim_meta)
