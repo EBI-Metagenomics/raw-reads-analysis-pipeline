@@ -7,13 +7,13 @@
     "items": {
         "type": "object",
         "properties": {
-            "study_accession": {
+            "study": {
                 "type": "string",
                 "pattern": "^\\S+$",
                 "errorMessage": "Study name must be provided and cannot contain spaces",
                 "minLength": 3
             },
-            "reads_accession": {
+            "sample": {
                 "type": "string",
                 "pattern": "^\\S+$",
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
@@ -39,18 +39,20 @@
             },
             "library_layout": {
                 "type": "string",
-                "enum": ["single", "paired"],
-                "errorMessage": "library_layout should be only 'single' or 'paired' value"
+                "enum": ["SINGLE", "PAIRED"],
+                "errorMessage": "library_layout should be only 'SINGLE' or 'PAIRED' value"
             },
             "library_strategy": {
                 "type": "string",
-                "enum": ["wgs", "metagenomic", "metatranscriptomic", "genomic", "transcriptomic", "other"],
-                "errorMessage": "library strategy should be only value from list: 'metagenomic', 'metatranscriptomic', 'genomic', 'transcriptomic', 'other'"
+                "enum": ["WGS", "METAGENOMIC"],
+                "errorMessage": "library strategy should be only value from list: 'METAGENOMIC', 'WGS'"
             },
-            "platform": {
-                "type": "string"
+            "instrument_platform": {
+                "type": "string",
+                "enum": ["ILLUMINA", "ONT", "PB"],
+                "errorMessage": "instrument platform should be only value from list: 'ILLUMINA', 'ONT', 'PB'"
             },
         },
-        "required": ["study_accession", "reads_accession", "fastq_1", "library_layout", "library_strategy"]
+        "required": ["study", "sample", "fastq_1", "library_layout", "library_strategy", "instrument_platform"]
     }
 }
