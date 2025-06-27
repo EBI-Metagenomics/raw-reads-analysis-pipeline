@@ -10,12 +10,22 @@ workflow MAPSEQ_OTU_KRONA {
     ch_dbs      // channel: [ path(fasta), path(tax), path(otu), path(mscluster), val(label) ]
 
     main:
+
     ch_versions = Channel.empty()
 
-    ch_dbs.multiMap{ fasta, tax, otu, mscluster, label ->
+    // db_fasta = ch_dbs[0]
+    // db_tax = ch_dbs[1]
+    // db_otu = ch_dbs[2]
+    // db_mscluster = ch_dbs[3]
+    // db_label = ch_dbs[4]
+
+    ch_dbs.multiMap { fasta, tax, otu, mscluster, label ->
             mapseq_input: [fasta, tax, mscluster]
             mapseq_to_biom_input: [ otu, label ]
-        }.set{ input }
+        }.set {
+            input
+        }
+
 
     MAPSEQ(
         ch_fasta,

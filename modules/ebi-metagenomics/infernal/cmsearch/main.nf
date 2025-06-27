@@ -1,13 +1,14 @@
+
 process INFERNAL_CMSEARCH {
 
-    tag "${meta.id}"
+    tag "$meta.id"
 
     label 'process_low'
 
     conda "bioconda::infernal=1.1.5"
-    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
-        ? 'https://depot.galaxyproject.org/singularity/infernal:1.1.5--pl5321h031d066_1'
-        : 'quay.io/biocontainers/infernal:1.1.5--pl5321h031d066_1'}"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/infernal:1.1.5--pl5321h031d066_1':
+        'biocontainers/infernal:1.1.5--pl5321h031d066_1' }"
 
     input:
     tuple val(meta), path(seqdb)
@@ -15,7 +16,7 @@ process INFERNAL_CMSEARCH {
 
     output:
     tuple val(meta), path("*.cmsearch_matches.tbl.gz"), emit: cmsearch_tbl
-    path "versions.yml", emit: versions
+    path "versions.yml"                            , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -27,16 +28,16 @@ process INFERNAL_CMSEARCH {
     def is_compressed = seqdb.name.endsWith(".gz")
     def seqdb_name = seqdb.name.replace(".gz", "")
     """
-    if [ "${is_compressed}" == "true" ]; then
-        gzip -c -d ${seqdb} > ${seqdb_name}
+    if [ "$is_compressed" == "true" ]; then
+        gzip -c -d $seqdb > $seqdb_name
     fi
 
     cmsearch \\
-        --cpu ${task.cpus} \\
-        ${args} \\
+        --cpu $task.cpus \\
+        $args \\
         --tblout ${prefix}.cmsearch_matches.tbl \\
-        ${covariance_model_database} \\
-        ${seqdb_name}
+        $covariance_model_database/*.cm \\
+        $seqdb_name
 
     gzip -n ${prefix}.cmsearch_matches.tbl
 
