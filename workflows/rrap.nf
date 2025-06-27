@@ -269,7 +269,7 @@ workflow PIPELINE {
     ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
 
     ADDHEADER_RRNA(
-        MAPSEQ_OTU_KRONA.out.biom_out,
+        MAPSEQ_OTU_KRONA.out.krona_input,
         "# ${params.results_file_headers.silva_taxonomy.join('\t')}"
     )
 
