@@ -10,11 +10,14 @@ include { DECONTAM_SHORTREAD } from '../subworkflows/local/decontam_shortread/ma
 include { DECONTAM_LONGREAD } from '../subworkflows/local/decontam_longread/main'
 include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
 include { SEQTK_SEQ } from '../modules/ebi-metagenomics/seqtk/seq/main'
+include { ADDHEADER as ADDHEADER_RRNA } from '../modules/local/addheader/main'
+include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
 
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { MULTIQC } from '../modules/nf-core/multiqc/main'
+// include { MULTIQC as MULTIQC_RUN } from '../modules/nf-core/multiqc/main'
+include { MULTIQC as MULTIQC_STUDY } from '../modules/nf-core/multiqc/main'
 include { PROFILE_HMMSEARCH_PFAM } from '../subworkflows/local/profile_hmmsearch_pfam/main'
 include { samplesheetToList } from 'plugin/nf-schema'
 
@@ -185,6 +188,11 @@ workflow PIPELINE {
     )
     ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)
 
+    ADDHEADER_MOTUS(
+        MOTUS_KRONA.out.krona,
+        "# ${params.results_file_headers.motus_taxonomy.join('\t')}"
+    )
+
     // rrna_extraction
     READSMERGE(clean_reads)
     ch_versions = ch_versions.mix(READSMERGE.out.versions)
@@ -260,6 +268,11 @@ workflow PIPELINE {
     MAPSEQ_OTU_KRONA(rrna_chs.seqs, rrna_chs.db)
     ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
 
+    ADDHEADER_RRNA(
+        MAPSEQ_OTU_KRONA.out.biom_out,
+        "# ${params.results_file_headers.silva_taxonomy.join('\t')}"
+    )
+
 
     // Pfam profiling
     pfam_db = dbs.pfam
@@ -292,14 +305,28 @@ workflow PIPELINE {
     // QC.out.fastp_json.map(trim_meta).view{ "QC.out.fastp_json - ${it}" }
     multiqc_ch = qc_stats.map(trim_meta)
         .join(decontam_stats.map(trim_meta), remainder: true)
+    // multiqc_ch.view { "multiqc_ch - ${it}" }
+
+    // per Run
+    // MULTIQC_RUN(
+    //     multiqc_ch,
+    //     ch_multiqc_config.toList(),
+    //     ch_multiqc_custom_config.toList(),
+    //     ch_multiqc_logo.toList(),
+    //     [],
+    //     [],
+    // )
+
+    // Study
+    multiqc_study_ch = multiqc_ch
         .multiMap { it ->
             names: it[0][0]
             files: it[1..-1]
         }
-    // multiqc_ch.names.view { "multiqc_ch.names - ${it}" }
+    // multiqc_study_ch.names.view { "multiqc_study_ch.names - ${it}" }
 
-    MULTIQC(
-        multiqc_ch.files.flatten().filter{ it }.collect(),
+    MULTIQC_STUDY(
+        multiqc_study_ch.files.flatten().filter{ it }.collect(),
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList(),
@@ -331,16 +358,16 @@ workflow PIPELINE {
         .map{ meta, _reads -> [meta.id, meta.clean_read_count > 0] }
     // decontam_status.view { "decontam_status - ${it}" }
 
-    motus_status = MOTUS_KRONA.out.motus
+    motus_status = ADDHEADER_MOTUS.out.file_with_header
         .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
     // motus_status.view { "motus_status - ${it}" }
 
-    silvassu_status = MAPSEQ_OTU_KRONA.out.biom_out
+    silvassu_status = ADDHEADER_RRNA.out.file_with_header
         .filter{ meta, _fp -> meta.db_label=='SILVA-SSU' }
-	.map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+	    .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
     // silvassu_status.view { "silvassu_status - ${it}" }
 
-    silvalsu_status = MAPSEQ_OTU_KRONA.out.biom_out
+    silvalsu_status = ADDHEADER_RRNA.out.file_with_header
         .filter{ meta, _fp -> meta.db_label=='SILVA-LSU' }
         .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
     // silvalsu_status.view { "silvalsu_status - ${it}" }
@@ -421,10 +448,10 @@ workflow PIPELINE {
         .collectFile(name: "run_status.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     emit:
-    versions = ch_versions                             // channel: [ path(versions.yml) ]
-    pfam_profile = PROFILE_HMMSEARCH_PFAM.out.profile  // channel: [ meta, path ]
-    rrna_profile = MAPSEQ_OTU_KRONA.out.biom_out       // channel: [ meta, path ]
-    motus_profile = MOTUS_KRONA.out.motus              // channel: [ meta, path ]
-    decontam_stats = decontam_stats                    // channel: [ meta, path ]
-    qc_stats = qc_stats                                // channel: [ meta, path ]
+    versions = ch_versions                                // channel: [ path(versions.yml) ]
+    pfam_profile = PROFILE_HMMSEARCH_PFAM.out.profile     // channel: [ meta, path ]
+    rrna_profile = ADDHEADER_RRNA.out.file_with_header    // channel: [ meta, path ]
+    motus_profile = ADDHEADER_MOTUS.out.file_with_header  // channel: [ meta, path ]
+    decontam_stats = decontam_stats                       // channel: [ meta, path ]
+    qc_stats = qc_stats                                   // channel: [ meta, path ]
 }
