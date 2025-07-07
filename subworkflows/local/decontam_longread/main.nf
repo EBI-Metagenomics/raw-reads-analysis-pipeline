@@ -1,4 +1,4 @@
-include { MINIMAP2_ALIGN } from '../../../modules/nf-core/minimap2/align/main'
+include { MINIMAP2_ALIGN } from '../../../modules/local/minimap2/align/main'
 include { DECONTAMBAM    } from '../../../modules/local/decontambam/main'
 include { COMBINEBAM } from '../../../modules/local/combinebam/main'
 include { CHUNKFASTX } from '../../../modules/local/chunkfastx/main'
@@ -39,14 +39,14 @@ workflow DECONTAM_LONGREAD {
                 return [tuple(groupKey(meta, 1), chunks)]
             }
         }
-    chunked_reads = chunked_reads.map{ meta, reads -> 
-                                       [meta, reads, reads[0].name.endsWith('.gz')] } 
-        .branch{ meta, reads, zip -> 
+    chunked_reads = chunked_reads.map{ meta, reads ->
+                                       [meta, reads, reads[0].name.endsWith('.gz')] }
+        .branch{ meta, reads, zip ->
             to_zip: !zip
                 return [meta, reads]
             already_zip: zip
-                return [meta, reads] 
-        } 
+                return [meta, reads]
+        }
     GZIPALL(chunked_reads.to_zip)
     chunked_reads = chunked_reads.already_zip.mix(GZIPALL.out.files)
     // chunked_reads.view{ "chunked_reads - ${it}" }
