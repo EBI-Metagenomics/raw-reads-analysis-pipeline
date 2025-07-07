@@ -11,7 +11,7 @@ nextflow_process {
     test("sample-size > chunk-size should match snapshot") {
 
         when {
-	    params { 
+	    params {
 	    	test_chunksize = '1K'
 	    }
             process {
@@ -23,7 +23,6 @@ nextflow_process {
 		        file("${projectDir}/tests/fixtures/chunkfastx/ERR10889147_mini_2.fq.gz", checkIfExists: true)
 		    ]
 		]
-		input[1] = file("${projectDir}/bin/chunk_fastx.py")
                 """
             }
         }
@@ -38,7 +37,7 @@ nextflow_process {
     test("single-end mini sample should match snapshot") {
 
         when {
-	    params { 
+	    params {
 	    	test_chunksize = '1K'
 	    }
             process {
@@ -47,7 +46,6 @@ nextflow_process {
 		    ['id': 'test', 'single_end': true],
 		    file("${projectDir}/tests/fixtures/chunkfastx/ERR10889147_mini_1.fq.gz", checkIfExists: true),
 		]
-		input[1] = file("${projectDir}/bin/chunk_fastx.py")
                 """
             }
         }
@@ -62,7 +60,7 @@ nextflow_process {
     test("sample-size < chunk-size should match snapshot") {
 
         when {
-	    params { 
+	    params {
 	    	test_chunksize = '200K'
 	    }
             process {
@@ -74,7 +72,6 @@ nextflow_process {
 		        file("${projectDir}/tests/fixtures/chunkfastx/ERR10889147_mini_2.fq.gz", checkIfExists: true)
 		    ]
 		]
-		input[1] = file("${projectDir}/bin/chunk_fastx.py")
                 """
             }
         }
@@ -89,7 +86,7 @@ nextflow_process {
     test("read-length > chunk-size should match snapshot") {
 
         when {
-	    params { 
+	    params {
 	    	test_chunksize = '10'
 	    }
             process {
@@ -101,7 +98,6 @@ nextflow_process {
 		        file("${projectDir}/tests/fixtures/chunkfastx/ERR10889147_mini_2.fq.gz", checkIfExists: true)
 		    ]
 		]
-		input[1] = file("${projectDir}/bin/chunk_fastx.py")
                 """
             }
         }

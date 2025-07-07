@@ -3,16 +3,15 @@ process FASTAEMBEDLENGTH {
     label 'process_single'
 
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
-        ? 'https://depot.galaxyproject.org/singularity/python:3.13'
-        : 'quay.io/biocontainers/python:3.13'}"
+        ? 'https://depot.galaxyproject.org/singularity/mgnify-pipelines-toolkit:0.1.1--pyhdfd78af_0'
+        : 'biocontainers/mgnify-pipelines-toolkit:0.1.1--pyhdfd78af_0'}"
 
     input:
     tuple val(meta), path(fasta)
-    path script
 
     output:
     tuple val(meta), path("${out_fn}"), emit: fasta
-    path "versions.yml"               , emit: versions
+    path "versions.yml", emit: versions
 
     script:
     def args = task.ext.args ?: ''
@@ -21,7 +20,7 @@ process FASTAEMBEDLENGTH {
     out_fn = "${base}.renamed.${ext}"
 
     """
-    python ${script} -i ${fasta} -o ${out_fn} --output_gzip
+    python fastx_embed_length.py -i ${fasta} -o ${out_fn} --output_gzip
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -34,7 +33,7 @@ process FASTAEMBEDLENGTH {
     def base = fasta.getName().tokenize('.')[0..-2].join('.')
     def ext = fasta.getName().tokenize('.')[-1]
     out_fn = "${base}.renamed.${ext}"
-    
+
     """
     touch ${out_fn}
 
