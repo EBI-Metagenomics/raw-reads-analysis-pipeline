@@ -2,14 +2,12 @@ process PARSEHMMSEARCHCOVERAGE {
     tag "${meta.id}"
     label 'process_single'
 
-    //conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
-        ? 'https://depot.galaxyproject.org/singularity/python:3.13'
-        : 'quay.io/biocontainers/python:3.13'}"
+        ? 'https://depot.galaxyproject.org/singularity/mgnify-pipelines-toolkit:0.1.1--pyhdfd78af_0'
+        : 'biocontainers/mgnify-pipelines-toolkit:0.1.1--pyhdfd78af_0'}"
 
     input:
     tuple val(meta), path(domtbl_file)
-    path script
 
     output:
     tuple val(meta), path(out_fp), emit: tsv
@@ -19,7 +17,7 @@ process PARSEHMMSEARCHCOVERAGE {
     def args = task.ext.args ?: ''
     out_fp = "${meta.id}_pfam_coverage.tsv"
     """
-    gunzip -c ${domtbl_file} | python ${script} ${args} -i - -o ${out_fp}
+    gunzip -c ${domtbl_file} | python hmmer_domtbl_parse_coverage.py ${args} -i - -o ${out_fp}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

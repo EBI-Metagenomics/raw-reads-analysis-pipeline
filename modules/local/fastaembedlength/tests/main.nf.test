@@ -17,7 +17,6 @@ nextflow_process {
 		    ['id': 'test'],
 		    file("${projectDir}/tests/fixtures/fastaembedlength/ERR10889147_mini_1.fa.gz", checkIfExists: true)
 		]
-		input[1] = file("${projectDir}/bin/fastx_embed_length.py")
                 """
             }
         }
@@ -38,7 +37,6 @@ nextflow_process {
 		    ['id': 'test'],
 		    file("${projectDir}/tests/fixtures/fastaembedlength/ERR10889147_mini_1.fq.gz", checkIfExists: true)
 		]
-		input[1] = file("${projectDir}/bin/fastx_embed_length.py")
                 """
             }
         }
@@ -59,7 +57,6 @@ nextflow_process {
 		    ['id': 'test'],
 		    file("${projectDir}/tests/fixtures/fastaembedlength/synthetic_test.fa.gz", checkIfExists: true)
 		]
-		input[1] = file("${projectDir}/bin/fastx_embed_length.py")
                 """
             }
         }
@@ -80,7 +77,6 @@ nextflow_process {
 		    ['id': 'test'],
 		    file("${projectDir}/tests/fixtures/fastaembedlength/synthetic_test.fq.gz", checkIfExists: true)
 		]
-		input[1] = file("${projectDir}/bin/fastx_embed_length.py")
                 """
             }
         }

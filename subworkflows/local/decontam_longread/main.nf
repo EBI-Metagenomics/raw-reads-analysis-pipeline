@@ -6,17 +6,19 @@ include { GZIPALL } from '../../../modules/local/gzipall/main'
 
 workflow DECONTAM_LONGREAD {
     take:
-    input_reads       // [ val(meta), path(reads) ]
-    reference_genome  // [ val(meta2), path(reference_genome) ]
+    input_reads // [ val(meta), path(reads) ]
+    reference_genome // [ val(meta2), path(reference_genome) ]
 
     main:
     def ch_versions = Channel.empty()
 
     reference_genome_index = reference_genome
-        .map{ meta, fp -> [
-            meta,
-            file("${fp}/${meta.base_dir}/${meta.files.index}")
-        ] }
+        .map { meta, fp ->
+            [
+                meta,
+                file("${fp}/${meta.base_dir}/${meta.files.index}"),
+            ]
+        }
         .first()
 
     // chunked_reads = input_reads
@@ -27,21 +29,20 @@ workflow DECONTAM_LONGREAD {
     // chunked_reads.view{ "chunked_reads - ${it}" }
 
     // SEQKIT_SPLIT2(input_reads)
-    CHUNKFASTX(
-        input_reads,
-        file("${projectDir}/bin/chunk_fastx.py")
-    )
-    chunked_reads = CHUNKFASTX.out.reads
-        .flatMap{ meta, chunks ->
-            if (chunks instanceof List) {
-                return chunks.collect{ chunk -> tuple(groupKey(meta, chunks.size()), chunk) }
-            } else {
-                return [tuple(groupKey(meta, 1), chunks)]
-            }
+    CHUNKFASTX(input_reads)
+    chunked_reads = CHUNKFASTX.out.reads.flatMap { meta, chunks ->
+        if (chunks instanceof List) {
+            return chunks.collect { chunk -> tuple(groupKey(meta, chunks.size()), chunk) }
         }
-    chunked_reads = chunked_reads.map{ meta, reads ->
-                                       [meta, reads, reads[0].name.endsWith('.gz')] }
-        .branch{ meta, reads, zip ->
+        else {
+            return [tuple(groupKey(meta, 1), chunks)]
+        }
+    }
+    chunked_reads = chunked_reads
+        .map { meta, reads ->
+            [meta, reads, reads[0].name.endsWith('.gz')]
+        }
+        .branch { meta, reads, zip ->
             to_zip: !zip
                 return [meta, reads]
             already_zip: zip
@@ -67,8 +68,8 @@ workflow DECONTAM_LONGREAD {
     )
 
     DECONTAMBAM(
-        COMBINEBAM.out.concatenated_result.map{ meta, bam ->
-            [meta, bam, meta.single_end==false, "long_read_host"]
+        COMBINEBAM.out.concatenated_result.map { meta, bam ->
+            [meta, bam, meta.single_end == false, "long_read_host"]
         }
     )
     ch_versions = ch_versions.mix(DECONTAMBAM.out.versions)
@@ -83,6 +84,6 @@ workflow DECONTAM_LONGREAD {
 
     emit:
     decontaminated_reads = decontaminated_reads
-    stats                = DECONTAMBAM.out.stats
-    versions             = ch_versions
+    stats = DECONTAMBAM.out.stats
+    versions = ch_versions
 }

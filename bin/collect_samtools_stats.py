@@ -1,7 +1,7 @@
 from collections import defaultdict
 import json
 import argparse
-parser = argparse.ArgumentParser(description='Generates sample-sheet from ENA accession.')
+parser = argparse.ArgumentParser(description='Extract summary results (SN), read lengths (RL) and mapping qualities (MAPQ) from samtools stats file.')
 parser.add_argument('-i', "--input_files", nargs='+', default=[],
                     help="Input samtools stats files.")
 parser.add_argument('-p', "--prefix", default='stats',

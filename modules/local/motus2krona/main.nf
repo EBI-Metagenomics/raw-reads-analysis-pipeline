@@ -2,17 +2,16 @@ process MOTUS2KRONA {
     tag "${meta.id}"
     label 'process_single'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/python:3.13':
-        'quay.io/biocontainers/python:3.13' }"
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/mgnify-pipelines-toolkit:0.1.1--pyhdfd78af_0'
+        : 'biocontainers/mgnify-pipelines-toolkit:0.1.1--pyhdfd78af_0'}"
 
     input:
     tuple val(meta), path(motus_out)
-    path(script)
 
     output:
     tuple val(meta), path("*_krona.tsv"), emit: krona
-    path "versions.yml"                 , emit: versions
+    path "versions.yml", emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,8 +20,8 @@ process MOTUS2KRONA {
     def args = task.ext.args ?: ''
 
     """
-    python ${script} \\
-        $args \\
+    python motus2krona.py \\
+        ${args} \\
         -i "${motus_out}" \\
         -o "${meta.id}_krona.tsv" \\
 

@@ -18,7 +18,7 @@ workflow MOTUS_KRONA {
     ch_versions = ch_versions.mix(MOTUS_PROFILE.out.versions)
     // MOTUS_PROFILE.out.out.view { "motus.out - ${it}" }
 
-    MOTUS2KRONA(MOTUS_PROFILE.out.out, file("${projectDir}/bin/motus2krona.py"))
+    MOTUS2KRONA(MOTUS_PROFILE.out.out)
     ch_versions = ch_versions.mix(MOTUS2KRONA.out.versions)
 
     // KRONA
