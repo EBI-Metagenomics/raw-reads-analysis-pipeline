@@ -9,7 +9,7 @@ nextflow_process {
     tag "minimap2"
     tag "minimap2/align"
 
-    test("sarscov2 - fastq, fasta, true, false, [], false, false") {
+    test("sarscov2 - fastq, fasta, true, [], false, false") {
 
         when {
             process {
@@ -23,10 +23,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = []
+                input[3] = []
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -44,7 +43,7 @@ nextflow_process {
 
     }
 
-    test("sarscov2 - fastq, fasta, true, false, 'bai', false, false") {
+    test("sarscov2 - fastq, fasta, true, 'bai', false, false") {
 
         when {
             process {
@@ -58,10 +57,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = 'bai'
+                input[3] = 'bai'
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -97,10 +95,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = []
+                input[3] = []
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -132,10 +129,9 @@ nextflow_process {
                     []
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = []
+                input[3] = []
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -167,10 +163,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = []
+                input[3] = []
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -188,7 +183,7 @@ nextflow_process {
 
     }
 
-    test("sarscov2 - bam, fasta, true, false, 'bai', false, false") {
+    test("sarscov2 - bam, fasta, true, 'bai', false, false") {
 
         when {
             process {
@@ -202,10 +197,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = 'bai'
+                input[3] = 'bai'
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -238,10 +232,9 @@ nextflow_process {
                     []
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = []
+                input[3] = []
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -270,10 +263,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = []
+                input[3] = []
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -303,10 +295,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = 'bai'
+                input[3] = 'bai'
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -336,10 +327,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = false
-                input[3] = false
-                input[4] = []
+                input[3] = []
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -353,7 +343,7 @@ nextflow_process {
 
     }
 
-    test("sarscov2 - bam, fasta, true, false, [], false, false - stub") {
+    test("sarscov2 - bam, fasta, true, [], false, false - stub") {
 
         options "-stub"
 
@@ -369,10 +359,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = []
+                input[3] = []
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -386,7 +375,7 @@ nextflow_process {
 
     }
 
-    test("sarscov2 - bam, fasta, true, false, 'bai', false, false - stub") {
+    test("sarscov2 - bam, fasta, true, 'bai', false, false - stub") {
 
         options "-stub"
 
@@ -402,10 +391,9 @@ nextflow_process {
                     file(params.modules_testdata_base_path + 'genomics/sarscov2/genome/genome.fasta', checkIfExists: true)
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = 'bai'
+                input[3] = 'bai'
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }
@@ -419,7 +407,7 @@ nextflow_process {
 
     }
 
-    test("sarscov2 - bam, [], true, false, false, false - stub") {
+    test("sarscov2 - bam, [], true, false, false - stub") {
 
         options "-stub"
 
@@ -435,10 +423,9 @@ nextflow_process {
                     []
                 ]
                 input[2] = true
-                input[3] = false
-                input[4] = []
+                input[3] = []
+                input[4] = false
                 input[5] = false
-                input[6] = false
                 """
             }
         }

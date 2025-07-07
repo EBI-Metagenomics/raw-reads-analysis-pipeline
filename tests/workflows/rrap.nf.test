@@ -57,10 +57,10 @@ nextflow_workflow {
                         local_path = ''
                         files {
                             ribosomal_models_folder = 'ribosomal_models'
-                            ribosomal_models_file = 'ribosomal_models'
+                            ribosomal_models_file = 'ribosomal_models/ribo.cm'
                             ribosomal_claninfo_file = 'ribosomal_models/ribo.claninfo'
                             other_models_folder = 'other_models'
-                            other_models_file = 'other_models'
+                            other_models_file = 'other_models/other.cm'
                             other_claninfo_file = 'other_models/other.claninfo'
                         }
                     }
@@ -122,9 +122,9 @@ nextflow_workflow {
 
                 assert workflow.success
                 assert snapshot(
-		    versions,
+		    versions, 
 		    pfam_profile, motus_profile, rrna_profile,
-		    workflow.out.decontam_stats,
+		    workflow.out.decontam_stats, 
 		    workflow.out.qc_stats,
 		).match()
         }

@@ -1,4 +1,4 @@
-include { MINIMAP2_ALIGN } from '../../../modules/local/minimap2/align/main'
+include { MINIMAP2_ALIGN } from '../../../modules/nf-core/minimap2/align/main'
 include { DECONTAMBAM    } from '../../../modules/local/decontambam/main'
 include { COMBINEBAM } from '../../../modules/local/combinebam/main'
 include { CHUNKFASTX } from '../../../modules/local/chunkfastx/main'
