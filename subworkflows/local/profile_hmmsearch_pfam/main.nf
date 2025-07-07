@@ -12,7 +12,7 @@ workflow PROFILE_HMMSEARCH_PFAM {
 
     main:
     ch_versions = Channel.empty()
-    FASTAEMBEDLENGTH(reads_fasta, file("${projectDir}/bin/fastx_embed_length.py"))
+    FASTAEMBEDLENGTH(reads_fasta)
     SEQKIT_TRANSLATE(FASTAEMBEDLENGTH.out.fasta)
 
     ch_chunked_pfam_in = SEQKIT_TRANSLATE.out.fastx
@@ -30,7 +30,7 @@ workflow PROFILE_HMMSEARCH_PFAM {
         HMMER_HMMSEARCH.out.domain_summary.groupTuple()
     )
 
-    PARSEHMMSEARCHCOVERAGE(COMBINEHMMSEARCHTBL.out.concatenated_result, file("${projectDir}/bin/hmmer_domtbl_parse_coverage.py"))
+    PARSEHMMSEARCHCOVERAGE(COMBINEHMMSEARCHTBL.out.concatenated_result)
     ch_versions = ch_versions.mix(PARSEHMMSEARCHCOVERAGE.out.versions)
 
     emit:

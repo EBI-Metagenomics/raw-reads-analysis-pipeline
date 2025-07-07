@@ -45,27 +45,7 @@ workflow DECONTAM_SHORTREAD {
     // host_genome_fasta.view{ "host_genome_fasta - ${it}" }
 
     if (params.remove_phix) {
-
-        // chunked_reads = reads
-        //     .flatMap{ meta, fastas ->
-        //         def chunks = []
-        //         if(meta.single_end) {
-        //             chunks = fastas.splitFasta(file: true, compress: true, size: 500.KB)
-        //         } else {
-        //             chunks = [
-        //                 fastas[0].splitFasta(file: true, compress: true, size: 500.KB),
-        //                 fastas[1].splitFasta(file: true, compress: true, size: 500.KB)
-        //             ].transpose()
-        //         }
-        //         chunks.collect{ chunk -> tuple(groupKey(meta, chunks.size()), chunk) }
-        //     }
-        // chunked_reads.view{ "chunked_reads - ${it}" }
-
-        // SEQKIT_SPLIT2_PHIX(reads)
-        CHUNKFASTX_PHIX(
-	    reads, 
-	    file("${projectDir}/bin/chunk_fastx.py")
-	)
+        CHUNKFASTX_PHIX(reads)
         chunked_reads = CHUNKFASTX_PHIX.out.reads.flatMap { meta, chunks ->
             if (chunks instanceof List) {
                 def grouped_chunks = [:]
@@ -78,24 +58,26 @@ workflow DECONTAM_SHORTREAD {
                         grouped_chunks[part] = [chunk]
                     }
                 }
-                return grouped_chunks.collect { _part, chunk -> 
-		    tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk)) 
-		}
+                return grouped_chunks.collect { _part, chunk ->
+                    tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk))
+                }
             }
             else {
                 return [tuple(groupKey(meta, 1), chunks)]
             }
         }
-	chunked_reads = chunked_reads.map{ meta, reads_ -> 
-	                                   [meta, reads_, reads_[0].name.endsWith('.gz')] } 
-	    .branch{ meta, reads_, zip -> 
-	        to_zip: !zip
-	            return [meta, reads_]
-	        already_zip: zip
-	            return [meta, reads_] 
-	    } 
-	GZIPALL_PHIX(chunked_reads.to_zip)
-	chunked_reads = chunked_reads.already_zip.mix(GZIPALL_PHIX.out.files)
+        chunked_reads = chunked_reads
+            .map { meta, reads_ ->
+                [meta, reads_, reads_[0].name.endsWith('.gz')]
+            }
+            .branch { meta, reads_, zip ->
+                to_zip: !zip
+                return [meta, reads_]
+                already_zip: zip
+                return [meta, reads_]
+            }
+        GZIPALL_PHIX(chunked_reads.to_zip)
+        chunked_reads = chunked_reads.already_zip.mix(GZIPALL_PHIX.out.files)
         // chunked_reads.view{ "chunked_reads - ${it}" }
 
         BWAMEM2_ALIGN_PHIX(
@@ -135,27 +117,7 @@ workflow DECONTAM_SHORTREAD {
     }
 
     if (host_genome != null) {
-
-        // chunked_decontaminated_reads = decontaminated_reads
-        //     .flatMap{ meta, fastas ->
-        //         def chunks = []
-        //         if(meta.single_end) {
-        //             chunks = fastas.splitFasta(file: true, compress: true, size: 500.KB)
-        //         } else {
-        //             chunks = [
-        //                 fastas[0].splitFasta(file: true, compress: true, size: 500.KB),
-        //                 fastas[1].splitFasta(file: true, compress: true, size: 500.KB)
-        //             ].transpose()
-        //         }
-        //         chunks.collect{ chunk -> tuple(groupKey(meta, chunks.size()), chunk) }
-        //     }
-        // chunked_decontaminated_reads.view{ "chunked_decontaminated_reads - ${it}" }
-
-        // SEQKIT_SPLIT2_HOST(decontaminated_reads)
-        CHUNKFASTX_HOST(
-	    decontaminated_reads, 
-	    file("${projectDir}/bin/chunk_fastx.py")
-	)
+        CHUNKFASTX_HOST(decontaminated_reads)
         chunked_decontaminated_reads = CHUNKFASTX_HOST.out.reads.flatMap { meta, chunks ->
             if (chunks instanceof List) {
                 def grouped_chunks = [:]
@@ -168,24 +130,26 @@ workflow DECONTAM_SHORTREAD {
                         grouped_chunks[part] = [chunk]
                     }
                 }
-                return grouped_chunks.collect { _part, chunk -> 
-		    tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk)) 
-		}
+                return grouped_chunks.collect { _part, chunk ->
+                    tuple(groupKey(meta, grouped_chunks.size()), tuple(chunk))
+                }
             }
             else {
                 return [tuple(groupKey(meta, 1), chunks)]
             }
         }
-	chunked_decontaminated_reads = chunked_decontaminated_reads.map{ meta, reads_ -> 
-	                                   [meta, reads_, reads_[0].name.endsWith('.gz')] } 
-	    .branch{ meta, reads_, zip -> 
-	        to_zip: !zip
-	            return [meta, reads_]
-	        already_zip: zip
-	            return [meta, reads_] 
-	    } 
-	GZIPALL_HOST(chunked_decontaminated_reads.to_zip)
-	chunked_decontaminated_reads = chunked_decontaminated_reads.already_zip.mix(GZIPALL_HOST.out.files)
+        chunked_decontaminated_reads = chunked_decontaminated_reads
+            .map { meta, reads_ ->
+                [meta, reads_, reads_[0].name.endsWith('.gz')]
+            }
+            .branch { meta, reads_, zip ->
+                to_zip: !zip
+                return [meta, reads_]
+                already_zip: zip
+                return [meta, reads_]
+            }
+        GZIPALL_HOST(chunked_decontaminated_reads.to_zip)
+        chunked_decontaminated_reads = chunked_decontaminated_reads.already_zip.mix(GZIPALL_HOST.out.files)
         // chunked_decontaminated_reads.view{ "chunked_decontaminated_reads - ${it}" }
 
         BWAMEM2_ALIGN_HOST(

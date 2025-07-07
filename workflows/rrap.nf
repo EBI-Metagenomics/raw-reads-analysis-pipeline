@@ -356,19 +356,6 @@ workflow PIPELINE {
         .join( silvassu_status, remainder: true )
         .join( silvalsu_status, remainder: true )
         .join( pfam_status, remainder: true )
-        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
-	        def status = "all_results"
-	        if (decontam == false) {
-	            status = "no_reads"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].any()) {
-	            status = "no_results"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].every()) {
-	            status = "missing_results"
-	        }
-	        return "${meta_id},${status},${reads ? "reads_yes":"read_no"},${qc ? "qc_yes":"qc_no"},${decontam ? "decontam_yes":"decontam_no"},${motus ? "motus_yes":"motus_no"},${silvassu ? "silva-ssu_yes":"silva-ssu_no"},${silvalsu ? "silva-lsu_yes":"silva-lsu_no"},${pfam ? "pfam_yes":"pfam_no"}"
-	    }}
 
     run_status
         .filter{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> qc }

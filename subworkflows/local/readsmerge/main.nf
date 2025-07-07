@@ -14,7 +14,7 @@ workflow READSMERGE {
     ch_pe_reads = ch_reads.filter { meta, _reads -> !meta.single_end }
 
     // rename paired-end reads...
-    RENAMEPAIREDFASTXHEADERS(ch_pe_reads, Channel.value(file("${projectDir}/bin/rename_pe_reads.py")))
+    RENAMEPAIREDFASTXHEADERS(ch_pe_reads)
 
     // ...then merge
     FASTP(RENAMEPAIREDFASTXHEADERS.out.reads, [], false, params.save_trimmed_fail, true)
