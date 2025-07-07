@@ -6,7 +6,7 @@ process EASEL_ESLSFETCH {
     conda "bioconda::easel=0.49"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/easel:0.49--h031d066_0':
-        'quay.io/biocontainers/easel:0.49--h031d066_0' }"
+        'biocontainers/easel:0.49--h031d066_0' }"
 
     input:
     tuple val(meta), path(fasta), path(cmsearch_deoverlap_out)

@@ -1,19 +1,20 @@
+
 process CMSEARCHTBLOUTDEOVERLAP {
-    tag "${meta.id}"
+    tag "$meta.id"
     label 'process_single'
 
     conda "bioconda::cmsearch_tblout_deoverlap=0.09"
-    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
-        ? 'https://depot.galaxyproject.org/singularity/cmsearch_tblout_deoverlap:0.09--pl5321hdfd78af_0'
-        : 'quay.io/biocontainers/cmsearch_tblout_deoverlap:0.09--pl5321hdfd78af_0'}"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/cmsearch_tblout_deoverlap:0.09--pl5321hdfd78af_0':
+        'biocontainers/cmsearch_tblout_deoverlap:0.09--pl5321hdfd78af_0' }"
 
     input:
     tuple val(meta), path(cmsearch_tblout)
-    path clanin
+    path(clanin)
 
     output:
     tuple val(meta), path("*.deoverlapped"), emit: cmsearch_tblout_deoverlapped
-    path "versions.yml", emit: versions
+    path "versions.yml"                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,13 +26,13 @@ process CMSEARCHTBLOUTDEOVERLAP {
     def cmsearch_tblout_name = cmsearch_tblout.name.replace(".gz", "")
 
     """
-    if [ "${is_compressed}" == "true" ]; then
-        gzip -c -d ${cmsearch_tblout} > ${cmsearch_tblout_name}
+    if [ "$is_compressed" == "true" ]; then
+        gzip -c -d $cmsearch_tblout > $cmsearch_tblout_name
     fi
 
-    cmsearch-deoverlap.pl ${args} \
-        --clanin ${clanin} \
-        ${cmsearch_tblout_name}
+    cmsearch-deoverlap.pl $args \
+        --clanin $clanin \
+        $cmsearch_tblout_name
 
     mv ${cmsearch_tblout_name}.deoverlapped ${prefix}.tblout.deoverlapped
 
