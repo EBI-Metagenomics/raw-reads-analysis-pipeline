@@ -56,7 +56,6 @@ workflow DECONTAM_LONGREAD {
         chunked_reads,
         reference_genome_index,
         true,
-        false,
         "bai",
         false,
         false,

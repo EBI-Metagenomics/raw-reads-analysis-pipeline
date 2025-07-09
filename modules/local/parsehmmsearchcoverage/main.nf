@@ -16,8 +16,11 @@ process PARSEHMMSEARCHCOVERAGE {
     script:
     def args = task.ext.args ?: ''
     out_fp = "${meta.id}_pfam_coverage.tsv"
+
+    def script = file("${moduleDir}/bin/hmmer_domtbl_parse_coverage.py")
+
     """
-    gunzip -c ${domtbl_file} | python hmmer_domtbl_parse_coverage.py ${args} -i - -o ${out_fp}
+    gunzip -c ${domtbl_file} | python ${script} ${args} -i - -o ${out_fp}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

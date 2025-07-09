@@ -19,8 +19,10 @@ process MOTUS2KRONA {
     script:
     def args = task.ext.args ?: ''
 
+    def script = file("${moduleDir}/bin/motus2krona.py")
+
     """
-    python motus2krona.py \\
+    python ${script} \\
         ${args} \\
         -i "${motus_out}" \\
         -o "${meta.id}_krona.tsv" \\

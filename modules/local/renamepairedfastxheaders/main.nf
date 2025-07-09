@@ -30,8 +30,11 @@ process RENAMEPAIREDFASTXHEADERS {
         ext2 = ext2.tokenize('.')[0..-2].join('.')
     }
     def out_f2 = "${prefix2}_renamed.${ext2}"
+
+    def script = file("${moduleDir}/bin/rename_pe_reads.py")
+
     """
-    python rename_pe_reads.py ${args} --no-zip-output -f ${in_f1} -r ${in_f2} -o ${out_f1} -l ${out_f2}
+    python ${script} ${args} --no-zip-output -f ${in_f1} -r ${in_f2} -o ${out_f1} -l ${out_f2}
     gzip ${out_f1} ${out_f2}
 
     cat <<-END_VERSIONS > versions.yml

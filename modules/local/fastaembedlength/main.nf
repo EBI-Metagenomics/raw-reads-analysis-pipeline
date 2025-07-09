@@ -19,8 +19,10 @@ process FASTAEMBEDLENGTH {
     def ext = fasta.getName().tokenize('.')[-1]
     out_fn = "${base}.renamed.${ext}"
 
+    def script = file("${moduleDir}/bin/fastx_embed_length.py")
+
     """
-    python fastx_embed_length.py -i ${fasta} -o ${out_fn} --output_gzip
+    python ${script} -i ${fasta} -o ${out_fn} --output_gzip
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -16,7 +16,7 @@ include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-// include { MULTIQC as MULTIQC_RUN } from '../modules/nf-core/multiqc/main'
+include { MULTIQC as MULTIQC_RUN } from '../modules/nf-core/multiqc/main'
 include { MULTIQC as MULTIQC_STUDY } from '../modules/nf-core/multiqc/main'
 include { PROFILE_HMMSEARCH_PFAM } from '../subworkflows/local/profile_hmmsearch_pfam/main'
 include { samplesheetToList } from 'plugin/nf-schema'
@@ -36,10 +36,9 @@ workflow PIPELINE {
             }
         )
         .filter { it }
-    // db_ch.view{ "db_ch - ${it}" }
+
     FETCHDB(db_ch, "${projectDir}/${params.databases.cache_path}")
     dbs_path_ch = FETCHDB.out.dbs
-    // dbs_path_ch.view{ "dbs_path_ch - ${it}" }
 
     if (!params.download_dbs){
 
@@ -55,15 +54,6 @@ workflow PIPELINE {
             pfam: meta.id == 'pfam'
         }
         .set { dbs }
-
-    // dbs.motus.view{ "dbs.motus - ${ it }" }
-    // dbs.host_genome.view{ "dbs.host_genome - ${ it }" }
-    // dbs.host_genome_minimap2.view{ "dbs.host_genome_minimap2 - ${ it }" }
-    // dbs.phix.view{ "dbs.phix - ${ it }" }
-    // dbs.rfam.view{ "dbs.rfam - ${ it }" }
-    // dbs.silva_ssu.view{ "dbs.silva_ssu - ${ it }" }
-    // dbs.silva_lsu.view{ "dbs.silva_lsu - ${ it }" }
-    // dbs.pfam.view{ "dbs.pfam - ${ it }" }
 
     // Parse samplesheet and fetch reads
     def groupReads = { study, sample, fq1, fq2, library_layout, library_strategy, instrument_platform ->
@@ -81,7 +71,6 @@ workflow PIPELINE {
     }
     samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
 
-    // [ study, sample, read1, [read2], library_layout, library_strategy, instrument_platform]
     fetch_reads_transformed = samplesheet.map(groupReads)
 
     classified_reads = fetch_reads_transformed.map { meta, reads ->
@@ -98,7 +87,6 @@ workflow PIPELINE {
     classified_reads = classified_reads.map { meta, reads ->
         [meta + ['read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
     }
-    // classified_reads.view{ meta, _reads -> "classified_reads - ${meta.id} - ${meta.read_count}" }
     classified_reads = classified_reads.filter { meta, _reads ->
         meta.read_count > 0
     }
@@ -121,7 +109,6 @@ workflow PIPELINE {
     qc_reads = qc_reads.map { meta, reads ->
         [meta + ['qc_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
     }
-    // qc_reads.view{ meta, _reads -> "qc_reads - ${meta.id} - ${meta.qc_read_count}" }
     qc_reads = qc_reads.filter { meta, _reads ->
         meta.qc_read_count > 0
     }
@@ -164,20 +151,15 @@ workflow PIPELINE {
     clean_reads = clean_reads.map { meta, reads ->
         [meta + ['clean_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
     }
-    // clean_reads.view{ meta, _reads -> "clean_reads - [${meta.id}, ${meta.instrument_platform}, ${meta.single_end}] - ${meta.clean_read_count}" }
     clean_reads = clean_reads.filter { meta, _reads ->
         meta.clean_read_count > 0
     }
-
-    // FASTQC(clean_reads)
-    // ch_versions = ch_versions.mix(FASTQC.out.versions)
 
     motus_db = dbs.motus
         .map { meta, fp ->
             file("${fp}/${meta.base_dir}")
         }
         .first()
-    // motus_db.view{ "motus_db - ${it}" }
 
     // mOTUs
     MOTUS_KRONA(
@@ -199,17 +181,15 @@ workflow PIPELINE {
 
     rfam_db = dbs.rfam
         .map { meta, fp ->
-            file("${fp}/${meta.base_dir}/${meta.files.ribosomal_models_file}")
+            file("${fp}/${meta.base_dir}/${meta.files.ribosomal_models_folder}")
         }
         .first()
-    // rfam_db.view{ "rfam_db - ${it}" }
 
     claninfo_db = dbs.rfam
         .map { meta, fp ->
             file("${fp}/${meta.base_dir}/${meta.files.ribosomal_claninfo_file}")
         }
         .first()
-    // claninfo_db.view{ "claninfo_db - ${it}" }
 
     RRNA_EXTRACTION(
         READSMERGE.out.reads_fasta,
@@ -231,7 +211,6 @@ workflow PIPELINE {
             ]
         }
         .first()
-    // lsu_db.view{ "lsu_db - ${it}" }
 
     ssu_db = dbs.silva_ssu
         .map { meta, fp ->
@@ -246,7 +225,6 @@ workflow PIPELINE {
             ]
         }
         .first()
-    // ssu_db.view{ "ssu_db - ${it}" }
 
     lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
         .map { meta, fp -> [meta+['db_label': 'SILVA-LSU'], fp]}
@@ -259,11 +237,6 @@ workflow PIPELINE {
         seqs: [meta, seqs]
         db: db
     }
-    // rrna_ch.view{ "rrna_ch - ${it}" }
-    // ch_test = rrna_chs.seqs.map { meta, reads ->
-    //     [meta + ['rrna_read_count': reads.countFasta()], reads]
-    // }
-    // ch_test.view{ meta, _reads -> "ch_test - [${meta.id}, ${meta.instrument_platform}, ${meta.single_end}] - ${meta.rrna_read_count}" }
 
     MAPSEQ_OTU_KRONA(rrna_chs.seqs, rrna_chs.db)
     ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
@@ -300,33 +273,45 @@ workflow PIPELINE {
         ? Channel.fromPath(params.multiqc_logo, checkIfExists: true)
         : Channel.empty()
 
-    trim_meta = { meta, v -> [[meta.id, meta.single_end, meta.instrument_platform], v] }
-    // decontam_stats.map(trim_meta).view{ "decontam_stats - ${it}" }
-    // QC.out.fastp_json.map(trim_meta).view{ "QC.out.fastp_json - ${it}" }
-    multiqc_ch = qc_stats.map(trim_meta)
-        .join(decontam_stats.map(trim_meta), remainder: true)
-    // multiqc_ch.view { "multiqc_ch - ${it}" }
+    trim_meta = { meta, v ->
+        [
+            [
+                id: meta.id,
+                single_end: meta.single_end,
+                instrument_platform: meta.instrument_platform
+            ],
+            v
+        ]
+    }
 
     // per Run
-    // MULTIQC_RUN(
-    //     multiqc_ch,
-    //     ch_multiqc_config.toList(),
-    //     ch_multiqc_custom_config.toList(),
-    //     ch_multiqc_logo.toList(),
-    //     [],
-    //     [],
-    // )
+    multiqc_run_ch = qc_stats.map(trim_meta)
+        .mix(decontam_stats.map(trim_meta))
+        .groupTuple()
+    multiqc_run_ch.view{ "multiqc_run_ch - ${it}" }
+
+    MULTIQC_RUN(
+        multiqc_run_ch,
+        [],
+        ch_multiqc_config.toList(),
+        ch_multiqc_custom_config.toList(),
+        ch_multiqc_logo.toList(),
+        [],
+        [],
+    )
 
     // Study
-    multiqc_study_ch = multiqc_ch
-        .multiMap { it ->
-            names: it[0][0]
-            files: it[1..-1]
+    multiqc_study_ch = qc_stats.map(trim_meta)
+        .mix(decontam_stats.map(trim_meta))
+        .groupTuple()
+        .multiMap { meta, files ->
+            names: (1..files.size()).collect{ meta.id }
+            files: files
         }
-    // multiqc_study_ch.names.view { "multiqc_study_ch.names - ${it}" }
 
     MULTIQC_STUDY(
-        multiqc_study_ch.files.flatten().filter{ it }.collect(),
+        Channel.value([id: "study"]).combine(multiqc_study_ch.files.flatten().collect()),
+        [],
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList(),
@@ -338,43 +323,36 @@ workflow PIPELINE {
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
-            name: 'ASSEMBLY_ANALYSIS_PIPELINE_software_' + 'mqc_' + 'versions.yml',
+            name: 'RAW_READS_ANALYSIS_PIPELINE_software_' + 'mqc_' + 'versions.yml',
             sort: true,
             newLine: true,
         )
         .set { collated_versions }
 
-    } // end download_dbs condition
+    }
 
     reads_status = classified_reads
         .map{ meta, _reads -> [meta.id, meta.read_count > 0] }
-    // reads_status.view { "reads_status - ${it}" }
 
     qc_status = qc_reads
         .map{ meta, _reads -> [meta.id, meta.qc_read_count > 0] }
-    // qc_status.view { "qc_status - ${it}" }
 
     decontam_status = clean_reads
         .map{ meta, _reads -> [meta.id, meta.clean_read_count > 0] }
-    // decontam_status.view { "decontam_status - ${it}" }
 
     motus_status = ADDHEADER_MOTUS.out.file_with_header
         .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
-    // motus_status.view { "motus_status - ${it}" }
 
     silvassu_status = ADDHEADER_RRNA.out.file_with_header
         .filter{ meta, _fp -> meta.db_label=='SILVA-SSU' }
 	    .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
-    // silvassu_status.view { "silvassu_status - ${it}" }
 
     silvalsu_status = ADDHEADER_RRNA.out.file_with_header
         .filter{ meta, _fp -> meta.db_label=='SILVA-LSU' }
         .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
-    // silvalsu_status.view { "silvalsu_status - ${it}" }
 
     pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
         .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
-    // pfam_status.view { "pfam_status - ${it}" }
 
     run_status = reads_status
         .join( qc_status, remainder: true )

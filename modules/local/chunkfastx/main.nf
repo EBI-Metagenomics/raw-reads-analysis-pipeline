@@ -33,9 +33,11 @@ process CHUNKFASTX {
 
     def reads_cmd = meta.single_end ? "-1 \"${in_f1}\"" : "-1 \"${in_f1}\" -2 \"${in_f2}\""
 
+    def script = file("${moduleDir}/bin/chunk_fastx.py")
+
     """
     mkdir chunked
-    python chunk_fastx.py ${args} ${reads_cmd} -o "chunked/${out_fn}"
+    python ${script} ${args} ${reads_cmd} -o "chunked/${out_fn}"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -65,6 +67,4 @@ process CHUNKFASTX {
         renamepairedfastxheaders: \$(python --version |& sed '1!d ; s/python //')
     END_VERSIONS
     """
-}
-}
 }
