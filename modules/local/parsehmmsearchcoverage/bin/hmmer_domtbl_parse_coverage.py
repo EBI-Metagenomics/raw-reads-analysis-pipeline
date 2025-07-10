@@ -119,7 +119,7 @@ if __name__ == '__main__':
             continue
         depth = sum(list(d.values()))/len(d)
         breadth = sum([v>0 for _,v in d.items()])/len(d)
-        
+
         depth_ = 709 if depth>709 else depth  # prevents and float overflow with math.exp
         expected = 1-(1/math.log2(1+math.exp(depth_)))
 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         }
 
     outfile = sys.stdout if args.output_fp=='-' else open(args.output_fp, 'wt')
-    outfile.write(f"# Query Accession\tRead Count\tCoverage Depth\tCoverage Breadth\n")
+    outfile.write(f"# function\tread_count\tcoverage_depth\tcoverage_breadth\n")
     for k,d in sorted(hmm_hits_coverage_stats.items(), key=lambda x:-x[1]['depth']):
         outfile.write(f"{k}\t{d['count']}\t{d['depth']}\t{d['breadth']}\n")
     outfile.close()

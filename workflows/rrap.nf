@@ -181,7 +181,7 @@ workflow PIPELINE {
 
     rfam_db = dbs.rfam
         .map { meta, fp ->
-            file("${fp}/${meta.base_dir}/${meta.files.ribosomal_models_folder}")
+            file("${fp}/${meta.base_dir}/${meta.files.ribosomal_models_file}")
         }
         .first()
 
@@ -288,7 +288,6 @@ workflow PIPELINE {
     multiqc_run_ch = qc_stats.map(trim_meta)
         .mix(decontam_stats.map(trim_meta))
         .groupTuple()
-    multiqc_run_ch.view{ "multiqc_run_ch - ${it}" }
 
     MULTIQC_RUN(
         multiqc_run_ch,
@@ -308,9 +307,12 @@ workflow PIPELINE {
             names: (1..files.size()).collect{ meta.id }
             files: files
         }
+    multiqc_study_ch = Channel.value([id: "study"])
+        .combine(multiqc_study_ch.files.flatten().collect())
+        .map{ new Tuple(it[0], it[1..-1]) }
 
     MULTIQC_STUDY(
-        Channel.value([id: "study"]).combine(multiqc_study_ch.files.flatten().collect()),
+        multiqc_study_ch,
         [],
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),

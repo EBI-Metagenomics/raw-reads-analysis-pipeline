@@ -36,7 +36,7 @@ process INFERNAL_CMSEARCH {
         --cpu $task.cpus \\
         $args \\
         --tblout ${prefix}.cmsearch_matches.tbl \\
-        $covariance_model_database/*.cm \\
+        $covariance_model_database \\
         $seqdb_name
 
     gzip -n ${prefix}.cmsearch_matches.tbl
