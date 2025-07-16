@@ -6,10 +6,7 @@ A previous pipeline analysing raw reads was a part of MGnify v5. This pipeline i
 
 ## Installation
 
-### Requirements
-* Nextflow >= 0.24.1
-
-### Installation
+Requires `Nextflow >= 0.24.1`
 
 ```bash
 git clone https://github.com/EBI-Metagenomics/raw-reads-analysis-pipeline.git
@@ -116,28 +113,28 @@ nextflow run /path/to/pipeline --samplesheet /path/to/samplesheet.csv -profile l
 
 The pipeline performs the following:
 1. Check for reference databases
-  * Check local paths
-  * Check cache directory
-  * Automatically download if needed/available
+    * Check local paths
+    * Check cache directory
+    * Automatically download if needed/available
 2. Quality control (QC)
-  * Use `fastp` to trim and filter reads
+    * Use `fastp` to trim and filter reads
 3. Decontamination of host (and phiX)
-  * Map reads to reference host genome (human by default)
-  * If the sequencing platform is Illumina then reads mapping to reference phiX genome are also removed
+    * Map reads to reference host genome (human by default)
+    * If the sequencing platform is Illumina then reads mapping to reference phiX genome are also removed
 4. Merge paried-end reads
-  * for some of the profiling steps
+    * for some of the profiling steps
 5. Profile reads
-  * Taxonomic profiling
-    * rRNA-based
-      * rRNA extraction
-      * mapping to reference database
-    * Run mOTUs
-  * Functional profiling
-    * Map reads to Pfam-A hidden markov models (HMMs)
-    * Generate profile from mapping results
+    * Taxonomic profiling
+      * rRNA-based
+        * rRNA extraction
+        * mapping to reference database
+      * Run mOTUs
+    * Functional profiling
+      * Map reads to Pfam-A hidden markov models (HMMs)
+      * Generate profile from mapping results
 6. Generate summary reports
-  * MultiQC
-  * Run status (succeeded/failed)
+    * MultiQC
+    * Run status (succeeded/failed)
 
 ### Discussion about methods
 
