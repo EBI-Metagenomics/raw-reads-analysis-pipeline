@@ -4,11 +4,111 @@ This pipeline analyses whole genome sequencing (WGS) reads, profiling their taxo
 
 A previous pipeline analysing raw reads was a part of MGnify v5. This pipeline is a complete refactor and a significant update to be a part of MGnify v6. It is now implemented in Nextflow, and functional profiling has been added as well as a re-implementation of the existing taxonomic profiling method.
 
-## Quick start
+## Installation
 
-Install like so
+### Requirements
+* Nextflow >= 0.24.1
 
-Run like so
+### Installation
+
+```bash
+git clone https://github.com/EBI-Metagenomics/raw-reads-analysis-pipeline.git
+```
+
+## Usage
+
+### Samplesheet
+
+A samplesheet is essential for running the pipeline. All the information about the input runs that the pipeline needs is defined in this single `csv` file. The column names and values correspond to those found in ENA.
+
+Samplesheet columns:
+| Column                | Purpose                                                                                                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `study`               | Not used by pipeline, can be useful for user to keep track of samples                                                                   |
+| `sample`              | Sample accession, used for naming the pipeline results. Must be unique.                                                                 |
+| `fastq_1`             | Path to first FASTQ file (and only if the `library_strategy` is `SINGLE`). May be a filesystem path, `ftp` path or `s3` path.           |
+| `fastq_2`             | Path to second FASTQ file (may be empty if the `library_strategy` is `SINGLE`).                                                         |
+| `library_layout`      | `SINGLE` if single-end reads, or `PAIRED` if paired-end reads.                                                                          |
+| `library_strategy`    | Not used                                                                                                                                |
+| `instrument_platform` | The sequencing platform used to generate reads. This is used to determine long reads (`ONT` or `PB`) vs. short reads (everything else). |
+
+Example:
+```csv
+study,sample,fastq_1,fastq_2,library_layout,library_strategy,instrument_platform
+PRJEB12345,ERR00000001,/path/to/sample1/reads_1.fastq.gz,/path/read/sample1/reads_2.fastq.gz,PAIRED,WGS,ILLUMINA
+PRJEB12345,ERR00000002,/path/to/sample2/reads_1.fastq.gz,/path/read/sample2/reads_2.fastq.gz,PAIRED,WGS,ILLUMINA
+PRJEB12345,ERR00000003,/path/to/sample3/reads.fastq.gz,,SINGLE,WGS,ONT
+```
+
+### Important parameters
+
+#### Basic
+
+| Parameter            | Purpose                                                                          |
+| -------------------- | -------------------------------------------------------------------------------- |
+| samplesheet          | Path to samplesheet (required)                                                   |
+| outdir               | Path to results directory (Deafult: `'./results'`)                               |
+| skip_qc              | Skip Qaulity Control (QC) (Default: `false`)                                     |
+| skip_decontam        | Skip Decontamination (Default: `false`)                                          |
+| remove_phix          | Toggle remoiving phiX (Default: `true`)                                          |
+| singularity_cachedir | Path to Singularity container cache directory (Default: `'./singularity_cache'`) |
+
+#### Databases
+
+| Parameter                                 | Purpose                                                                                |
+| ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| databases.cache_path                      | Path to cache directory for database downloads (Deafult: `'download_cache/databases'`) |
+| databases.motus.local_path                | Local (filesystem) path to mOTUs database (Default: `''`)                              |
+| databases.motus.base_dir                  | Root directory of mOTUs database (Default: `'db_mOTU'`)                                |
+| databases.host_genome.local_path          | Local (filesystem) path to host (hg38) `bwa-mem2` database (Default: `''`)             |
+| databases.host_genome.base_dir            | Root directory of host `bwa-mem2` database (Default: `'hg38'`)                         |
+| databases.host_genome_minimap2.local_path | Local (filesystem) path to host (hg38) `minimap2` database (Default: `''`)             |
+| databases.host_genome_minimap2.base_dir   | Root directory of host `minimap2` database (Default: `'.'`)                            |
+| databases.phix.local_path                 | Local (filesystem) path to phiX `bwa-mem2` database (Default: `''`)                    |
+| databases.phix.base_dir                   | Root directory of phiX `bwa-mem2` database (Default: `'phix'`)                         |
+| databases.rfam.local_path                 | Local (filesystem) path to Rfam database (Default: `''`)                               |
+| databases.rfam.base_dir                   | Root directory of Rfam database (Default: `'rfam_models'`)                             |
+| databases.silva_ssu.local_path            | Local (filesystem) path to SILVA-SSU database (Default: `''`)                          |
+| databases.silva_ssu.base_dir              | Root directory of SILVA-SSU database (Default: `'silva_ssu-20200130'`)                 |
+| databases.silva_lsu.local_path            | Local (filesystem) path to SILVA-LSU database (Default: `''`)                          |
+| databases.silva_lsu.base_dir              | Root directory of SILVA-LSU database (Default: `'silva_lsu-20200130'`)                 |
+| databases.pfam.local_path                 | Local (filesystem) path to Pfam-A database (Default: `''`)                             |
+| databases.pfam.base_dir                   | Root directory of Pfam-A database (Default: `'.'`)                                     |
+| force_download_dbs                        | Force downloading databases overwriting cache (Default: `false`                        |
+| download_dbs                              | Enable downloading databases (Default: `true`)                                         |
+
+#### Advanced
+
+| Parameter                     | Purpose                                                                      |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| cmsearch_chunksize            | Size of reads chunks for `cmsearch` (Default: `400.KB`)                      |
+| hmmsearch_chunksize           | Size of reads chunks for `hmmsearch` (Default: `400.KB`)                     |
+| decontam_short_phix_chunksize | Size of reads chunks for short-read phiX decontamination (Default: `'400K'`) |
+| decontam_short_host_chunksize | Size of reads chunks for short-read host decontamination (Default: `'400K'`) |
+| decontam_long_host_chunksize  | Size of reads chunks for long-read host decontamination (Default: `'400K'`)  |
+| save_trimmed_fail             | Save reads that fail QC trimming (Default: `false`)                          |
+
+### Commands
+
+Basic run:
+```bash
+nextflow run /path/to/pipeline --samplesheet /path/to/samplesheet.csv -profile local
+```
+
+Customised run:
+```bash
+nextflow run /path/to/pipeline --samplesheet /path/to/samplesheet.csv -profile local --databases.rfam.local_path='/path/to/db' --skip_qc
+```
+
+Custom profile with custom config:
+```bash
+nextflow run /path/to/pipeline --samplesheet /path/to/samplesheet.csv -c /path/to/custom.config -profile custom
+```
+
+Resume:
+```bash
+nextflow run /path/to/pipeline --samplesheet /path/to/samplesheet.csv -profile local -resume
+```
 
 ## Pipeline description
 
@@ -130,28 +230,6 @@ Numerous `nf-core` modules are used throughout the pipeline, and the `nf-core` t
 | [hg38](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000001405.40/) | GRCh38.p14 | Human host reference genome for decontaminations                                           |
 | [phiX](https://www.ncbi.nlm.nih.gov/nuccore/9626372)                   | phiX174    | DNA sometimes introduced by Illumina sequencing platforms to be removed in decontamination |
 
-## Usage
-
-Minimal
-
-Custom DB path
-
-Skipping
-
-Custom profile with custom config
-
-Resume
-
-Debugging
-
-## Samplesheet
-
-Explain why each is needed:
-* Study accession - can be any string, please no underscores
-* Platform
-* Strategy
-* Layout
-
 ## Outputs
 
 Example output directory for a study with a single run `ERR10889056`:
@@ -244,6 +322,4 @@ nf-test test tests/*
 ```
 
 The pipeline comes packaged with mini reads and databases as fixtures to perform these tests so nothing else need to be downloaded.
-
-## Citations
 
