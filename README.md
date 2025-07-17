@@ -1,5 +1,7 @@
 # Raw Reads Analysis Pipeline (RawR)
 
+<img align="center" width="300" src="assets/rawr-dinosaur-ebi-colours.png">
+
 This pipeline analyses whole genome sequencing (WGS) reads, profiling their taxonomy and functions. It is designed to handle short (paired- and single-end) and long reads and to take raw reads (not assembled contigs or genomes) as input.
 
 A previous pipeline analysing raw reads was a part of MGnify v5. This pipeline is a complete refactor and a significant update to be a part of MGnify v6. It is now implemented in Nextflow, and functional profiling has been added as well as a re-implementation of the existing taxonomic profiling method.
@@ -108,6 +110,8 @@ nextflow run /path/to/pipeline --samplesheet /path/to/samplesheet.csv -profile l
 ```
 
 ## Pipeline description
+
+<img src="assets/rawr-schema.png" alt="Pipeline overview" width="90%">
 
 ### Overview
 
