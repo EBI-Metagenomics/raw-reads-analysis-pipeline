@@ -112,7 +112,7 @@ nextflow run /path/to/pipeline --samplesheet /path/to/samplesheet.csv -profile l
 
 ## Pipeline description
 
-<img src="assets/rawr-schema.png" alt="Pipeline overview" width="90%">
+<img src="assets/rawr-schema.png" alt="Pipeline overview" width="100%">
 
 ### Overview
 
