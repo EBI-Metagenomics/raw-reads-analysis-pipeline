@@ -1,6 +1,7 @@
 <h1>
-  Raw Reads Analysis Pipeline (RawR)<br/><br/>
+  Raw Reads Analysis Pipeline (RawR)
   <img align="right" height="140" src="assets/rawr-dinosaur-ebi-colours.png">
+  <br/><br/>
 </h1>
 This pipeline analyses whole genome sequencing (WGS) reads, profiling their taxonomy and functions. It is designed to handle short (paired- and single-end) and long reads and to take raw reads (not assembled contigs or genomes) as input.
 
