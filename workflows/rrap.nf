@@ -84,17 +84,17 @@ workflow PIPELINE {
     classified_reads = classified_reads.map { meta, reads ->
         [meta + ['read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
     }
-    classified_reads = classified_reads.filter { meta, _reads ->
+    classified_nonem_typreads = classified_reads.filter { meta, _reads ->
         meta.read_count > 0
     }
 
     // QC
     if (params.skip_qc) {
-        classified_reads.set { qc_reads }
+        classified_none_ptymreads.set { qc_reads }
         qc_stats = Channel.empty()
     }
     else {
-        QC(classified_reads)
+        QC(classified_none_ptymreads)
         ch_versions = ch_versions.mix(QC.out.versions)
 
         qc_reads = QC.out.fastq
