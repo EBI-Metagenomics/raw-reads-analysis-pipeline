@@ -27,8 +27,8 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="0.76639746"
-     inkscape:cx="634.13571"
-     inkscape:cy="679.15152"
+     inkscape:cx="861.17196"
+     inkscape:cy="822.68018"
      inkscape:window-width="2560"
      inkscape:window-height="1412"
      inkscape:window-x="1080"
@@ -49,7 +49,7 @@
        id="rect131"
        width="79.169525"
        height="64.389717"
-       x="136.93642"
+       x="139.05305"
        y="233.51755" /><path
        style="fill:none;stroke:#000000;stroke-width:0.93;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
        d="m 107.33516,197.27721 c 0.44793,-8.03121 10.72457,-8.35027 10.73975,-14.50577 0.0104,-4.20486 0.1921,-7.23482 -0.0846,-24.58767"
@@ -207,7 +207,7 @@
          id="tspan37"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333px;line-height:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-variant-east-asian:normal;font-feature-settings:normal;font-variation-settings:normal;text-indent:0;text-align:end;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:end;white-space:normal;vector-effect:none;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.63;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;paint-order:markers stroke fill;stop-color:#000000;stop-opacity:1"
          x="90.041664"
-         y="141.20445">Map reds tp reference</tspan><tspan
+         y="141.20445">Map reads to reference</tspan><tspan
          sodipodi:role="line"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333px;line-height:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-variant-east-asian:normal;font-feature-settings:normal;font-variation-settings:normal;text-indent:0;text-align:end;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:end;white-space:normal;vector-effect:none;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.63;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;paint-order:markers stroke fill;stop-color:#000000;stop-opacity:1"
          x="90.041664"
@@ -379,7 +379,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333px;line-height:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-variant-east-asian:normal;font-feature-settings:normal;font-variation-settings:normal;text-indent:0;text-align:start;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;white-space:normal;vector-effect:none;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.63;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;paint-order:markers stroke fill;stop-color:#000000;stop-opacity:1"
          x="145.34819"
          y="348.63776"
-         id="tspan279">(ADDHEADER))</tspan></text><text
+         id="tspan279">(ADDHEADER)</tspan></text><text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333px;line-height:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-variant-east-asian:normal;font-feature-settings:normal;font-variation-settings:normal;text-indent:0;text-align:start;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;opacity:1;vector-effect:none;fill:#000000;fill-opacity:1;stroke:#ffffff;stroke-width:0.63;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;paint-order:markers stroke fill;stop-color:#000000;stop-opacity:1"
        x="145.34819"
@@ -508,13 +508,13 @@
        id="rect129"
        width="79.175758"
        height="69.121368"
-       x="41.999512"
+       x="40.941177"
        y="224.99094" /><rect
        style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.63;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:1.26, 1.26;stroke-dashoffset:0;stroke-opacity:0.5275"
        id="rect130"
        width="72.500206"
        height="32.004208"
-       x="48.496788"
+       x="47.438454"
        y="300.80423" /><rect
        style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.63;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:1.26, 1.26;stroke-dashoffset:0;stroke-opacity:0.5275"
        id="rect132"
@@ -544,7 +544,7 @@
        id="rect137-1"
        width="64.16481"
        height="71.72776"
-       x="34.749134"
+       x="33.6908"
        y="104.91778" /><g
        id="g153"
        transform="matrix(0.41732076,0,0,0.41732076,-108.92562,286.29741)"><path
