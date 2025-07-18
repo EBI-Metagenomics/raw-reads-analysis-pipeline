@@ -9,7 +9,6 @@ include { READSMERGE } from '../subworkflows/local/readsmerge/main'
 include { DECONTAM_SHORTREAD } from '../subworkflows/local/decontam_shortread/main'
 include { DECONTAM_LONGREAD } from '../subworkflows/local/decontam_longread/main'
 include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
-include { SEQTK_SEQ } from '../modules/ebi-metagenomics/seqtk/seq/main'
 include { ADDHEADER as ADDHEADER_RRNA } from '../modules/local/addheader/main'
 include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
 
@@ -40,385 +39,387 @@ workflow PIPELINE {
     FETCHDB(db_ch, "${projectDir}/${params.databases.cache_path}")
     dbs_path_ch = FETCHDB.out.dbs
 
-    if (!params.download_dbs){
+    if (!params.download_dbs) {
 
-    dbs_path_ch
-        .branch { meta, _fp ->
-            motus: meta.id == 'motus'
-            host_genome: meta.id == 'host_genome'
-            host_genome_minimap2: meta.id == 'host_genome_minimap2'
-            phix: meta.id == 'phix'
-            rfam: meta.id == 'rfam'
-            silva_ssu: meta.id == 'silva_ssu'
-            silva_lsu: meta.id == 'silva_lsu'
-            pfam: meta.id == 'pfam'
-        }
-        .set { dbs }
+        dbs_path_ch
+            .branch { meta, _fp ->
+                motus: meta.id == 'motus'
+                host_genome: meta.id == 'host_genome'
+                host_genome_minimap2: meta.id == 'host_genome_minimap2'
+                phix: meta.id == 'phix'
+                rfam: meta.id == 'rfam'
+                silva_ssu: meta.id == 'silva_ssu'
+                silva_lsu: meta.id == 'silva_lsu'
+                pfam: meta.id == 'pfam'
+            }
+            .set { dbs }
 
-    // Parse samplesheet and fetch reads
-    def groupReads = { study, sample, fq1, fq2, library_layout, library_strategy, instrument_platform ->
-        [
+        // Parse samplesheet and fetch reads
+        def groupReads = { study, sample, fq1, fq2, library_layout, library_strategy, instrument_platform ->
             [
-                'id': sample,
-                'study': study,
-                'single_end': fq2 == [] ? true : false,
-                'library_layout': library_layout,
-                'library_strategy': library_strategy,
-                'instrument_platform': instrument_platform
-            ],
-            fq2 == [] ? file(fq1) : [file(fq1), file(fq2)]
-        ]
-    }
-    samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
+                [
+                    'id': sample,
+                    'study': study,
+                    'single_end': fq2 == [] ? true : false,
+                    'library_layout': library_layout,
+                    'library_strategy': library_strategy,
+                    'instrument_platform': instrument_platform,
+                ],
+                fq2 == [] ? file(fq1) : [file(fq1), file(fq2)],
+            ]
+        }
+        samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
 
-    fetch_reads_transformed = samplesheet.map(groupReads)
+        fetch_reads_transformed = samplesheet.map(groupReads)
 
-    classified_reads = fetch_reads_transformed.map { meta, reads ->
-        // Long reads
-        if (["ONT", "PB"].contains(meta.instrument_platform)) {
-            return [meta + [long_reads: true], reads]
+        classified_reads = fetch_reads_transformed.map { meta, reads ->
+            // Long reads
+            if (["ONT", "PB"].contains(meta.instrument_platform)) {
+                return [meta + [long_reads: true], reads]
+            }
+            else {
+                return [meta + [short_reads: true], reads]
+            }
+        }
+
+        // Get read count per fastq row
+        classified_reads = classified_reads.map { meta, reads ->
+            [meta + ['read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+        }
+        classified_reads = classified_reads.filter { meta, _reads ->
+            meta.read_count > 0
+        }
+
+        // QC
+        if (params.skip_qc) {
+            classified_reads.set { qc_reads }
+            qc_stats = Channel.empty()
         }
         else {
-            return [meta + [short_reads: true], reads]
+            QC(classified_reads)
+            ch_versions = ch_versions.mix(QC.out.versions)
+
+            qc_reads = QC.out.fastq
+            qc_stats = QC.out.fastp_json
         }
-    }
-
-    // Get read count per fastq row
-    classified_reads = classified_reads.map { meta, reads ->
-        [meta + ['read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
-    }
-    classified_reads = classified_reads.filter { meta, _reads ->
-        meta.read_count > 0
-    }
-
-    // QC
-    if (params.skip_qc) {
-        classified_reads.set{ qc_reads }
-	qc_stats = Channel.empty()
-    }
-    else {
-        QC(classified_reads)
-        ch_versions = ch_versions.mix(QC.out.versions)
-
-        qc_reads = QC.out.fastq
-        qc_stats = QC.out.fastp_json
-    }
 
 
-    // Get read count per fastq row
-    qc_reads = qc_reads.map { meta, reads ->
-        [meta + ['qc_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
-    }
-    qc_reads = qc_reads.filter { meta, _reads ->
-        meta.qc_read_count > 0
-    }
+        // Get read count per fastq row
+        qc_reads = qc_reads.map { meta, reads ->
+            [meta + ['qc_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+        }
+        qc_reads = qc_reads.filter { meta, _reads ->
+            meta.qc_read_count > 0
+        }
 
-    // DECONTAMINATION
-    if (params.skip_decontam) {
-        qc_reads.set { clean_reads }
-	decontam_stats = Channel.empty()
-    }
-    else {
-        qc_reads
-            .branch { meta, _reads ->
-                short_reads: meta.short_reads
-                long_reads: meta.long_reads
+        // DECONTAMINATION
+        if (params.skip_decontam) {
+            qc_reads.set { clean_reads }
+            decontam_stats = Channel.empty()
+        }
+        else {
+            qc_reads
+                .branch { meta, _reads ->
+                    short_reads: meta.short_reads
+                    long_reads: meta.long_reads
+                }
+                .set { reads_to_analyse }
+
+            DECONTAM_SHORTREAD(
+                reads_to_analyse.short_reads,
+                dbs.host_genome,
+                dbs.phix,
+            )
+            ch_versions = ch_versions.mix(DECONTAM_SHORTREAD.out.versions)
+
+            DECONTAM_LONGREAD(
+                reads_to_analyse.long_reads,
+                dbs.host_genome_minimap2,
+            )
+            ch_versions = ch_versions.mix(DECONTAM_LONGREAD.out.versions)
+
+            clean_reads = DECONTAM_SHORTREAD.out.decontaminated_reads.mix(DECONTAM_LONGREAD.out.decontaminated_reads)
+
+            decontam_stats = DECONTAM_SHORTREAD.out.phix_stats
+                .mix(DECONTAM_SHORTREAD.out.host_stats)
+                .mix(DECONTAM_LONGREAD.out.stats)
+        }
+
+        // Get read count per fastq row
+        clean_reads = clean_reads.map { meta, reads ->
+            [meta + ['clean_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+        }
+        clean_reads = clean_reads.filter { meta, _reads ->
+            meta.clean_read_count > 0
+        }
+
+        motus_db = dbs.motus
+            .map { meta, fp ->
+                file("${fp}/${meta.base_dir}")
             }
-            .set { reads_to_analyse }
+            .first()
 
-        DECONTAM_SHORTREAD(
-            reads_to_analyse.short_reads,
-            dbs.host_genome,
-            dbs.phix,
+        // mOTUs
+        MOTUS_KRONA(
+            clean_reads.map { meta, reads ->
+                [meta, meta.single_end ? [reads] : reads]
+            },
+            motus_db,
         )
-        ch_versions = ch_versions.mix(DECONTAM_SHORTREAD.out.versions)
+        ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)
 
-        DECONTAM_LONGREAD(
-            reads_to_analyse.long_reads,
-            dbs.host_genome_minimap2,
+        ADDHEADER_MOTUS(
+            MOTUS_KRONA.out.krona,
+            "# ${params.results_file_headers.motus_taxonomy.join('\t')}",
         )
-        ch_versions = ch_versions.mix(DECONTAM_LONGREAD.out.versions)
 
-        clean_reads = DECONTAM_SHORTREAD.out.decontaminated_reads
-            .mix(DECONTAM_LONGREAD.out.decontaminated_reads)
+        // rrna_extraction
+        READSMERGE(clean_reads)
+        ch_versions = ch_versions.mix(READSMERGE.out.versions)
 
-        decontam_stats = DECONTAM_SHORTREAD.out.phix_stats
-            .mix(DECONTAM_SHORTREAD.out.host_stats)
-            .mix(DECONTAM_LONGREAD.out.stats)
-    }
+        rfam_db = dbs.rfam
+            .map { meta, fp ->
+                file("${fp}/${meta.base_dir}/${meta.files.ribosomal_models_file}")
+            }
+            .first()
 
-    // Get read count per fastq row
-    clean_reads = clean_reads.map { meta, reads ->
-        [meta + ['clean_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
-    }
-    clean_reads = clean_reads.filter { meta, _reads ->
-        meta.clean_read_count > 0
-    }
+        claninfo_db = dbs.rfam
+            .map { meta, fp ->
+                file("${fp}/${meta.base_dir}/${meta.files.ribosomal_claninfo_file}")
+            }
+            .first()
 
-    motus_db = dbs.motus
-        .map { meta, fp ->
-            file("${fp}/${meta.base_dir}")
+        RRNA_EXTRACTION(
+            READSMERGE.out.reads_fasta,
+            rfam_db,
+            claninfo_db,
+        )
+        ch_versions = ch_versions.mix(RRNA_EXTRACTION.out.versions)
+
+        lsu_db = dbs.silva_lsu
+            .map { meta, fp ->
+                [
+                    [
+                        file("${fp}/${meta.base_dir}/${meta.files.fasta}"),
+                        file("${fp}/${meta.base_dir}/${meta.files.tax}"),
+                        file("${fp}/${meta.base_dir}/${meta.files.otu}"),
+                        file("${fp}/${meta.base_dir}/${meta.files.mscluster}"),
+                        meta.id,
+                    ]
+                ]
+            }
+            .first()
+
+        ssu_db = dbs.silva_ssu
+            .map { meta, fp ->
+                [
+                    [
+                        file("${fp}/${meta.base_dir}/${meta.files.fasta}"),
+                        file("${fp}/${meta.base_dir}/${meta.files.tax}"),
+                        file("${fp}/${meta.base_dir}/${meta.files.otu}"),
+                        file("${fp}/${meta.base_dir}/${meta.files.mscluster}"),
+                        meta.id,
+                    ]
+                ]
+            }
+            .first()
+
+        lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
+            .map { meta, fp -> [meta + ['db_label': 'SILVA-LSU'], fp] }
+            .combine(lsu_db)
+        ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
+            .map { meta, fp -> [meta + ['db_label': 'SILVA-SSU'], fp] }
+            .combine(ssu_db)
+        rrna_ch = lsu_ch.mix(ssu_ch)
+        rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
+            seqs: [meta, seqs]
+            db: db
         }
-        .first()
 
-    // mOTUs
-    MOTUS_KRONA(
-        clean_reads.map { meta, reads ->
-            [meta, meta.single_end ? [reads] : reads]
-        },
-        motus_db
-    )
-    ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)
+        MAPSEQ_OTU_KRONA(rrna_chs.seqs, rrna_chs.db)
+        ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
 
-    ADDHEADER_MOTUS(
-        MOTUS_KRONA.out.krona,
-        "# ${params.results_file_headers.motus_taxonomy.join('\t')}"
-    )
+        ADDHEADER_RRNA(
+            MAPSEQ_OTU_KRONA.out.krona_input,
+            "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
+        )
 
-    // rrna_extraction
-    READSMERGE(clean_reads)
-    ch_versions = ch_versions.mix(READSMERGE.out.versions)
 
-    rfam_db = dbs.rfam
-        .map { meta, fp ->
-            file("${fp}/${meta.base_dir}/${meta.files.ribosomal_models_file}")
-        }
-        .first()
+        // Pfam profiling
+        pfam_db = dbs.pfam
+            .map { meta, fp ->
+                file("${fp}/${meta.base_dir}/${meta.files.hmm}")
+            }
+            .first()
 
-    claninfo_db = dbs.rfam
-        .map { meta, fp ->
-            file("${fp}/${meta.base_dir}/${meta.files.ribosomal_claninfo_file}")
-        }
-        .first()
+        PROFILE_HMMSEARCH_PFAM(
+            READSMERGE.out.reads_fasta,
+            pfam_db,
+        )
+        ch_versions = ch_versions.mix(PROFILE_HMMSEARCH_PFAM.out.versions)
 
-    RRNA_EXTRACTION(
-        READSMERGE.out.reads_fasta,
-        rfam_db,
-        claninfo_db,
-    )
-    ch_versions = ch_versions.mix(RRNA_EXTRACTION.out.versions)
 
-    lsu_db = dbs.silva_lsu
-        .map { meta, fp ->
+        // MultiQC
+        ch_multiqc_config = Channel.fromPath(
+            "${projectDir}/assets/multiqc_config.yml",
+            checkIfExists: true
+        )
+        ch_multiqc_custom_config = params.multiqc_config
+            ? Channel.fromPath(params.multiqc_config, checkIfExists: true)
+            : Channel.empty()
+        ch_multiqc_logo = params.multiqc_logo
+            ? Channel.fromPath(params.multiqc_logo, checkIfExists: true)
+            : Channel.empty()
+
+        trim_meta = { meta, v ->
             [
                 [
-                    file("${fp}/${meta.base_dir}/${meta.files.fasta}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.tax}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.otu}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.mscluster}"),
-                    meta.id,
-                ]
+                    id: meta.id,
+                    single_end: meta.single_end,
+                    instrument_platform: meta.instrument_platform,
+                ],
+                v,
             ]
         }
-        .first()
 
-    ssu_db = dbs.silva_ssu
-        .map { meta, fp ->
-            [
-                [
-                    file("${fp}/${meta.base_dir}/${meta.files.fasta}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.tax}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.otu}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.mscluster}"),
-                    meta.id,
-                ]
-            ]
-        }
-        .first()
+        // per Run
+        multiqc_run_ch = qc_stats
+            .map(trim_meta)
+            .mix(decontam_stats.map(trim_meta))
+            .groupTuple()
 
-    lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
-        .map { meta, fp -> [meta+['db_label': 'SILVA-LSU'], fp]}
-        .combine(lsu_db)
-    ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
-        .map { meta, fp -> [meta+['db_label': 'SILVA-SSU'], fp]}
-        .combine(ssu_db)
-    rrna_ch = lsu_ch.mix(ssu_ch)
-    rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
-        seqs: [meta, seqs]
-        db: db
-    }
-
-    MAPSEQ_OTU_KRONA(rrna_chs.seqs, rrna_chs.db)
-    ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
-
-    ADDHEADER_RRNA(
-        MAPSEQ_OTU_KRONA.out.krona_input,
-        "# ${params.results_file_headers.silva_taxonomy.join('\t')}"
-    )
-
-
-    // Pfam profiling
-    pfam_db = dbs.pfam
-        .map { meta, fp ->
-            file("${fp}/${meta.base_dir}/${meta.files.hmm}")
-        }
-        .first()
-
-    PROFILE_HMMSEARCH_PFAM(
-        READSMERGE.out.reads_fasta,
-        pfam_db
-    )
-    ch_versions = ch_versions.mix(PROFILE_HMMSEARCH_PFAM.out.versions)
-
-
-    // MultiQC
-    ch_multiqc_config = Channel.fromPath(
-        "${projectDir}/assets/multiqc_config.yml",
-        checkIfExists: true
-    )
-    ch_multiqc_custom_config = params.multiqc_config
-        ? Channel.fromPath(params.multiqc_config, checkIfExists: true)
-        : Channel.empty()
-    ch_multiqc_logo = params.multiqc_logo
-        ? Channel.fromPath(params.multiqc_logo, checkIfExists: true)
-        : Channel.empty()
-
-    trim_meta = { meta, v ->
-        [
-            [
-                id: meta.id,
-                single_end: meta.single_end,
-                instrument_platform: meta.instrument_platform
-            ],
-            v
-        ]
-    }
-
-    // per Run
-    multiqc_run_ch = qc_stats.map(trim_meta)
-        .mix(decontam_stats.map(trim_meta))
-        .groupTuple()
-
-    MULTIQC_RUN(
-        multiqc_run_ch,
-        [],
-        ch_multiqc_config.toList(),
-        ch_multiqc_custom_config.toList(),
-        ch_multiqc_logo.toList(),
-        [],
-        [],
-    )
-
-    // Study
-    multiqc_study_ch = qc_stats.map(trim_meta)
-        .mix(decontam_stats.map(trim_meta))
-        .groupTuple()
-        .multiMap { meta, files ->
-            names: (1..files.size()).collect{ meta.id }
-            files: files
-        }
-    multiqc_study_ch = Channel.value([id: "study"])
-        .combine(multiqc_study_ch.files.flatten().collect())
-        .map{ new Tuple(it[0], it[1..-1]) }
-
-    MULTIQC_STUDY(
-        multiqc_study_ch,
-        [],
-        ch_multiqc_config.toList(),
-        ch_multiqc_custom_config.toList(),
-        ch_multiqc_logo.toList(),
-        [],
-        [],
-    )
-
-    // Collate software versions
-    softwareVersionsToYAML(ch_versions)
-        .collectFile(
-            storeDir: "${params.outdir}/pipeline_info",
-            name: 'RAW_READS_ANALYSIS_PIPELINE_software_' + 'mqc_' + 'versions.yml',
-            sort: true,
-            newLine: true,
+        MULTIQC_RUN(
+            multiqc_run_ch,
+            [],
+            ch_multiqc_config.toList(),
+            ch_multiqc_custom_config.toList(),
+            ch_multiqc_logo.toList(),
+            [],
+            [],
         )
-        .set { collated_versions }
 
+        // Study
+        multiqc_study_ch = qc_stats
+            .map(trim_meta)
+            .mix(decontam_stats.map(trim_meta))
+            .groupTuple()
+            .multiMap { meta, files ->
+                names: (1..files.size()).collect { meta.id }
+                files: files
+            }
+        multiqc_study_ch = Channel
+            .value([id: "study"])
+            .combine(multiqc_study_ch.files.flatten().collect())
+            .map { new Tuple(it[0], it[1..-1]) }
+
+        MULTIQC_STUDY(
+            multiqc_study_ch,
+            [],
+            ch_multiqc_config.toList(),
+            ch_multiqc_custom_config.toList(),
+            ch_multiqc_logo.toList(),
+            [],
+            [],
+        )
+
+        // Collate software versions
+        softwareVersionsToYAML(ch_versions)
+            .collectFile(
+                storeDir: "${params.outdir}/pipeline_info",
+                name: 'RAW_READS_ANALYSIS_PIPELINE_software_' + 'mqc_' + 'versions.yml',
+                sort: true,
+                newLine: true,
+            )
+            .set { collated_versions }
     }
 
-    reads_status = classified_reads
-        .map{ meta, _reads -> [meta.id, meta.read_count > 0] }
+    reads_status = classified_reads.map { meta, _reads -> [meta.id, meta.read_count > 0] }
 
-    qc_status = qc_reads
-        .map{ meta, _reads -> [meta.id, meta.qc_read_count > 0] }
+    qc_status = qc_reads.map { meta, _reads -> [meta.id, meta.qc_read_count > 0] }
 
-    decontam_status = clean_reads
-        .map{ meta, _reads -> [meta.id, meta.clean_read_count > 0] }
+    decontam_status = clean_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
 
-    motus_status = ADDHEADER_MOTUS.out.file_with_header
-        .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+    motus_status = ADDHEADER_MOTUS.out.file_with_header.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
     silvassu_status = ADDHEADER_RRNA.out.file_with_header
-        .filter{ meta, _fp -> meta.db_label=='SILVA-SSU' }
-	    .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+        .filter { meta, _fp -> meta.db_label == 'SILVA-SSU' }
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
     silvalsu_status = ADDHEADER_RRNA.out.file_with_header
-        .filter{ meta, _fp -> meta.db_label=='SILVA-LSU' }
-        .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+        .filter { meta, _fp -> meta.db_label == 'SILVA-LSU' }
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
-    pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
-        .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+    pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
     run_status = reads_status
-        .join( qc_status, remainder: true )
-        .join( decontam_status, remainder: true )
-        .join( motus_status, remainder: true )
-        .join( silvassu_status, remainder: true )
-        .join( silvalsu_status, remainder: true )
-        .join( pfam_status, remainder: true )
+        .join(qc_status, remainder: true)
+        .join(decontam_status, remainder: true)
+        .join(motus_status, remainder: true)
+        .join(silvassu_status, remainder: true)
+        .join(silvalsu_status, remainder: true)
+        .join(pfam_status, remainder: true)
 
     run_status
-        .filter{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> qc }
-        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
-	        def status = "all_results"
-	        if (decontam == false) {
-	            status = "no_reads"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].any()) {
-	            status = "no_results"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].every()) {
-	            status = "missing_results"
-	        }
-	        return "${meta_id},${status}"
-	    }}
+        .filter { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> qc }
+        .map { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam ->
+            {
+                def status = "all_results"
+                if (decontam == false) {
+                    status = "no_reads"
+                }
+                if (![motus, silvassu, silvalsu, pfam].any()) {
+                    status = "no_results"
+                }
+                if (![motus, silvassu, silvalsu, pfam].every()) {
+                    status = "missing_results"
+                }
+                return "${meta_id},${status}"
+            }
+        }
         .collectFile(name: "qc_passed_runs.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     run_status
-        .filter{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> !qc }
-        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
-	        def status = "all_results"
-	        if (decontam == false) {
-	            status = "no_reads"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].any()) {
-	            status = "no_results"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].every()) {
-	            status = "missing_results"
-	        }
-	        return "${meta_id},${status}"
-	    }}
+        .filter { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> !qc }
+        .map { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam ->
+            {
+                def status = "all_results"
+                if (decontam == false) {
+                    status = "no_reads"
+                }
+                if (![motus, silvassu, silvalsu, pfam].any()) {
+                    status = "no_results"
+                }
+                if (![motus, silvassu, silvalsu, pfam].every()) {
+                    status = "missing_results"
+                }
+                return "${meta_id},${status}"
+            }
+        }
         .collectFile(name: "qc_failed_runs.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     run_status
-        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
-	        def status = "all_results"
-	        if (decontam == false) {
-	            status = "no_reads"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].any()) {
-	            status = "no_results"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].every()) {
-	            status = "missing_results"
-	        }
-	        return "${meta_id},${status},${reads ? "reads_yes":"read_no"},${qc ? "qc_yes":"qc_no"},${decontam ? "decontam_yes":"decontam_no"},${motus ? "motus_yes":"motus_no"},${silvassu ? "silva-ssu_yes":"silva-ssu_no"},${silvalsu ? "silva-lsu_yes":"silva-lsu_no"},${pfam ? "pfam_yes":"pfam_no"}"
-	    }}
+        .map { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam ->
+            {
+                def status = "all_results"
+                if (decontam == false) {
+                    status = "no_reads"
+                }
+                if (![motus, silvassu, silvalsu, pfam].any()) {
+                    status = "no_results"
+                }
+                if (![motus, silvassu, silvalsu, pfam].every()) {
+                    status = "missing_results"
+                }
+                return "${meta_id},${status},${reads ? "reads_yes" : "read_no"},${qc ? "qc_yes" : "qc_no"},${decontam ? "decontam_yes" : "decontam_no"},${motus ? "motus_yes" : "motus_no"},${silvassu ? "silva-ssu_yes" : "silva-ssu_no"},${silvalsu ? "silva-lsu_yes" : "silva-lsu_no"},${pfam ? "pfam_yes" : "pfam_no"}"
+            }
+        }
         .collectFile(name: "run_status.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     emit:
-    versions = ch_versions                                // channel: [ path(versions.yml) ]
-    pfam_profile = PROFILE_HMMSEARCH_PFAM.out.profile     // channel: [ meta, path ]
-    rrna_profile = ADDHEADER_RRNA.out.file_with_header    // channel: [ meta, path ]
-    motus_profile = ADDHEADER_MOTUS.out.file_with_header  // channel: [ meta, path ]
-    decontam_stats = decontam_stats                       // channel: [ meta, path ]
-    qc_stats = qc_stats                                   // channel: [ meta, path ]
+    versions = ch_versions // channel: [ path(versions.yml) ]
+    pfam_profile = PROFILE_HMMSEARCH_PFAM.out.profile // channel: [ meta, path ]
+    rrna_profile = ADDHEADER_RRNA.out.file_with_header // channel: [ meta, path ]
+    motus_profile = ADDHEADER_MOTUS.out.file_with_header // channel: [ meta, path ]
+    decontam_stats = decontam_stats // channel: [ meta, path ]
+    qc_stats = qc_stats // channel: [ meta, path ]
 }
