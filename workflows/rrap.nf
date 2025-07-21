@@ -9,7 +9,6 @@ include { READSMERGE } from '../subworkflows/local/readsmerge/main'
 include { DECONTAM_SHORTREAD } from '../subworkflows/local/decontam_shortread/main'
 include { DECONTAM_LONGREAD } from '../subworkflows/local/decontam_longread/main'
 include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
-include { SEQTK_SEQ } from '../modules/ebi-metagenomics/seqtk/seq/main'
 include { ADDHEADER as ADDHEADER_RRNA } from '../modules/local/addheader/main'
 include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
 
