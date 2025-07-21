@@ -39,8 +39,6 @@ workflow PIPELINE {
     FETCHDB(db_ch, "${projectDir}/${params.databases.cache_path}")
     dbs_path_ch = FETCHDB.out.dbs
 
-    if (!params.download_dbs){
-
     dbs_path_ch
         .branch { meta, _fp ->
             motus: meta.id == 'motus'
@@ -63,9 +61,9 @@ workflow PIPELINE {
                 'single_end': fq2 == [] ? true : false,
                 'library_layout': library_layout,
                 'library_strategy': library_strategy,
-                'instrument_platform': instrument_platform
+                'instrument_platform': instrument_platform,
             ],
-            fq2 == [] ? file(fq1) : [file(fq1), file(fq2)]
+            fq2 == [] ? file(fq1) : [file(fq1), file(fq2)],
         ]
     }
     samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
@@ -86,17 +84,17 @@ workflow PIPELINE {
     classified_reads = classified_reads.map { meta, reads ->
         [meta + ['read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
     }
-    classified_reads = classified_reads.filter { meta, _reads ->
+    classified_nonempty_reads = classified_reads.filter { meta, _reads ->
         meta.read_count > 0
     }
 
     // QC
     if (params.skip_qc) {
-        classified_reads.set{ qc_reads }
-	qc_stats = Channel.empty()
+        classified_nonempty_reads.set { qc_reads }
+        qc_stats = Channel.empty()
     }
     else {
-        QC(classified_reads)
+        QC(classified_nonempty_reads)
         ch_versions = ch_versions.mix(QC.out.versions)
 
         qc_reads = QC.out.fastq
@@ -115,7 +113,7 @@ workflow PIPELINE {
     // DECONTAMINATION
     if (params.skip_decontam) {
         qc_reads.set { clean_reads }
-	decontam_stats = Channel.empty()
+        decontam_stats = Channel.empty()
     }
     else {
         qc_reads
@@ -138,8 +136,7 @@ workflow PIPELINE {
         )
         ch_versions = ch_versions.mix(DECONTAM_LONGREAD.out.versions)
 
-        clean_reads = DECONTAM_SHORTREAD.out.decontaminated_reads
-            .mix(DECONTAM_LONGREAD.out.decontaminated_reads)
+        clean_reads = DECONTAM_SHORTREAD.out.decontaminated_reads.mix(DECONTAM_LONGREAD.out.decontaminated_reads)
 
         decontam_stats = DECONTAM_SHORTREAD.out.phix_stats
             .mix(DECONTAM_SHORTREAD.out.host_stats)
@@ -165,13 +162,13 @@ workflow PIPELINE {
         clean_reads.map { meta, reads ->
             [meta, meta.single_end ? [reads] : reads]
         },
-        motus_db
+        motus_db,
     )
     ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)
 
     ADDHEADER_MOTUS(
         MOTUS_KRONA.out.krona,
-        "# ${params.results_file_headers.motus_taxonomy.join('\t')}"
+        "# ${params.results_file_headers.motus_taxonomy.join('\t')}",
     )
 
     // rrna_extraction
@@ -226,10 +223,10 @@ workflow PIPELINE {
         .first()
 
     lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
-        .map { meta, fp -> [meta+['db_label': 'SILVA-LSU'], fp]}
+        .map { meta, fp -> [meta + ['db_label': 'SILVA-LSU'], fp] }
         .combine(lsu_db)
     ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
-        .map { meta, fp -> [meta+['db_label': 'SILVA-SSU'], fp]}
+        .map { meta, fp -> [meta + ['db_label': 'SILVA-SSU'], fp] }
         .combine(ssu_db)
     rrna_ch = lsu_ch.mix(ssu_ch)
     rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
@@ -242,7 +239,7 @@ workflow PIPELINE {
 
     ADDHEADER_RRNA(
         MAPSEQ_OTU_KRONA.out.krona_input,
-        "# ${params.results_file_headers.silva_taxonomy.join('\t')}"
+        "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
     )
 
 
@@ -255,7 +252,7 @@ workflow PIPELINE {
 
     PROFILE_HMMSEARCH_PFAM(
         READSMERGE.out.reads_fasta,
-        pfam_db
+        pfam_db,
     )
     ch_versions = ch_versions.mix(PROFILE_HMMSEARCH_PFAM.out.versions)
 
@@ -277,14 +274,15 @@ workflow PIPELINE {
             [
                 id: meta.id,
                 single_end: meta.single_end,
-                instrument_platform: meta.instrument_platform
+                instrument_platform: meta.instrument_platform,
             ],
-            v
+            v,
         ]
     }
 
     // per Run
-    multiqc_run_ch = qc_stats.map(trim_meta)
+    multiqc_run_ch = qc_stats
+        .map(trim_meta)
         .mix(decontam_stats.map(trim_meta))
         .groupTuple()
 
@@ -299,16 +297,18 @@ workflow PIPELINE {
     )
 
     // Study
-    multiqc_study_ch = qc_stats.map(trim_meta)
+    multiqc_study_ch = qc_stats
+        .map(trim_meta)
         .mix(decontam_stats.map(trim_meta))
         .groupTuple()
         .multiMap { meta, files ->
-            names: (1..files.size()).collect{ meta.id }
+            names: (1..files.size()).collect { meta.id }
             files: files
         }
-    multiqc_study_ch = Channel.value([id: "study"])
+    multiqc_study_ch = Channel
+        .value([id: "study"])
         .combine(multiqc_study_ch.files.flatten().collect())
-        .map{ new Tuple(it[0], it[1..-1]) }
+        .map { new Tuple(it[0], it[1..-1]) }
 
     MULTIQC_STUDY(
         multiqc_study_ch,
@@ -330,94 +330,93 @@ workflow PIPELINE {
         )
         .set { collated_versions }
 
-    }
+    reads_status = classified_reads.map { meta, _reads -> [meta.id, meta.read_count > 0] }
 
-    reads_status = classified_reads
-        .map{ meta, _reads -> [meta.id, meta.read_count > 0] }
+    qc_status = qc_reads.map { meta, _reads -> [meta.id, meta.qc_read_count > 0] }
 
-    qc_status = qc_reads
-        .map{ meta, _reads -> [meta.id, meta.qc_read_count > 0] }
+    decontam_status = clean_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
 
-    decontam_status = clean_reads
-        .map{ meta, _reads -> [meta.id, meta.clean_read_count > 0] }
-
-    motus_status = ADDHEADER_MOTUS.out.file_with_header
-        .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+    motus_status = ADDHEADER_MOTUS.out.file_with_header.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
     silvassu_status = ADDHEADER_RRNA.out.file_with_header
-        .filter{ meta, _fp -> meta.db_label=='SILVA-SSU' }
-	    .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+        .filter { meta, _fp -> meta.db_label == 'SILVA-SSU' }
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
     silvalsu_status = ADDHEADER_RRNA.out.file_with_header
-        .filter{ meta, _fp -> meta.db_label=='SILVA-LSU' }
-        .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+        .filter { meta, _fp -> meta.db_label == 'SILVA-LSU' }
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
-    pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
-        .map{ meta, fp -> [meta.id, fp.exists() && (fp.readLines().size()>0)] }
+    pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
     run_status = reads_status
-        .join( qc_status, remainder: true )
-        .join( decontam_status, remainder: true )
-        .join( motus_status, remainder: true )
-        .join( silvassu_status, remainder: true )
-        .join( silvalsu_status, remainder: true )
-        .join( pfam_status, remainder: true )
+        .join(qc_status, remainder: true)
+        .join(decontam_status, remainder: true)
+        .join(motus_status, remainder: true)
+        .join(silvassu_status, remainder: true)
+        .join(silvalsu_status, remainder: true)
+        .join(pfam_status, remainder: true)
 
     run_status
-        .filter{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> qc }
-        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
-	        def status = "all_results"
-	        if (decontam == false) {
-	            status = "no_reads"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].any()) {
-	            status = "no_results"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].every()) {
-	            status = "missing_results"
-	        }
-	        return "${meta_id},${status}"
-	    }}
+        .filter { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> qc }
+        .map { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam ->
+            {
+                def status = "all_results"
+                if (decontam == false) {
+                    status = "no_reads"
+                }
+                if (![motus, silvassu, silvalsu, pfam].any()) {
+                    status = "no_results"
+                }
+                if (![motus, silvassu, silvalsu, pfam].every()) {
+                    status = "missing_results"
+                }
+                return "${meta_id},${status}"
+            }
+        }
         .collectFile(name: "qc_passed_runs.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     run_status
-        .filter{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> !qc }
-        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
-	        def status = "all_results"
-	        if (decontam == false) {
-	            status = "no_reads"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].any()) {
-	            status = "no_results"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].every()) {
-	            status = "missing_results"
-	        }
-	        return "${meta_id},${status}"
-	    }}
+        .filter { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> !qc }
+        .map { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam ->
+            {
+                def status = "all_results"
+                if (decontam == false) {
+                    status = "no_reads"
+                }
+                if (![motus, silvassu, silvalsu, pfam].any()) {
+                    status = "no_results"
+                }
+                if (![motus, silvassu, silvalsu, pfam].every()) {
+                    status = "missing_results"
+                }
+                return "${meta_id},${status}"
+            }
+        }
         .collectFile(name: "qc_failed_runs.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     run_status
-        .map{ meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> {
-	        def status = "all_results"
-	        if (decontam == false) {
-	            status = "no_reads"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].any()) {
-	            status = "no_results"
-	        }
-	        if (![motus, silvassu, silvalsu, pfam].every()) {
-	            status = "missing_results"
-	        }
-	        return "${meta_id},${status},${reads ? "reads_yes":"read_no"},${qc ? "qc_yes":"qc_no"},${decontam ? "decontam_yes":"decontam_no"},${motus ? "motus_yes":"motus_no"},${silvassu ? "silva-ssu_yes":"silva-ssu_no"},${silvalsu ? "silva-lsu_yes":"silva-lsu_no"},${pfam ? "pfam_yes":"pfam_no"}"
-	    }}
+        .map { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam ->
+            {
+                def status = "all_results"
+                if (decontam == false) {
+                    status = "no_reads"
+                }
+                if (![motus, silvassu, silvalsu, pfam].any()) {
+                    status = "no_results"
+                }
+                if (![motus, silvassu, silvalsu, pfam].every()) {
+                    status = "missing_results"
+                }
+                return "${meta_id},${status},${reads ? "reads_yes" : "read_no"},${qc ? "qc_yes" : "qc_no"},${decontam ? "decontam_yes" : "decontam_no"},${motus ? "motus_yes" : "motus_no"},${silvassu ? "silva-ssu_yes" : "silva-ssu_no"},${silvalsu ? "silva-lsu_yes" : "silva-lsu_no"},${pfam ? "pfam_yes" : "pfam_no"}"
+            }
+        }
         .collectFile(name: "run_status.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     emit:
-    versions = ch_versions                                // channel: [ path(versions.yml) ]
-    pfam_profile = PROFILE_HMMSEARCH_PFAM.out.profile     // channel: [ meta, path ]
-    rrna_profile = ADDHEADER_RRNA.out.file_with_header    // channel: [ meta, path ]
-    motus_profile = ADDHEADER_MOTUS.out.file_with_header  // channel: [ meta, path ]
-    decontam_stats = decontam_stats                       // channel: [ meta, path ]
-    qc_stats = qc_stats                                   // channel: [ meta, path ]
+    versions = ch_versions // channel: [ path(versions.yml) ]
+    pfam_profile = PROFILE_HMMSEARCH_PFAM.out.profile // channel: [ meta, path ]
+    rrna_profile = ADDHEADER_RRNA.out.file_with_header // channel: [ meta, path ]
+    motus_profile = ADDHEADER_MOTUS.out.file_with_header // channel: [ meta, path ]
+    decontam_stats = decontam_stats // channel: [ meta, path ]
+    qc_stats = qc_stats // channel: [ meta, path ]
 }
