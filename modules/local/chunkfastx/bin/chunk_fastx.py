@@ -37,7 +37,7 @@ def get_reads(infile, gz: bool):
             if not header is None:
                 yield (header, base_count, '\n'.join(lines))
             lines = []
-            header, _ = re.findall(r"^(.*)([./](1|2))?$", line_str[1:].split()[0])[0][:2]
+            header, _ = re.findall(r"^(.*?)([./][12])?$", line_str[1:].split()[0])[0][:2]
         if (not prev_line=='+') and (not line_str[0] in {'+','>','@'}):
             base_count = len(line_str.strip())
         lines.append(line_str.strip())
