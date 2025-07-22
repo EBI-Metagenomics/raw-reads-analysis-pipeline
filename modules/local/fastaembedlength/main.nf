@@ -16,13 +16,14 @@ process FASTAEMBEDLENGTH {
     script:
     def args = task.ext.args ?: ''
     def base = fasta.getName().tokenize('.')[0..-2].join('.')
-    def ext = fasta.getName().tokenize('.')[-1]
-    out_fn = "${base}.renamed.${ext}"
+    // def ext = fasta.getName().tokenize('.')[-1]
+    out_fn = "${base}.renamed"
 
     def script = file("${moduleDir}/bin/fastx_embed_length.py")
 
     """
-    python ${script} -i ${fasta} -o ${out_fn} --output_gzip
+    python ${script} -i ${fasta} -o ${out_fn} --no_output_gzip ${args}
+    gzip ${out_fn}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -31,10 +32,8 @@ process FASTAEMBEDLENGTH {
     """
 
     stub:
-    def args = task.ext.args ?: ''
     def base = fasta.getName().tokenize('.')[0..-2].join('.')
-    def ext = fasta.getName().tokenize('.')[-1]
-    out_fn = "${base}.renamed.${ext}"
+    out_fn = "${base}.renamed"
 
     """
     touch ${out_fn}
