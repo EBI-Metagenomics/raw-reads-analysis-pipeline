@@ -10,7 +10,7 @@ process FASTAEMBEDLENGTH {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("${out_fn}"), emit: fasta
+    tuple val(meta), path("${out_fn}.gz"), emit: fasta
     path "versions.yml", emit: versions
 
     script:
