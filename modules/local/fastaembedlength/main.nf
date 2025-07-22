@@ -36,7 +36,7 @@ process FASTAEMBEDLENGTH {
     out_fn = "${base}.renamed"
 
     """
-    touch ${out_fn}
+    touch ${out_fn}.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
