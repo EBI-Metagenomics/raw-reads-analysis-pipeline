@@ -52,6 +52,8 @@ workflow DECONTAM_SHORTREAD {
             return chunks.collect { chunk -> tuple(groupKey(meta, chunks.size), chunk) }
         }
 
+        chunked_reads.view{ "chunked_reads - ${it}" }
+
         BWAMEM2_ALIGN_PHIX(
             chunked_reads,
             phix_genome_index,
