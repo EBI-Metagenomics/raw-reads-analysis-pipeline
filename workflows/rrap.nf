@@ -4,6 +4,7 @@
     ~~~~~~~~~~~~~~~~~~
 */
 include { FETCHDB } from '../subworkflows/local/fetchdb/main'
+include { STANDARDFASTX } from '../modules/local/standardfastx/main'
 include { QC } from '../subworkflows/local/qc/main'
 include { READSMERGE } from '../subworkflows/local/readsmerge/main'
 include { DECONTAM_SHORTREAD } from '../subworkflows/local/decontam_shortread/main'
@@ -63,7 +64,7 @@ workflow PIPELINE {
                 'library_strategy': library_strategy,
                 'instrument_platform': instrument_platform,
             ],
-            fq2 == [] ? file(fq1) : [file(fq1), file(fq2)],
+            fq2 == [] ? [file(fq1)] : [file(fq1), file(fq2)],
         ]
     }
     samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
@@ -82,7 +83,7 @@ workflow PIPELINE {
 
     // Get read count per fastq row
     classified_reads = classified_reads.map { meta, reads ->
-        [meta + ['read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+        [meta + ['read_count': reads[0].countFastq()], reads]
     }
     classified_nonempty_reads = classified_reads.filter { meta, _reads ->
         meta.read_count > 0
@@ -138,14 +139,29 @@ workflow PIPELINE {
 
         clean_reads = DECONTAM_SHORTREAD.out.decontaminated_reads.mix(DECONTAM_LONGREAD.out.decontaminated_reads)
 
+        clean_reads = clean_reads.map { meta, reads ->
+            return [
+                groupKey(
+                    meta.findAll{ it.key !in ['read_idx', 'reads_n'] },
+                    meta.reads_n
+                ),
+                reads
+            ]
+        }
+        .groupTuple()
+
         decontam_stats = DECONTAM_SHORTREAD.out.phix_stats
             .mix(DECONTAM_SHORTREAD.out.host_stats)
             .mix(DECONTAM_LONGREAD.out.stats)
     }
 
+
+    STANDARDFASTX(clean_reads)
+    clean_reads = STANDARDFASTX.out.reads
+
     // Get read count per fastq row
     clean_reads = clean_reads.map { meta, reads ->
-        [meta + ['clean_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+        [meta + ['clean_read_count': reads[0].countFastq()], reads]
     }
     clean_reads = clean_reads.filter { meta, _reads ->
         meta.clean_read_count > 0
@@ -159,9 +175,7 @@ workflow PIPELINE {
 
     // mOTUs
     MOTUS_KRONA(
-        clean_reads.map { meta, reads ->
-            [meta, meta.single_end ? [reads] : reads]
-        },
+        clean_reads,
         motus_db,
     )
     ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)

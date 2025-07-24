@@ -1,4 +1,3 @@
-include { RENAMEPAIREDFASTXHEADERS } from '../../../modules/local/renamepairedfastxheaders/main'
 include { SEQTK_SEQ } from '../../../modules/ebi-metagenomics/seqtk/seq/main'
 include { FASTP } from '../../../modules/nf-core/fastp/main'
 
@@ -13,11 +12,7 @@ workflow READSMERGE {
     ch_se_reads = ch_reads.filter { meta, _reads -> meta.single_end }
     ch_pe_reads = ch_reads.filter { meta, _reads -> !meta.single_end }
 
-    // rename paired-end reads...
-    RENAMEPAIREDFASTXHEADERS(ch_pe_reads)
-
-    // ...then merge
-    FASTP(RENAMEPAIREDFASTXHEADERS.out.reads, [], false, params.save_trimmed_fail, true)
+    FASTP(ch_pe_reads, [], false, params.save_trimmed_fail, true)
     ch_versions = ch_versions.mix(FASTP.out.versions.first())
 
     // mix back with single-end reads
