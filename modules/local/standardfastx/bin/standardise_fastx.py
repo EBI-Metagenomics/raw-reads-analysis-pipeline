@@ -70,7 +70,7 @@ if __name__ == '__main__':
     read_stacks = [{} for _ in range(2 if pe else 1)]
     stop_flag = [False for _ in in_reads]
 
-    basename, extension = re.findall(r"^(.*)\.(f(ast)?[aq](\.gz)?)$", args.output_pattern)[0][:2]
+    basename, extension = re.findall(r"^(.*?)\.(f(ast)?[aq](\.gz)?)$", args.output_pattern)[0][:2]
     out_gz = (args.output_gzip) if (args.output_gzip is not None) else (extension[-3:]=='.gz')
     if pe:
         out_files = [f"{basename}.{str(i+1)}.{extension}" for i in range(2)]

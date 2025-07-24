@@ -21,17 +21,20 @@ workflow DECONTAM_LONGREAD {
         }
         .first()
 
-    chunked_reads = input_reads.flatMap { meta, fasta ->
-        def reads_n = fasta.size()
-        [fasta.indices, fasta].transpose().collect { idx, fasta_ ->
-            def chunks = fasta_.splitFasta(
-                file: true,
-                size: params.decontam_long_host_chunksize
-            )
-            return chunks.collect{chunk -> tuple(idx, chunk, chunks.size())}
+    decontaminated_reads = input_reads.flatMap { meta, fastas ->
+        def reads_n = fastas.size()
+        return [fastas.indices, fastas].transpose().collect {
+            idx, fasta ->
+            tuple(meta + ['read_idx': idx, 'reads_n': reads_n], fasta)
         }
-        .collectMany { it }
-        .collect{ idx, chunk, chunksize -> tuple(groupKey(meta + ['read_idx': idx, 'reads_n': reads_n], chunksize), chunk) }
+    }
+
+    chunked_reads = decontaminated_reads.flatMap { meta, fasta ->
+        def chunks = fasta.splitFasta(
+            file: true,
+            size: params.decontam_long_host_chunksize
+        )
+        return chunks.collect { chunk -> tuple(groupKey(meta, chunks.size), chunk) }
     }
 
     MINIMAP2_ALIGN(
@@ -50,17 +53,21 @@ workflow DECONTAM_LONGREAD {
 
     DECONTAMBAM(
         COMBINEBAM.out.concatenated_result.map { meta, bam ->
-            [meta, bam, false, "long_read_host"]
+            [meta, bam, false, "long_read_host_${meta.read_idx+1}"]
         }
     )
     ch_versions = ch_versions.mix(DECONTAMBAM.out.versions)
 
-    decontaminated_reads = DECONTAMBAM.out.unmapped_reads.map { meta, reads ->
-        [meta + ['decontam_host_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+    decontaminated_reads = decontaminated_reads.map {
+        meta, fasta ->
+        def meta_ = meta - ['read_idx': meta.read_idx, 'reads_n': meta.reads_n]
+        return tuple(
+            groupKey(meta_, meta.reads_n),
+            fasta
+        )
     }
-    decontaminated_reads = decontaminated_reads.filter { meta, _reads ->
-        meta.decontam_host_read_count > 0
-    }
+    .groupTuple()
+
 
     emit:
     decontaminated_reads = decontaminated_reads

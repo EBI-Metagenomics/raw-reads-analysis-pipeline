@@ -59,7 +59,7 @@ workflow PIPELINE {
             [
                 'id': sample,
                 'study': study,
-                'single_end': fq2 == [] ? true : false,
+                'single_end': library_layout == 'SINGLE' ? true : false,
                 'library_layout': library_layout,
                 'library_strategy': library_strategy,
                 'instrument_platform': instrument_platform,
@@ -105,9 +105,10 @@ workflow PIPELINE {
 
     // Get read count per fastq row
     qc_reads = qc_reads.map { meta, reads ->
-        [meta + ['qc_read_count': (meta.single_end ? reads : reads[0]).countFastq()], reads]
+        def reads_ = (reads instanceof Collection ? reads[0] : reads)
+        [meta + ['qc_read_count': reads_.countFastq()], reads]
     }
-    qc_reads = qc_reads.filter { meta, _reads ->
+    .filter { meta, _reads ->
         meta.qc_read_count > 0
     }
 
@@ -139,41 +140,35 @@ workflow PIPELINE {
 
         clean_reads = DECONTAM_SHORTREAD.out.decontaminated_reads.mix(DECONTAM_LONGREAD.out.decontaminated_reads)
 
-        clean_reads = clean_reads.map { meta, reads ->
-            return [
-                groupKey(
-                    meta.findAll{ it.key !in ['read_idx', 'reads_n'] },
-                    meta.reads_n
-                ),
-                reads
-            ]
-        }
-        .groupTuple()
-
         decontam_stats = DECONTAM_SHORTREAD.out.phix_stats
             .mix(DECONTAM_SHORTREAD.out.host_stats)
             .mix(DECONTAM_LONGREAD.out.stats)
     }
 
+    clean_reads = clean_reads.map { meta, reads ->
+        def reads_ = (reads instanceof Collection ? reads[0] : reads)
+        [
+            meta + [
+                'clean_read_count': reads_.countFastq()
+            ],
+            reads
+        ]
+    }
+    .filter { meta, _reads ->
+        meta.clean_read_count > 0
+    }
 
     STANDARDFASTX(clean_reads)
     clean_reads = STANDARDFASTX.out.reads
 
-    // Get read count per fastq row
-    clean_reads = clean_reads.map { meta, reads ->
-        [meta + ['clean_read_count': reads[0].countFastq()], reads]
-    }
-    clean_reads = clean_reads.filter { meta, _reads ->
-        meta.clean_read_count > 0
-    }
 
+    // mOTUs
     motus_db = dbs.motus
         .map { meta, fp ->
             file("${fp}/${meta.base_dir}")
         }
         .first()
 
-    // mOTUs
     MOTUS_KRONA(
         clean_reads,
         motus_db,

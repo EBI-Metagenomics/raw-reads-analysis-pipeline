@@ -25,22 +25,22 @@ process STANDARDFASTX {
         (in_f1, in_f2) = reads
     }
 
-    def prefix = in_f1.getName().tokenize('.')[0]
-    def extension = in_f1.getName().tokenize('.')[1..-1].join('.')
-    if (extension.endsWith('.gz')) {
-        extension = extension.tokenize('.')[0..-2].join('.')
+    def out_fn = in_f1.getName()
+    if (out_fn.endsWith('.gz')) {
+        out_fn = out_fn.tokenize('.')[0..<-1].join('.')
     }
-    def out_fn = "${prefix}.${extension}"
 
-    def reads_cmd = meta.single_end ? "-1 \"${in_f1}\"" : "-1 \"${in_f1}\" -2 \"${in_f2}\""
+    def out_dir = "standardised"
+
+    def reads_cmd = (in_f2 == null) ? "-1 \"${in_f1}\"" : "-1 \"${in_f1}\" -2 \"${in_f2}\""
     def pe_cmd = meta.single_end ? "" : "-p"
 
     def script = file("${moduleDir}/bin/standardise_fastx.py")
 
     """
-    mkdir standardised
-    python ${script} ${args} ${reads_cmd} -o "standardised/${out_fn} -c ${pe_cmd}"
-    ls standardised | xargs gzip
+    mkdir ${out_dir}
+    python ${script} ${args} ${reads_cmd} -o "${out_dir}/${out_fn}" -c ${pe_cmd}
+    ls ${out_dir}/* | xargs gzip
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -58,13 +58,14 @@ process STANDARDFASTX {
         (in_f1, in_f2) = reads
     }
 
-    def prefix = in_f1.getName().tokenize('.')[0]
-    def extension = in_f1.getName().tokenize('.')[1..-1].join('.')
-    def out_fn = "${prefix}.${extension}"
+    def out_fn1 = in_f1.getName()
+    def out_fn2 = in_f2.getName()
+    def out_dir = "standardised"
 
     """
-    mkdir chunked
-    touch "chunked/${prefix}.${extension}"
+    mkdir ${out_dir}
+    touch "${out_dir}/${out_fn1}"
+    touch "${out_dir}/${out_fn2}"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
