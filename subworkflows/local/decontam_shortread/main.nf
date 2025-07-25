@@ -2,8 +2,8 @@ include { BWAMEM2_MEM as BWAMEM2_ALIGN_PHIX } from '../../../modules/nf-core/bwa
 include { BWAMEM2_MEM as BWAMEM2_ALIGN_HOST } from '../../../modules/nf-core/bwamem2/mem/main'
 include { DECONTAMBAM as DECONTAMBAM_PHIX } from '../../../modules/local/decontambam/main'
 include { DECONTAMBAM as DECONTAMBAM_HOST } from '../../../modules/local/decontambam/main'
-include { COMBINEBAM as COMBINEBAM_PHIX } from '../../../modules/local/combinebam/main'
-include { COMBINEBAM as COMBINEBAM_HOST } from '../../../modules/local/combinebam/main'
+include { CHUNKFASTX} from  '../../../modules/local/chunkfastx/main'
+include { CONCATENATE} from  '../../../modules/local/concatenate/main'
 
 workflow DECONTAM_SHORTREAD {
     take:
@@ -35,108 +35,92 @@ workflow DECONTAM_SHORTREAD {
         }
         .first()
 
-    decontaminated_reads = reads.flatMap { meta, fastas ->
-        def reads_n = fastas.size()
-        return [fastas.indices, fastas].transpose().collect {
-            idx, fasta ->
-            tuple(meta + ['read_idx': idx, 'reads_n': reads_n], fasta)
-        }
-    }
 
-    if (params.remove_phix) {
-        chunked_reads = decontaminated_reads.flatMap { meta, fasta ->
-            def chunks = fasta.splitFasta(
-                file: true,
-                size: params.decontam_short_phix_chunksize
+    if (params.remove_phix || params.remove_host) {
+
+        decontaminated_reads = reads.flatMap { meta, fastas ->
+            def reads_n = fastas.size()
+            return [fastas.indices, fastas].transpose().collect {
+                idx, fasta ->
+                tuple(meta + ['read_idx': idx, 'reads_n': reads_n], fasta)
+            }
+        }
+
+        CHUNKFASTX(decontaminated_reads)
+        chunked_decontaminated_reads = CHUNKFASTX.out.chunked_reads.flatMap {
+            meta, chunks ->
+            def chunks_ = chunks instanceof Collection ? chunks : [chunks]
+            return chunks_.collect {
+                chunk ->
+                tuple(groupKey(meta, chunks_.size()), chunk)
+            }
+        }
+
+        if (params.remove_phix) {
+
+            BWAMEM2_ALIGN_PHIX(
+                chunked_decontaminated_reads,
+                phix_genome_index,
+                phix_genome_fasta,
+                false,
             )
-            return chunks.collect { chunk -> tuple(groupKey(meta, chunks.size), chunk) }
+            ch_versions = ch_versions.mix(BWAMEM2_ALIGN_PHIX.out.versions)
+
+            DECONTAMBAM_PHIX(
+                BWAMEM2_ALIGN_PHIX.out.bam.map { meta, bam ->
+                    [meta, bam, false, "${meta.read_idx+1}"]
+                }
+            )
+            ch_versions = ch_versions.mix(DECONTAMBAM_PHIX.out.versions)
+
+            chunked_decontaminated_reads = DECONTAMBAM_PHIX.out.unmapped_reads
         }
 
-        chunked_reads.view{ "chunked_reads - ${it}" }
+        if (host_genome != null) {
 
-        BWAMEM2_ALIGN_PHIX(
-            chunked_reads,
-            phix_genome_index,
-            phix_genome_fasta,
-            false,
-        )
-        ch_versions = ch_versions.mix(BWAMEM2_ALIGN_PHIX.out.versions)
+            BWAMEM2_ALIGN_HOST(
+                chunked_decontaminated_reads,
+                host_genome_index,
+                host_genome_fasta,
+                false,
+            )
+            ch_versions = ch_versions.mix(BWAMEM2_ALIGN_HOST.out.versions)
 
-        COMBINEBAM_PHIX(
-            BWAMEM2_ALIGN_PHIX.out.bam.groupTuple()
-        )
+            DECONTAMBAM_HOST(
+                BWAMEM2_ALIGN_HOST.out.bam.map { meta, bam ->
+                    [meta, bam, false, "${meta.read_idx+1}"]
+                }
+            )
+            ch_versions = ch_versions.mix(DECONTAMBAM_HOST.out.versions)
 
-        DECONTAMBAM_PHIX(
-            COMBINEBAM_PHIX.out.concatenated_result.map { meta, bam ->
-                [meta, bam, false, "short_read_phix_${meta.read_idx+1}"]
+            chunked_decontaminated_reads = DECONTAMBAM_HOST.out.unmapped_reads
+        }
+
+        CONCATENATE(
+            chunked_decontaminated_reads
+            .groupTuple()
+            .map { meta, reads ->
+                tuple(meta, "${meta.id}.${meta.read_idx+1}.fq.gz", reads)
             }
         )
-        ch_versions = ch_versions.mix(DECONTAMBAM_PHIX.out.versions)
+        decontaminated_reads = CONCATENATE.out.concatenated_file
 
-
-        decontaminated_reads = DECONTAMBAM_PHIX.out.unmapped_reads
-        phix_stats = DECONTAMBAM_PHIX.out.unmapped_stats
-    }
-    else {
-        phix_stats = Channel.empty()
-    }
-
-    decontaminated_reads = decontaminated_reads.map { meta, reads_ ->
-        [meta + ['decontam_phix_read_count': reads_.countFastq()], reads_]
-    }
-    decontaminated_reads = decontaminated_reads.filter { meta, _reads ->
-        meta.decontam_phix_read_count > 0
-    }
-
-    if (host_genome != null) {
-        chunked_decontaminated_reads = decontaminated_reads.flatMap { meta, fasta ->
-            def chunks = fasta.splitFasta(
-                file: true,
-                size: params.decontam_short_host_chunksize
+        decontaminated_reads = decontaminated_reads.map {
+            meta, fasta ->
+            def meta_ = meta - ['read_idx': meta.read_idx, 'reads_n': meta.reads_n]
+            return tuple(
+                groupKey(meta_, meta.reads_n),
+                fasta
             )
-            return chunks.collect { chunk -> tuple(groupKey(meta, chunks.size), chunk) }
         }
-
-        BWAMEM2_ALIGN_HOST(
-            chunked_decontaminated_reads,
-            host_genome_index,
-            host_genome_fasta,
-            false,
-        )
-        ch_versions = ch_versions.mix(BWAMEM2_ALIGN_HOST.out.versions)
-
-        COMBINEBAM_HOST(
-            BWAMEM2_ALIGN_HOST.out.bam.groupTuple()
-        )
-
-        DECONTAMBAM_HOST(
-            COMBINEBAM_HOST.out.concatenated_result.map { meta, bam ->
-                [meta, bam, false, "short_read_host_${meta.read_idx+1}"]
-            }
-        )
-        ch_versions = ch_versions.mix(DECONTAMBAM_HOST.out.versions)
-
-        decontaminated_reads = DECONTAMBAM_HOST.out.unmapped_reads
-        host_stats = DECONTAMBAM_HOST.out.unmapped_stats
+        .groupTuple()
     }
     else {
-        host_stats = Channel.empty()
+        decontaminated_reads = reads
     }
-
-    decontaminated_reads = decontaminated_reads.map {
-        meta, fasta ->
-        def meta_ = meta - ['read_idx': meta.read_idx, 'reads_n': meta.reads_n]
-        return tuple(
-            groupKey(meta_, meta.reads_n),
-            fasta
-        )
-    }
-    .groupTuple()
 
 
     emit:
     decontaminated_reads = decontaminated_reads
-    host_stats = host_stats
-    phix_stats = phix_stats
     versions = ch_versions
 }

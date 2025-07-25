@@ -1,8 +1,7 @@
 include { MINIMAP2_ALIGN } from '../../../modules/nf-core/minimap2/align/main'
 include { DECONTAMBAM } from '../../../modules/local/decontambam/main'
-include { COMBINEBAM } from '../../../modules/local/combinebam/main'
-include { CHUNKFASTX } from '../../../modules/local/chunkfastx/main'
-include { GZIPALL } from '../../../modules/local/gzipall/main'
+include { CHUNKFASTX} from  '../../../modules/local/chunkfastx/main'
+include { CONCATENATE} from  '../../../modules/local/concatenate/main'
 
 workflow DECONTAM_LONGREAD {
     take:
@@ -21,56 +20,69 @@ workflow DECONTAM_LONGREAD {
         }
         .first()
 
-    decontaminated_reads = input_reads.flatMap { meta, fastas ->
-        def reads_n = fastas.size()
-        return [fastas.indices, fastas].transpose().collect {
-            idx, fasta ->
-            tuple(meta + ['read_idx': idx, 'reads_n': reads_n], fasta)
+    if (params.remove_host) {
+        decontaminated_reads = input_reads.flatMap { meta, fastas ->
+            def reads_n = fastas.size()
+            return [fastas.indices, fastas].transpose().collect {
+                idx, fasta ->
+                tuple(meta + ['read_idx': idx, 'reads_n': reads_n], fasta)
+            }
         }
-    }
 
-    chunked_reads = decontaminated_reads.flatMap { meta, fasta ->
-        def chunks = fasta.splitFasta(
-            file: true,
-            size: params.decontam_long_host_chunksize
-        )
-        return chunks.collect { chunk -> tuple(groupKey(meta, chunks.size), chunk) }
-    }
-
-    MINIMAP2_ALIGN(
-        chunked_reads,
-        reference_genome_index,
-        true,
-        "bai",
-        false,
-        false,
-    )
-    ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
-
-    COMBINEBAM(
-        MINIMAP2_ALIGN.out.bam.groupTuple()
-    )
-
-    DECONTAMBAM(
-        COMBINEBAM.out.concatenated_result.map { meta, bam ->
-            [meta, bam, false, "long_read_host_${meta.read_idx+1}"]
+        CHUNKFASTX(decontaminated_reads)
+        chunked_reads = CHUNKFASTX.out.chunked_reads.flatMap {
+            meta, chunks ->
+            def chunks_ = chunks instanceof Collection ? chunks : [chunks]
+            return chunks_.collect {
+                chunk ->
+                tuple(groupKey(meta, chunks_.size()), chunk)
+            }
         }
-    )
-    ch_versions = ch_versions.mix(DECONTAMBAM.out.versions)
 
-    decontaminated_reads = decontaminated_reads.map {
-        meta, fasta ->
-        def meta_ = meta - ['read_idx': meta.read_idx, 'reads_n': meta.reads_n]
-        return tuple(
-            groupKey(meta_, meta.reads_n),
-            fasta
+        MINIMAP2_ALIGN(
+            chunked_reads,
+            reference_genome_index,
+            true,
+            "bai",
+            false,
+            false,
         )
-    }
-    .groupTuple()
+        ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
 
+        DECONTAMBAM(
+            MINIMAP2_ALIGN.out.bam.map { meta, bam ->
+                [meta, bam, false, "${meta.read_idx+1}"]
+            }
+        )
+        ch_versions = ch_versions.mix(DECONTAMBAM.out.versions)
+
+        chunked_decontaminated_reads = DECONTAMBAM.out.unmapped_reads
+
+        CONCATENATE(
+            chunked_decontaminated_reads
+            .groupTuple()
+            .map { meta, reads ->
+                tuple(meta, "${meta.id}.${meta.read_idx+1}.fq.gz", reads)
+            }
+        )
+        decontaminated_reads = CONCATENATE.out.concatenated_file
+
+        decontaminated_reads = decontaminated_reads.map {
+            meta, fasta ->
+            def meta_ = meta - ['read_idx': meta.read_idx, 'reads_n': meta.reads_n]
+            return tuple(
+                groupKey(meta_, meta.reads_n),
+                fasta
+            )
+        }
+        .groupTuple()
+
+    }
+    else {
+        decontaminated_reads = input_reads
+    }
 
     emit:
     decontaminated_reads = decontaminated_reads
-    stats = DECONTAMBAM.out.unmapped_stats
     versions = ch_versions
 }

@@ -3,6 +3,7 @@ include { FASTAEMBEDLENGTH } from '../../../modules/local/fastaembedlength/main'
 include { HMMER_HMMSEARCH } from '../../../modules/local/hmmer/hmmsearch/main'
 include { PARSEHMMSEARCHCOVERAGE } from '../../../modules/local/parsehmmsearchcoverage/main'
 include { COMBINEHMMSEARCHTBL } from '../../../modules/local/combinehmmsearchtbl/main'
+include { CHUNKFASTX} from  '../../../modules/local/chunkfastx/main'
 
 workflow PROFILE_HMMSEARCH_PFAM {
     take:
@@ -11,14 +12,23 @@ workflow PROFILE_HMMSEARCH_PFAM {
 
     main:
     ch_versions = Channel.empty()
+
     FASTAEMBEDLENGTH(reads_fasta)
+
     SEQKIT_TRANSLATE(FASTAEMBEDLENGTH.out.fasta)
 
-    ch_chunked_pfam_in = SEQKIT_TRANSLATE.out.fastx
-        .flatMap { meta, fasta ->
-            def chunks = fasta.splitFasta(file: true, size: params.hmmsearch_chunksize)
-            chunks.collect { chunk -> tuple(groupKey(meta, chunks.size()), chunk) }
+    CHUNKFASTX(SEQKIT_TRANSLATE.out.fastx)
+
+    ch_chunked_fasta = CHUNKFASTX.out.chunked_reads.flatMap {
+        meta, chunks ->
+        def chunks_ = chunks instanceof Collection ? chunks : [chunks]
+        return chunks_.collect {
+            chunk ->
+            tuple(groupKey(meta, chunks_.size()), chunk)
         }
+    }
+
+    ch_chunked_pfam_in = ch_chunked_fasta
         .combine(pfam_db)
         .map { meta, reads, db -> [meta, db, reads, false, true, true] }
 

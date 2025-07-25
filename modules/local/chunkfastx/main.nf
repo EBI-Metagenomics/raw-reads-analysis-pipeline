@@ -10,28 +10,20 @@ process CHUNKFASTX {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("chunked/*"), emit: reads
+    tuple val(meta), path("chunked/*"), emit: chunked_reads
     path "versions.yml", emit: versions
 
     script:
     def args = task.ext.args ?: ''
-    def in_f1 = null
-    def in_f2 = null
-    if (meta.single_end) {
-        in_f1 = reads
-    }
-    else {
-        (in_f1, in_f2) = reads
-    }
 
-    def prefix = in_f1.getName().tokenize('.')[0]
-    def extension = in_f1.getName().tokenize('.')[1..-1].join('.')
+    def prefix = reads.getName().tokenize('.')[0]
+    def extension = reads.getName().tokenize('.')[1..-1].join('.')
     if (extension.endsWith('.gz')) {
         extension = extension.tokenize('.')[0..-2].join('.')
     }
     def out_fn = "${prefix}.${extension}"
 
-    def reads_cmd = meta.single_end ? "-1 \"${in_f1}\"" : "-1 \"${in_f1}\" -2 \"${in_f2}\""
+    def reads_cmd = "-i \"${reads}\""
 
     def script = file("${moduleDir}/bin/chunk_fastx.py")
 
@@ -46,17 +38,8 @@ process CHUNKFASTX {
     """
 
     stub:
-    def in_f1 = null
-    def in_f2 = null
-    if (meta.single_end) {
-        in_f1 = reads
-    }
-    else {
-        (in_f1, in_f2) = reads
-    }
-
-    def prefix = in_f1.getName().tokenize('.')[0]
-    def extension = in_f1.getName().tokenize('.')[1..-1].join('.')
+    def prefix = reads.getName().tokenize('.')[0]
+    def extension = reads.getName().tokenize('.')[1..-1].join('.')
     def out_fn = "${prefix}.${extension}"
     """
     mkdir chunked

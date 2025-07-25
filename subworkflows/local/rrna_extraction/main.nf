@@ -3,6 +3,7 @@ include { CMSEARCHTBLOUTDEOVERLAP     } from '../../../modules/ebi-metagenomics/
 include { EASEL_ESLSFETCH             } from '../../../modules/ebi-metagenomics/easel/eslsfetch/main'
 include { EXTRACTCOORDS               } from '../../../modules/ebi-metagenomics/extractcoords/main'
 include { COMBINEHMMSEARCHTBL } from '../../../modules/local/combinehmmsearchtbl/main'
+include { CHUNKFASTX} from  '../../../modules/local/chunkfastx/main'
 
 workflow RRNA_EXTRACTION {
 
@@ -14,15 +15,15 @@ workflow RRNA_EXTRACTION {
     main:
     ch_versions = Channel.empty()
 
-    ch_fasta = ch_fasta.map { meta, reads ->
-        [meta + ['fasta_read_count': reads.countFasta()], reads]
-    }
-
-    ch_chunked_fasta = ch_fasta
-        .flatMap{ meta, fasta ->
-            def chunks = fasta.splitFasta(file: true, size: params.cmsearch_chunksize)
-            chunks.collect{ chunk -> tuple(groupKey(meta, chunks.size()), chunk) }
+    CHUNKFASTX(ch_fasta)
+    ch_chunked_fasta = CHUNKFASTX.out.chunked_reads.flatMap {
+        meta, chunks ->
+        def chunks_ = chunks instanceof Collection ? chunks : [chunks]
+        return chunks_.collect {
+            chunk ->
+            tuple(groupKey(meta, chunks_.size()), chunk)
         }
+    }
 
     INFERNAL_CMSEARCH(
         ch_chunked_fasta,

@@ -81,41 +81,46 @@ workflow PIPELINE {
         }
     }
 
-    // Get read count per fastq row
-    classified_reads = classified_reads.map { meta, reads ->
-        [meta + ['read_count': reads[0].countFastq()], reads]
-    }
-    classified_nonempty_reads = classified_reads.filter { meta, _reads ->
-        meta.read_count > 0
-    }
-
     // QC
     if (params.skip_qc) {
-        classified_nonempty_reads.set { qc_reads }
+        classified_reads.set { qc_reads }
         qc_stats = Channel.empty()
     }
     else {
-        QC(classified_nonempty_reads)
+        QC(classified_reads)
         ch_versions = ch_versions.mix(QC.out.versions)
 
         qc_reads = QC.out.fastq
         qc_stats = QC.out.fastp_json
+
+        qc_read_counts = qc_stats.map {
+            meta, json_file ->
+            def json = new groovy.json.JsonSlurper().parseText(json_file.text)
+            return tuple(
+                meta,
+                tuple(
+                    json["summary"]["before_filtering"]["total_reads"],
+                    json["summary"]["after_filtering"]["total_reads"],
+                )
+            )
+        }
+
+        qc_reads = qc_reads.join(qc_read_counts)
+        .map{ meta, reads, counts ->
+            tuple(
+                meta + ['read_count': counts[0], 'qc_read_count': counts[1]],
+                reads
+            )
+        }
+        .filter{ meta, _reads -> meta.qc_read_count > 0 }
     }
 
-
-    // Get read count per fastq row
-    qc_reads = qc_reads.map { meta, reads ->
-        def reads_ = (reads instanceof Collection ? reads[0] : reads)
-        [meta + ['qc_read_count': reads_.countFastq()], reads]
-    }
-    .filter { meta, _reads ->
-        meta.qc_read_count > 0
-    }
 
     // DECONTAMINATION
+    decontam_stats = Channel.empty()
+
     if (params.skip_decontam) {
         qc_reads.set { clean_reads }
-        decontam_stats = Channel.empty()
     }
     else {
         qc_reads
@@ -140,27 +145,55 @@ workflow PIPELINE {
 
         clean_reads = DECONTAM_SHORTREAD.out.decontaminated_reads.mix(DECONTAM_LONGREAD.out.decontaminated_reads)
 
-        decontam_stats = DECONTAM_SHORTREAD.out.phix_stats
-            .mix(DECONTAM_SHORTREAD.out.host_stats)
-            .mix(DECONTAM_LONGREAD.out.stats)
     }
 
-    clean_reads = clean_reads.map { meta, reads ->
-        def reads_ = (reads instanceof Collection ? reads[0] : reads)
-        [
+    // Standardise FASTX files
+    STANDARDFASTX(clean_reads)
+    standard_reads = STANDARDFASTX.out.reads
+
+    READSMERGE(standard_reads)
+    ch_versions = ch_versions.mix(READSMERGE.out.versions)
+
+    // Get post-decontam stats
+    decontam_stats = READSMERGE.out.fastp_summary_json
+
+    decontam_read_counts = decontam_stats.map {
+        meta, json_file ->
+        def json = new groovy.json.JsonSlurper().parseText(json_file.text)
+        return tuple(
+            meta,
+            tuple(
+                json["summary"]["before_filtering"]["total_reads"],
+                json["summary"]["after_filtering"]["total_reads"],
+            )
+        )
+    }
+
+    standard_reads = standard_reads
+    .join(decontam_read_counts)
+    .map{ meta, reads, counts ->
+        tuple(
             meta + [
-                'clean_read_count': reads_.countFastq()
+                'clean_read_count': counts[0],
+                'merged_read_count': counts[1],
             ],
             reads
-        ]
+        )
     }
-    .filter { meta, _reads ->
-        meta.clean_read_count > 0
+    .filter{ meta, _reads -> meta.clean_read_count > 0 }
+
+    merged_reads = READSMERGE.out.reads_fasta
+    .join(decontam_read_counts)
+    .map{ meta, reads, counts ->
+        tuple(
+            meta + [
+                'clean_read_count': counts[0],
+                'merged_read_count': counts[1],
+            ],
+            reads
+        )
     }
-
-    STANDARDFASTX(clean_reads)
-    clean_reads = STANDARDFASTX.out.reads
-
+    .filter{ meta, _reads -> meta.merged_read_count > 0 }
 
     // mOTUs
     motus_db = dbs.motus
@@ -170,7 +203,7 @@ workflow PIPELINE {
         .first()
 
     MOTUS_KRONA(
-        clean_reads,
+        standard_reads,
         motus_db,
     )
     ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)
@@ -180,10 +213,8 @@ workflow PIPELINE {
         "# ${params.results_file_headers.motus_taxonomy.join('\t')}",
     )
 
-    // rrna_extraction
-    READSMERGE(clean_reads)
-    ch_versions = ch_versions.mix(READSMERGE.out.versions)
 
+    // rrna_extraction
     rfam_db = dbs.rfam
         .map { meta, fp ->
             file("${fp}/${meta.base_dir}/${meta.files.ribosomal_models_file}")
@@ -197,7 +228,7 @@ workflow PIPELINE {
         .first()
 
     RRNA_EXTRACTION(
-        READSMERGE.out.reads_fasta,
+        merged_reads,
         rfam_db,
         claninfo_db,
     )
@@ -343,7 +374,7 @@ workflow PIPELINE {
 
     qc_status = qc_reads.map { meta, _reads -> [meta.id, meta.qc_read_count > 0] }
 
-    decontam_status = clean_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
+    decontam_status = standard_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
 
     motus_status = ADDHEADER_MOTUS.out.file_with_header.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
