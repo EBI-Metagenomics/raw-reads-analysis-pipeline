@@ -22,7 +22,7 @@ parser.add_argument('-r', "--read_count_target", type=str,
                     default='', required=False,
                     help="Target number of reads in each chunk (rounded down). K, M, G and T suffixes available (e.g. 1.5K).")
 parser.add_argument('-n', "--read_batch_n", type=int,
-                    default=1000,
+                    default=200000,
                     help="Number of FASTX entries handled together in a read/write batch.")
 args = parser.parse_args()
 
@@ -44,7 +44,7 @@ def get_reads(infile, gz: bool):
             base_count = 0
         if line_str_strip == '+':
             content = False
-        if ((prev_line is not None) and (prev_line[0] in {'>','@'})) and (not line_str[0] in {'>','@'}):
+        if ((prev_line is not None) and (prev_line[0] in {'>','@'})) and (not line_str[0] in {'>','@','+'}):
             content = True
         if content:
             base_count += len(line_str_strip)
@@ -82,15 +82,14 @@ if __name__ == '__main__':
             if stop_flag:
                 continue
             try:
-                base_count, v = next(in_reads)
+                base_count_, v = next(in_reads)
             except StopIteration:
                 stop_flag = True
                 continue
-            read_stack.append((base_count, v))
+            read_stack.append((base_count_, v))
 
         # output reads that have been read in all input files
         for base_count_, v in read_stack:
-            print(base_count)
             if out_file is None:
                 out_fp = f"{basename}.chunk-{chunk_n}.{extension}"
                 out_file = gzip.open(out_fp, 'wb') if out_gz else open(out_fp, 'wt')
