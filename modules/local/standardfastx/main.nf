@@ -38,7 +38,7 @@ process STANDARDFASTX {
     def script = file("${moduleDir}/bin/standardise_fastx.py")
 
     """
-    mkdir ${out_dir}
+    mkdir -p ${out_dir}
     python ${script} ${args} ${reads_cmd} -o "${out_dir}/${out_fn}" -c ${pe_cmd}
     ls ${out_dir}/* | xargs gzip
 
@@ -63,7 +63,7 @@ process STANDARDFASTX {
     def out_dir = "standardised"
 
     """
-    mkdir ${out_dir}
+    mkdir -p ${out_dir}
     touch "${out_dir}/${out_fn1}"
     touch "${out_dir}/${out_fn2}"
 

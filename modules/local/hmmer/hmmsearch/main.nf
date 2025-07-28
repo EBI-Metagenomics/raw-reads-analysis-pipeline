@@ -28,7 +28,7 @@ process HMMER_HMMSEARCH {
     target_summary = write_target ? "--tblout ${prefix}.tbl" : ''
     domain_summary = write_domain ? "--domtblout ${prefix}.domtbl" : ''
     """
-    mkdir tmp
+    mkdir -p tmp
     cp -L ${hmmfile} tmp/profiles.hmm
 
     hmmsearch \\

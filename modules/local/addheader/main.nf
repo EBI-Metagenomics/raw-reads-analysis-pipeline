@@ -21,7 +21,7 @@ process ADDHEADER {
 
     """
     fn=\$(basename $in_fp)
-    mkdir output
+    mkdir -p output
     out_fp=output/\$fn
     echo -e "$header_str" > \$out_fp
     cat $in_fp >> \$out_fp
@@ -32,7 +32,7 @@ process ADDHEADER {
 
     """
     fn=\$(basename $in_fp)
-    mkdir output
+    mkdir -p output
     out_fp = output/\$fn
     touch \$out_fp
     """
