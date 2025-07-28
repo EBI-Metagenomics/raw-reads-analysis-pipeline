@@ -21,7 +21,7 @@ process CONCATENATE {
 
     """
     mkdir $out_dir
-    find input_files/* -exec cat {} + > ${out_dir}/${out_fn}
+    find input_files/*/* -exec cat {} + > ${out_dir}/${out_fn}
     """
 
     stub:
