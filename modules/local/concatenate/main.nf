@@ -7,7 +7,7 @@ process CONCATENATE {
         : 'biocontainers/mgnify-pipelines-toolkit:0.1.1--pyhdfd78af_0'}"
 
     input:
-    tuple val(meta), val(out_fn), path(files, stageAs: "input_files/*")
+    tuple val(meta), val(out_fn), path(files, stageAs: "input_files/?/*")
 
     output:
     tuple val(meta), path("concatenated/${out_fn}"), emit: concatenated_file
