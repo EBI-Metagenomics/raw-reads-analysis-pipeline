@@ -73,9 +73,9 @@ workflow DECONTAM_LONGREAD {
             chunked_decontaminated_reads
             .groupTuple()
             .flatMap {
-                meta, reads ->
-                return reads.transpose()
-                    .collect{ reads_ -> tuple(groupKey(meta), "${meta.id}.fastq.gz", reads_) }
+                meta, reads_ ->
+                return reads_.transpose()
+                    .collect{ reads__ -> tuple(groupKey(meta), "${meta.id}.fastq.gz", reads__) }
             }
         )
         decontaminated_reads = CONCATENATE.out.concatenated_file.groupTuple()
