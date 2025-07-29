@@ -47,25 +47,38 @@ workflow DECONTAM_SHORTREAD {
             pe: !meta.single_end
         }
         chunked_decontaminated_reads = pe_se_reads.se
+            .map { meta, reads_ -> [meta] + [reads_[0]] }
             .splitFastq(
-                by: params.decontam_shortread_chunksize,
-                pe: false,
+                by: params.decontam_short_chunksize,
+                elem: 1,
                 file: true
-            )
-            .mix(
-                pe_se_reads.pe.splitFastq(
-                    by: params.decontam_shortread_chunksize,
-                    pe: true,
-                    file: true
-                )
             )
             .flatMap {
                 meta, chunks ->
-                return chunks.collect {
+                def chunks_ = chunks instanceof Collection ? chunks : [chunks]
+                return chunks_.collect {
                     chunk ->
-                    tuple(groupKey(meta, chunks.size()), chunk)
+                    tuple(groupKey(meta, chunks_.size()), chunk)
                 }
             }
+            .mix(
+                pe_se_reads.pe
+                .map { meta, reads_ -> [meta] + reads_ }
+                .splitFastq(
+                    by: params.decontam_short_chunksize,
+                    elem: [1,2],
+                    file: true
+                )
+                .flatMap {
+                    meta, chunks1, chunks2 ->
+                    def chunks1_ = chunks1 instanceof Collection ? chunks1 : [chunks1]
+                    def chunks2_ = chunks2 instanceof Collection ? chunks2 : [chunks2]
+                    return [chunks1_, chunks2_].transpose().collect {
+                        chunk1, chunk2 ->
+                        tuple(groupKey(meta, chunks1_.size()), [chunk1, chunk2])
+                    }
+                }
+            )
 
         if (params.remove_phix) {
 
@@ -112,8 +125,17 @@ workflow DECONTAM_SHORTREAD {
             .groupTuple()
             .flatMap {
                 meta, reads_ ->
-                return reads_.transpose()
-                    .collect{ reads__ -> tuple(groupKey(meta), "${meta.id}.fastq.gz", reads__) }
+                def reads__ = reads_
+                if (meta.single_end) {
+                    reads__ = [reads_ instanceof Collection ? reads_ : [reads_]]
+                } else {
+                    reads__ = reads_[0] instanceof Collection ? reads_ : [reads_]
+                }
+                def reads_t = reads__.transpose()
+                return reads_t.indexed().collect{
+                    idx, reads_t_ ->
+                    tuple(groupKey(meta, reads_t.size()), "${meta.id}_${idx}.fastq.gz", reads_t_)
+                }
             }
         )
         decontaminated_reads = CONCATENATE.out.concatenated_file.groupTuple()
