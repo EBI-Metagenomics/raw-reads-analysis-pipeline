@@ -1,4 +1,4 @@
-process BWAMEM2_MEM {
+rocess BWAMEM2_MEM {
     tag "$meta.id"
     label 'process_high'
 

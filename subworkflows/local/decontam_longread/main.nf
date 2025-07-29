@@ -1,11 +1,10 @@
 include { MINIMAP2_ALIGN } from '../../../modules/nf-core/minimap2/align/main'
 include { DECONTAMBAM } from '../../../modules/local/decontambam/main'
-include { CHUNKFASTX} from  '../../../modules/local/chunkfastx/main'
 include { CONCATENATE} from  '../../../modules/local/concatenate/main'
 
 workflow DECONTAM_LONGREAD {
     take:
-    input_reads // [ val(meta), path(reads) ]
+    reads // [ val(meta), path(reads) ]
     reference_genome // [ val(meta2), path(reference_genome) ]
 
     main:
@@ -21,23 +20,35 @@ workflow DECONTAM_LONGREAD {
         .first()
 
     if (params.remove_host) {
-        decontaminated_reads = input_reads.flatMap { meta, fastas ->
-            def reads_n = fastas.size()
-            return [fastas.indices, fastas].transpose().collect {
-                idx, fasta ->
-                tuple(meta + ['read_idx': idx, 'reads_n': reads_n], fasta)
-            }
+        reads = reads.map { meta, fastqs ->
+            return tuple(meta + ['reads_n': fastqs.size()], fastqs)
         }
 
-        CHUNKFASTX(decontaminated_reads)
-        chunked_reads = CHUNKFASTX.out.chunked_reads.flatMap {
-            meta, chunks ->
-            def chunks_ = chunks instanceof Collection ? chunks : [chunks]
-            return chunks_.collect {
-                chunk ->
-                tuple(groupKey(meta, chunks_.size()), chunk)
-            }
+        pe_se_reads = reads.branch{
+            meta, _reads ->
+            se: meta.single_end
+            pe: !meta.single_end
         }
+        chunked_reads = pe_se_reads.se
+            .splitFastq(
+                by: params.decontam_longread_chunksize,
+                pe: false,
+                file: true
+            )
+            .mix(
+                pe_se_reads.pe.splitFastq(
+                    by: params.decontam_longread_chunksize,
+                    pe: true,
+                    file: true
+                )
+            )
+            .flatMap {
+                meta, chunks ->
+                return chunks.collect {
+                    chunk ->
+                    tuple(groupKey(meta, chunks.size()), chunk)
+                }
+            }
 
         MINIMAP2_ALIGN(
             chunked_reads,
@@ -51,7 +62,7 @@ workflow DECONTAM_LONGREAD {
 
         DECONTAMBAM(
             MINIMAP2_ALIGN.out.bam.map { meta, bam ->
-                [meta, bam, false, "${meta.read_idx+1}"]
+                [meta, bam, !meta.single_end, ""]
             }
         )
         ch_versions = ch_versions.mix(DECONTAMBAM.out.versions)
@@ -60,26 +71,19 @@ workflow DECONTAM_LONGREAD {
 
         CONCATENATE(
             chunked_decontaminated_reads
-            .groupTuple()
-            .map { meta, reads ->
-                tuple(meta, "${meta.id}.${meta.read_idx+1}.fq.gz", reads)
+                .groupTuple()
+                .flatMap {
+                    meta, reads ->
+                    return reads.transpose()
+                        .collect{ reads_ -> tuple(groupKey(meta), "${meta.id}.fastq.gz", reads_) }
+                }
             }
         )
-        decontaminated_reads = CONCATENATE.out.concatenated_file
-
-        decontaminated_reads = decontaminated_reads.map {
-            meta, fasta ->
-            def meta_ = meta - ['read_idx': meta.read_idx, 'reads_n': meta.reads_n]
-            return tuple(
-                groupKey(meta_, meta.reads_n),
-                fasta
-            )
-        }
-        .groupTuple()
+        decontaminated_reads = CONCATENATE.out.concatenated_file.groupTuple()
 
     }
     else {
-        decontaminated_reads = input_reads
+        decontaminated_reads = reads
     }
 
     emit:

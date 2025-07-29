@@ -2,7 +2,6 @@ include { BWAMEM2_MEM as BWAMEM2_ALIGN_PHIX } from '../../../modules/nf-core/bwa
 include { BWAMEM2_MEM as BWAMEM2_ALIGN_HOST } from '../../../modules/nf-core/bwamem2/mem/main'
 include { DECONTAMBAM as DECONTAMBAM_PHIX } from '../../../modules/local/decontambam/main'
 include { DECONTAMBAM as DECONTAMBAM_HOST } from '../../../modules/local/decontambam/main'
-include { CHUNKFASTX} from  '../../../modules/local/chunkfastx/main'
 include { CONCATENATE} from  '../../../modules/local/concatenate/main'
 
 workflow DECONTAM_SHORTREAD {
@@ -32,29 +31,41 @@ workflow DECONTAM_SHORTREAD {
     host_genome_fasta = host_genome
         .map { meta, fp ->
             [meta, file("${fp}/${meta.base_dir}/${meta.files.genome}")]
-        }
+       }
         .first()
 
 
     if (params.remove_phix || params.remove_host) {
 
-        decontaminated_reads = reads.flatMap { meta, fastas ->
-            def reads_n = fastas.size()
-            return [fastas.indices, fastas].transpose().collect {
-                idx, fasta ->
-                tuple(meta + ['read_idx': idx, 'reads_n': reads_n], fasta)
-            }
+        reads = reads.map { meta, fastqs ->
+            return tuple(meta + ['reads_n': fastqs.size()], fastqs)
         }
 
-        CHUNKFASTX(decontaminated_reads)
-        chunked_decontaminated_reads = CHUNKFASTX.out.chunked_reads.flatMap {
-            meta, chunks ->
-            def chunks_ = chunks instanceof Collection ? chunks : [chunks]
-            return chunks_.collect {
-                chunk ->
-                tuple(groupKey(meta, chunks_.size()), chunk)
-            }
+        pe_se_reads = reads.branch{
+            meta, _reads ->
+            se: meta.single_end
+            pe: !meta.single_end
         }
+        chunked_decontaminated_reads = pe_se_reads.se
+            .splitFastq(
+                by: params.decontam_shortread_chunksize,
+                pe: false,
+                file: true
+            )
+            .mix(
+                pe_se_reads.pe.splitFastq(
+                    by: params.decontam_shortread_chunksize,
+                    pe: true,
+                    file: true
+                )
+            )
+            .flatMap {
+                meta, chunks ->
+                return chunks.collect {
+                    chunk ->
+                    tuple(groupKey(meta, chunks.size()), chunk)
+                }
+            }
 
         if (params.remove_phix) {
 
@@ -68,7 +79,7 @@ workflow DECONTAM_SHORTREAD {
 
             DECONTAMBAM_PHIX(
                 BWAMEM2_ALIGN_PHIX.out.bam.map { meta, bam ->
-                    [meta, bam, false, "${meta.read_idx+1}"]
+                    [meta, bam, !meta.single_end, ""]
                 }
             )
             ch_versions = ch_versions.mix(DECONTAMBAM_PHIX.out.versions)
@@ -88,7 +99,7 @@ workflow DECONTAM_SHORTREAD {
 
             DECONTAMBAM_HOST(
                 BWAMEM2_ALIGN_HOST.out.bam.map { meta, bam ->
-                    [meta, bam, false, "${meta.read_idx+1}"]
+                    [meta, bam, !meta.single_end, ""]
                 }
             )
             ch_versions = ch_versions.mix(DECONTAMBAM_HOST.out.versions)
@@ -98,22 +109,16 @@ workflow DECONTAM_SHORTREAD {
 
         CONCATENATE(
             chunked_decontaminated_reads
-            .groupTuple()
-            .map { meta, reads ->
-                tuple(meta, "${meta.id}.${meta.read_idx+1}.fq.gz", reads)
+                .groupTuple()
+                .flatMap {
+                    meta, reads ->
+                    return reads.transpose()
+                        .collect{ reads_ -> tuple(groupKey(meta), "${meta.id}.fastq.gz", reads_) }
+                }
             }
         )
-        decontaminated_reads = CONCATENATE.out.concatenated_file
+        decontaminated_reads = CONCATENATE.out.concatenated_file.groupTuple()
 
-        decontaminated_reads = decontaminated_reads.map {
-            meta, fasta ->
-            def meta_ = meta - ['read_idx': meta.read_idx, 'reads_n': meta.reads_n]
-            return tuple(
-                groupKey(meta_, meta.reads_n),
-                fasta
-            )
-        }
-        .groupTuple()
     }
     else {
         decontaminated_reads = reads

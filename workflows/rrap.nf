@@ -4,7 +4,6 @@
     ~~~~~~~~~~~~~~~~~~
 */
 include { FETCHDB } from '../subworkflows/local/fetchdb/main'
-include { STANDARDFASTX } from '../modules/local/standardfastx/main'
 include { QC } from '../subworkflows/local/qc/main'
 include { READSMERGE } from '../subworkflows/local/readsmerge/main'
 include { DECONTAM_SHORTREAD } from '../subworkflows/local/decontam_shortread/main'
@@ -12,6 +11,7 @@ include { DECONTAM_LONGREAD } from '../subworkflows/local/decontam_longread/main
 include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
 include { ADDHEADER as ADDHEADER_RRNA } from '../modules/local/addheader/main'
 include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
+include { BBMAP_REFORMAT } from '../modules/local/bbmap/reformat/main'
 
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
@@ -55,22 +55,24 @@ workflow PIPELINE {
 
     // Parse samplesheet and fetch reads
     def groupReads = { study, sample, fq1, fq2, library_layout, library_strategy, instrument_platform ->
+        def single_end = (library_layout == 'SINGLE')
+        def single_file = (fq2 == [])
         [
             [
                 'id': sample,
                 'study': study,
-                'single_end': library_layout == 'SINGLE' ? true : false,
+                'single_end': single_end,
+                'interleaved': (!single_end) && single_file,
                 'library_layout': library_layout,
                 'library_strategy': library_strategy,
                 'instrument_platform': instrument_platform,
             ],
-            fq2 == [] ? [file(fq1)] : [file(fq1), file(fq2)],
+            single_file ? [file(fq1)] : [file(fq1), file(fq2)],
         ]
     }
     samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
 
     fetch_reads_transformed = samplesheet.map(groupReads)
-
     classified_reads = fetch_reads_transformed.map { meta, reads ->
         // Long reads
         if (["ONT", "PB"].contains(meta.instrument_platform)) {
@@ -80,6 +82,16 @@ workflow PIPELINE {
             return [meta + [short_reads: true], reads]
         }
     }
+
+    // De-interleave interleaved paired-end reads
+    deinterleave_ch = classified_reads.branch {
+        meta, _reads ->
+        interleaved: meta.interleaved
+        noninterleaved: !meta.interleaved
+    }
+    BBMAP_REFORMAT(deinterleave_ch.interleaved)
+    classified_reads = deinterleave_ch.noninterleaved
+        .mix(BBMAP_REFORMAT.out.reformated)
 
     // QC
     if (params.skip_qc) {
@@ -147,12 +159,9 @@ workflow PIPELINE {
 
     }
 
-    // Standardise FASTX files
-    STANDARDFASTX(clean_reads)
-    standard_reads = STANDARDFASTX.out.reads
-
-    READSMERGE(standard_reads)
-    ch_versions = ch_versions.mix(READSMERGE.out.versions)
+    // Merge reads
+    READSMERGE(clean_reads)
+    merged_reads = READSMERGE.out.reads_fasta
 
     // Get post-decontam stats
     decontam_stats = READSMERGE.out.fastp_summary_json
@@ -169,7 +178,7 @@ workflow PIPELINE {
         )
     }
 
-    standard_reads = standard_reads
+    clean_reads = clean_reads
     .join(decontam_read_counts)
     .map{ meta, reads, counts ->
         tuple(
@@ -182,7 +191,7 @@ workflow PIPELINE {
     }
     .filter{ meta, _reads -> meta.clean_read_count > 0 }
 
-    merged_reads = READSMERGE.out.reads_fasta
+    merged_reads = merged_reads
     .join(decontam_read_counts)
     .map{ meta, reads, counts ->
         tuple(
@@ -203,7 +212,7 @@ workflow PIPELINE {
         .first()
 
     MOTUS_KRONA(
-        standard_reads,
+        clean_reads,
         motus_db,
     )
     ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)
@@ -291,7 +300,7 @@ workflow PIPELINE {
         .first()
 
     PROFILE_HMMSEARCH_PFAM(
-        READSMERGE.out.reads_fasta,
+        merged_reads,
         pfam_db,
     )
     ch_versions = ch_versions.mix(PROFILE_HMMSEARCH_PFAM.out.versions)
@@ -374,7 +383,7 @@ workflow PIPELINE {
 
     qc_status = qc_reads.map { meta, _reads -> [meta.id, meta.qc_read_count > 0] }
 
-    decontam_status = standard_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
+    decontam_status = clean_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
 
     motus_status = ADDHEADER_MOTUS.out.file_with_header.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
