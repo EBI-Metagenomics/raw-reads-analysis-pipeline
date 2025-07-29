@@ -20,8 +20,8 @@ workflow QC {
     )
     ch_versions = ch_versions.mix(FASTP.out.versions)
 
-    output_reads = FASTP.out.reads.map{ meta, reads ->
-        [meta, (reads instanceof Collection) ? reads : [reads]]
+    output_reads = FASTP.out.reads.map{ meta, reads_ ->
+        [meta, (reads_ instanceof Collection) ? reads_ : [reads_]]
     }
 
     emit:
