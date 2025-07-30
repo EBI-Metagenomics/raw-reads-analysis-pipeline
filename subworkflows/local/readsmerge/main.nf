@@ -1,4 +1,4 @@
-include { SEQTK_SEQ } from '../../../modules/ebi-metagenomics/seqtk/seq/main'
+include { BBMAP_REFORMAT } from '../../../modules/local/bbmap/reformat/main'
 include { FASTP as FASTP_SE } from '../../../modules/nf-core/fastp/main'
 include { FASTP as FASTP_PE } from '../../../modules/nf-core/fastp/main'
 
@@ -23,12 +23,12 @@ workflow READSMERGE {
     ch_all_reads = ch_se_reads.mix(FASTP_PE.out.reads_merged)
 
     // convert to fasta
-    SEQTK_SEQ(ch_all_reads)
-    ch_versions = ch_versions.mix(SEQTK_SEQ.out.versions.first())
+    BBMAP_REFORMAT(ch_all_reads, 'fasta')
+    ch_versions = ch_versions.mix(BBMAP_REFORMAT.out.versions.first())
 
     emit:
     reads = ch_all_reads // channel: [ val(meta), [ fastq ] ]
     fastp_summary_json = fastp_summary_json // channel: [ val(meta), [ json ] ]
-    reads_fasta = SEQTK_SEQ.out.fastx // channel: [ val(meta), [ fasta ] ]
+    reads_fasta = BBMAP_REFORMAT.out.reformated // channel: [ val(meta), [ fasta ] ]
     versions = ch_versions // channel: [ versions.yml ]
 }

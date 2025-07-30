@@ -47,11 +47,26 @@ workflow DECONTAM_SHORTREAD {
             pe: !meta.single_end
         }
         chunked_decontaminated_reads = pe_se_reads.se
-            .map { meta, reads_ -> [meta] + [reads_[0]] }
+            .map { meta, reads_ ->
+                def reads__ = reads_ instanceof Collection ? reads_[0] : reads_
+                [meta] + [reads__]
+            }
             .splitFastq(
-                by: params.decontam_short_chunksize,
+                by: params.decontam_long_chunksize,
                 elem: 1,
                 file: true
+            )
+            .groupTuple()
+            .mix(
+                pe_se_reads.pe
+                .map { meta, reads_ -> [meta] + reads_ }
+                .splitFastq(
+                    by: params.decontam_long_chunksize,
+                    elem: [1,2],
+                    file: true
+                )
+                .map { meta, reads1, reads2 -> tuple(meta, [reads1, reads2])}
+                .groupTuple()
             )
             .flatMap {
                 meta, chunks ->
@@ -61,24 +76,6 @@ workflow DECONTAM_SHORTREAD {
                     tuple(groupKey(meta, chunks_.size()), chunk)
                 }
             }
-            .mix(
-                pe_se_reads.pe
-                .map { meta, reads_ -> [meta] + reads_ }
-                .splitFastq(
-                    by: params.decontam_short_chunksize,
-                    elem: [1,2],
-                    file: true
-                )
-                .flatMap {
-                    meta, chunks1, chunks2 ->
-                    def chunks1_ = chunks1 instanceof Collection ? chunks1 : [chunks1]
-                    def chunks2_ = chunks2 instanceof Collection ? chunks2 : [chunks2]
-                    return [chunks1_, chunks2_].transpose().collect {
-                        chunk1, chunk2 ->
-                        tuple(groupKey(meta, chunks1_.size()), [chunk1, chunk2])
-                    }
-                }
-            )
 
         if (params.remove_phix) {
 
@@ -120,24 +117,23 @@ workflow DECONTAM_SHORTREAD {
             chunked_decontaminated_reads = DECONTAMBAM_HOST.out.unmapped_reads
         }
 
-        CONCATENATE(
-            chunked_decontaminated_reads
+        concat_ch = chunked_decontaminated_reads
             .groupTuple()
             .flatMap {
                 meta, reads_ ->
-                def reads__ = reads_
+                def stacked_reads = reads_
                 if (meta.single_end) {
-                    reads__ = [reads_ instanceof Collection ? reads_ : [reads_]]
+                    stacked_reads = [reads_ instanceof Collection ? reads_ : [reads_]]
                 } else {
-                    reads__ = reads_[0] instanceof Collection ? reads_ : [reads_]
+                    stacked_reads = (reads_[0] instanceof Collection ? reads_ : [reads_]).transpose()
                 }
-                def reads_t = reads__.transpose()
-                return reads_t.indexed().collect{
-                    idx, reads_t_ ->
-                    tuple(groupKey(meta, reads_t.size()), "${meta.id}_${idx}.fastq.gz", reads_t_)
+                return stacked_reads.indexed().collect{
+                    idx, reads_stack ->
+                    tuple(groupKey(meta, stacked_reads.size()), "${meta.id}_${idx+1}.fastq.gz", reads_stack)
                 }
             }
-        )
+        CONCATENATE(concat_ch)
+
         decontaminated_reads = CONCATENATE.out.concatenated_file.groupTuple()
 
     }

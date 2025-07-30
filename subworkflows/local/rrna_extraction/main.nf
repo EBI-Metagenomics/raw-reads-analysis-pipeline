@@ -15,15 +15,22 @@ workflow RRNA_EXTRACTION {
     main:
     ch_versions = Channel.empty()
 
-    CHUNKFASTX(ch_fasta)
-    ch_chunked_fasta = CHUNKFASTX.out.chunked_reads.flatMap {
-        meta, chunks ->
-        def chunks_ = chunks instanceof Collection ? chunks : [chunks]
-        return chunks_.collect {
-            chunk ->
-            tuple(groupKey(meta, chunks_.size()), chunk)
+    ch_chunked_fasta = ch_fasta
+        .splitFasta(
+            size: params.cmsearch_chunksize,
+            elem: 1,
+            file: true
+        )
+        .groupTuple()
+        .flatMap {
+            meta, chunks ->
+            def chunks_ = chunks instanceof Collection ? chunks : [chunks]
+            def chunksize = chunks_.size()
+            return chunks_.collect {
+                chunk ->
+                tuple(groupKey(meta, chunksize), chunk)
+            }
         }
-    }
 
     INFERNAL_CMSEARCH(
         ch_chunked_fasta,
@@ -35,11 +42,14 @@ workflow RRNA_EXTRACTION {
         INFERNAL_CMSEARCH.out.cmsearch_tbl.groupTuple()
     )
 
+    COMBINEHMMSEARCHTBL.out.concatenated_result.view { "cmsearch_concat - ${it}" }
+
     CMSEARCHTBLOUTDEOVERLAP(
         COMBINEHMMSEARCHTBL.out.concatenated_result,
         claninfo
     )
     ch_versions = ch_versions.mix(CMSEARCHTBLOUTDEOVERLAP.out.versions.first())
+
 
     ch_easel = ch_fasta
                 .join(CMSEARCHTBLOUTDEOVERLAP.out.cmsearch_tblout_deoverlapped)

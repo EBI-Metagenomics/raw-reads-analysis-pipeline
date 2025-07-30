@@ -11,7 +11,7 @@ include { DECONTAM_LONGREAD } from '../subworkflows/local/decontam_longread/main
 include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
 include { ADDHEADER as ADDHEADER_RRNA } from '../modules/local/addheader/main'
 include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
-include { BBMAP_REFORMAT } from '../modules/local/bbmap/reformat/main'
+include { BBMAP_REFORMAT_STANDARDISE } from '../modules/local/bbmap/reformat_standardise/main'
 
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
@@ -83,15 +83,15 @@ workflow PIPELINE {
         }
     }
 
-    // De-interleave interleaved paired-end reads
-    deinterleave_ch = classified_reads.branch {
-        meta, _reads ->
-        interleaved: meta.interleaved
-        noninterleaved: !meta.interleaved
+    classified_reads
+    .filter { meta, _reads -> (meta.long_reads && (!meta.single_end)) }
+    .collect { meta, _reads ->
+        error "Error: Long reads (ONT or PB) cannot be paired-end — ${meta}"
     }
-    BBMAP_REFORMAT(deinterleave_ch.interleaved)
-    classified_reads = deinterleave_ch.noninterleaved
-        .mix(BBMAP_REFORMAT.out.reformated)
+
+    // De-interleave interleaved paired-end reads
+    BBMAP_REFORMAT_STANDARDISE(classified_reads, 'fastq.gz')
+    classified_reads = BBMAP_REFORMAT_STANDARDISE.out.reformated
 
     // QC
     if (params.skip_qc) {
@@ -179,30 +179,30 @@ workflow PIPELINE {
     }
 
     clean_reads = clean_reads
-    .join(decontam_read_counts)
-    .map{ meta, reads, counts ->
-        tuple(
-            meta + [
-                'clean_read_count': counts[0],
-                'merged_read_count': counts[1],
-            ],
-            reads
-        )
-    }
+        .join(decontam_read_counts)
+        .map{ meta, reads, counts ->
+            tuple(
+                meta + [
+                    'clean_read_count': counts[0],
+                    'merged_read_count': counts[1],
+                ],
+                reads
+            )
+        }
     .filter{ meta, _reads -> meta.clean_read_count > 0 }
 
     merged_reads = merged_reads
-    .join(decontam_read_counts)
-    .map{ meta, reads, counts ->
-        tuple(
-            meta + [
-                'clean_read_count': counts[0],
-                'merged_read_count': counts[1],
-            ],
-            reads
-        )
-    }
-    .filter{ meta, _reads -> meta.merged_read_count > 0 }
+        .join(decontam_read_counts)
+        .map{ meta, reads, counts ->
+            tuple(
+                meta + [
+                    'clean_read_count': counts[0],
+                    'merged_read_count': counts[1],
+                ],
+                reads
+            )
+        }
+        .filter{ meta, _reads -> meta.merged_read_count > 0 }
 
     // mOTUs
     motus_db = dbs.motus

@@ -3,15 +3,19 @@ import math
 import sys
 import re
 import fileinput
+import json
 from collections import defaultdict
 
 parser = argparse.ArgumentParser(description='Parse domain table output from HMMer (`hmmsearch`) to calculate HMM model coverages from metagenomic reads.')
 parser.add_argument('-i', "--input_fp", type=str,
-                    default='-', required=False,
+                    default='-',
                     help="Input fasta/fastq filepath. Use '-' for STDIN (default).")
 parser.add_argument('-o', "--output_fp", type=str,
-                    default='-', required=False,
+                    default='-',
                     help="Output TSV filepath. Use '-' for STDOUT (default).")
+parser.add_argument('-s', "--stats_output_fp", type=str,
+                    default='',
+                    help="Output JSON filepath for recording mapping stats.")
 
 args = parser.parse_args()
 
@@ -43,13 +47,12 @@ cols = [
 ]
 
 def extract_from_line(line_dict):
-    l, d, b, e = int(line_dict['read_length']), int(line_dict['read_frame']), int(line_dict['read_frame_begin']), int(line_dict['read_frame_end'])
+    d, b, e = int(line_dict['read_frame']), int(line_dict['read_frame_begin']), int(line_dict['read_frame_end'])
     if d<0:
-        b = l-b
-        e = l-e
+        b, e = e, b
 
     return {
-        'read_frame': (l,d,b,e),
+        'read_frame': (d,b,e),
         'query_accession': line_dict['query_accession'],
         'overall_score': float(line_dict['overall_score']),
         'overall_evalue': float(line_dict['overall_evalue']),
@@ -70,13 +73,12 @@ if __name__ == '__main__':
             continue
         line_dict = dict(zip(cols, [v.strip() for v in line.strip().split()]))
 
-        read_header_split = re.findall(r'^([^_]*)_length=(\d+)_frame=(-?\d+)_begin=(\d+)_end=(\d+)\s*$',
+        read_header_split = re.findall(r'^(.*?)_frame=(-?\d+)_begin=(\d+)_end=(\d+)\s*$',
                                        line_dict['target_name'])[0]
         line_dict['read_name'] = read_header_split[0]
-        line_dict['read_length'] = read_header_split[1]
-        line_dict['read_frame'] = read_header_split[2]
-        line_dict['read_frame_begin'] = read_header_split[3]
-        line_dict['read_frame_end'] = read_header_split[4]
+        line_dict['read_frame'] = read_header_split[1]
+        line_dict['read_frame_begin'] = read_header_split[2]
+        line_dict['read_frame_end'] = read_header_split[3]
 
         read_hits[line_dict['read_name']].append(extract_from_line(line_dict))
 
@@ -84,20 +86,20 @@ if __name__ == '__main__':
     for k,vs in read_hits.items():
         # greedy resolution of overlaps
         deoverlapped = []
-        ali_coverage = {i:False for i in range(vs[0]['read_frame'][0])}
+        ali_coverage = set()
         for d in sorted(vs, key=lambda x:x['overall_evalue']):
-            phase = d['read_frame'][1]
+            phase = int(d['read_frame'][0])
             direction = -1 if phase<0 else 1
-            start, end = d['read_frame'][2:4]
+            phase *= direction
+            start, end = d['read_frame'][1:3]
 
-            f_sort = lambda a,b: (b,a) if a>b else (a,b)
-            m = lambda x: (start-1)+direction*(x-1)*3 + ((phase*direction)-1)
-            nt_base_idxs = list(range(*f_sort(m(d['ali_coord_from']), m(d['ali_coord_to']))))
+            m = lambda x: (start-1)+direction*(x-1)*3 + (phase-1)
+            nt_base_idxs = list(range(*list(sorted((m(d['ali_coord_from']), m(d['ali_coord_to']))))))
 
-            if not any([ali_coverage[i] for i in nt_base_idxs]):
+            if not any([i in ali_coverage for i in nt_base_idxs]):
                 deoverlapped.append(d)
                 for i in nt_base_idxs:
-                    ali_coverage[i] = True
+                    ali_coverage.add(i)
 
         top_read_hits[k] = list(deoverlapped)
 
@@ -136,4 +138,14 @@ if __name__ == '__main__':
     for k,d in sorted(hmm_hits_coverage_stats.items(), key=lambda x:-x[1]['depth']):
         outfile.write(f"{k}\t{d['count']}\t{d['depth']}\t{d['breadth']}\n")
     outfile.close()
+
+    if args.stats_output_fp:
+        stats = {
+            'reads_mapped': len(top_read_hits),
+            'hmm_count': len(hmm_hit_count),
+            'read_hit_count': sum(list(hmm_hit_count.values()))
+        }
+        with open(args.stats_output_fp, 'wt') as f:
+            json.dump(stats, f)
+
 

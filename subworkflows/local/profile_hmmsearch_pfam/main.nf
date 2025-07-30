@@ -1,9 +1,7 @@
 include { SEQKIT_TRANSLATE } from '../../../modules/nf-core/seqkit/translate/main'
-include { FASTAEMBEDLENGTH } from '../../../modules/local/fastaembedlength/main'
 include { HMMER_HMMSEARCH } from '../../../modules/local/hmmer/hmmsearch/main'
 include { PARSEHMMSEARCHCOVERAGE } from '../../../modules/local/parsehmmsearchcoverage/main'
 include { COMBINEHMMSEARCHTBL } from '../../../modules/local/combinehmmsearchtbl/main'
-include { CHUNKFASTX} from  '../../../modules/local/chunkfastx/main'
 
 workflow PROFILE_HMMSEARCH_PFAM {
     take:
@@ -13,20 +11,24 @@ workflow PROFILE_HMMSEARCH_PFAM {
     main:
     ch_versions = Channel.empty()
 
-    FASTAEMBEDLENGTH(reads_fasta)
+    SEQKIT_TRANSLATE(reads_fasta)
 
-    SEQKIT_TRANSLATE(FASTAEMBEDLENGTH.out.fasta)
-
-    CHUNKFASTX(SEQKIT_TRANSLATE.out.fastx)
-
-    ch_chunked_fasta = CHUNKFASTX.out.chunked_reads.flatMap {
-        meta, chunks ->
-        def chunks_ = chunks instanceof Collection ? chunks : [chunks]
-        return chunks_.collect {
-            chunk ->
-            tuple(groupKey(meta, chunks_.size()), chunk)
+    ch_chunked_fasta = SEQKIT_TRANSLATE.out.fastx
+        .splitFasta(
+            size: params.hmmsearch_chunksize,
+            elem: 1,
+            file: true
+        )
+        .groupTuple()
+        .flatMap {
+            meta, chunks ->
+            def chunks_ = chunks instanceof Collection ? chunks : [chunks]
+            def chunksize = chunks_.size()
+            return chunks_.collect {
+                chunk ->
+                tuple(groupKey(meta, chunksize), chunk)
+            }
         }
-    }
 
     ch_chunked_pfam_in = ch_chunked_fasta
         .combine(pfam_db)
@@ -39,10 +41,13 @@ workflow PROFILE_HMMSEARCH_PFAM {
         HMMER_HMMSEARCH.out.domain_summary.groupTuple()
     )
 
+    COMBINEHMMSEARCHTBL.out.concatenated_result.view { "hmmsearch_concat - ${it}" }
+
     PARSEHMMSEARCHCOVERAGE(COMBINEHMMSEARCHTBL.out.concatenated_result)
     ch_versions = ch_versions.mix(PARSEHMMSEARCHCOVERAGE.out.versions)
 
     emit:
     profile = PARSEHMMSEARCHCOVERAGE.out.tsv
+    stats = PARSEHMMSEARCHCOVERAGE.out.stats
     versions = ch_versions // channel: [ versions.yml ]
 }

@@ -11,16 +11,18 @@ process PARSEHMMSEARCHCOVERAGE {
 
     output:
     tuple val(meta), path(out_fp), emit: tsv
+    tuple val(meta), path(stats_out_fp), emit: stats
     path "versions.yml", emit: versions
 
     script:
     def args = task.ext.args ?: ''
     out_fp = "${meta.id}_pfam_coverage.tsv"
+    stats_out_fp = "${meta.id}_stats.json"
 
     def script = file("${moduleDir}/bin/hmmer_domtbl_parse_coverage.py")
 
     """
-    gunzip -c ${domtbl_file} | python ${script} ${args} -i - -o ${out_fp}
+    gunzip -c ${domtbl_file} | python ${script} ${args} -i - -o ${out_fp} -s ${stats_out_fp}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
