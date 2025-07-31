@@ -23,12 +23,13 @@ process DECONTAMBAM {
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def unmapped_prefix = "${prefix}_${fn_prefix}_unmapped"
+    def sam_flag = meta.single_end ? 4 : 12
     if (split) {
         """
         #!/bin/bash
         samtools view \\
             ${args1} \\
-            -f 4 \\
+            -f ${sam_flag} \\
             -b ${inputbam} \\
         | samtools bam2fq \\
             ${args2} \\
@@ -39,7 +40,7 @@ process DECONTAMBAM {
             -s ${unmapped_prefix}_singleton.fq.gz \\
             -
 
-        samtools stats -f 4 ${inputbam} \\
+        samtools stats -f ${sam_flag} ${inputbam} \\
         > ${unmapped_prefix}_summary_stats.txt
 
         cat <<-END_VERSIONS > versions.yml
