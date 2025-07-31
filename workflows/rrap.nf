@@ -31,9 +31,9 @@ workflow PIPELINE {
         .from(
             params.databases.collect { k, v ->
                 if (v instanceof Map) {
-                    if (v.containsKey('chunked') && (v['chunked']==true)) {
+                    if (v.containsKey('chunked') && v['chunked']) {
                         v.collect { k_, v_ ->
-                            if (v instanceof Map) {
+                            if (v_ instanceof Map) {
                                 if (v_.containsKey('base_dir')) {
                                     return [id: k, chunk_id: k_] + v_
                                 }
