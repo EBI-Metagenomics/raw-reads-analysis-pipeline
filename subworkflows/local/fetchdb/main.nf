@@ -1,5 +1,3 @@
-include { FETCHUNZIP } from '../../../modules/local/fetchunzip/main'
-
 workflow FETCHDB {
     take:
     fetch_ch // channel: val(meta)

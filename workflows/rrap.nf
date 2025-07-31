@@ -31,19 +31,22 @@ workflow PIPELINE {
         .from(
             params.databases.collect { k, v ->
                 if (v instanceof Map) {
-                    if (v.containsKey('base_dir')) {
-                        return [id: k] + v
-                    } else if (v.containsKey('chunked') && v['chunked']) {
+                    if (v.containsKey('chunked') && (v['chunked']==true)) {
                         v.collect { k_, v_ ->
-                            if (v_.containsKey('base_dir')) {
-                                return [id: k, chunk_id: k_, chunk_n: v.size()] + v_
+                            if (v instanceof Map) {
+                                if (v_.containsKey('base_dir')) {
+                                    return [id: k, chunk_id: k_] + v_
+                                }
                             }
                         }
+                    } else if (v.containsKey('base_dir')) {
+                        return [id: k] + v
                     }
                 }
-            }
+            }.flatten()
         )
         .filter { it }
+    db_ch.view { "db_ch - ${it}" }
 
     FETCHDB(db_ch, "${projectDir}/${params.databases.cache_path}")
     dbs_path_ch = FETCHDB.out.dbs
