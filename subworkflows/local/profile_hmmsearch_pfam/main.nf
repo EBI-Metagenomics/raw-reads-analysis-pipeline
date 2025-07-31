@@ -19,6 +19,12 @@ workflow PROFILE_HMMSEARCH_PFAM {
             elem: 1,
             file: true
         )
+
+    ch_chunked_pfam_in = ch_chunked_fasta
+        .combine(pfam_db)
+        .map { meta, reads, db -> tuple(meta, tuple(reads, db)) }
+    
+    ch_chunked_pfam_in = ch_chunked_pfam_in
         .groupTuple()
         .flatMap {
             meta, chunks ->
@@ -29,10 +35,10 @@ workflow PROFILE_HMMSEARCH_PFAM {
                 tuple(groupKey(meta, chunksize), chunk)
             }
         }
-
-    ch_chunked_pfam_in = ch_chunked_fasta
-        .combine(pfam_db)
-        .map { meta, reads, db -> [meta, db, reads, false, true, true] }
+        .map { meta, v ->
+            def (reads, db) = v
+            return [meta, db, reads, false, true, true] 
+        }
 
     HMMER_HMMSEARCH(ch_chunked_pfam_in)
     ch_versions = ch_versions.mix(HMMER_HMMSEARCH.out.versions)
@@ -40,8 +46,6 @@ workflow PROFILE_HMMSEARCH_PFAM {
     COMBINEHMMSEARCHTBL(
         HMMER_HMMSEARCH.out.domain_summary.groupTuple()
     )
-
-    COMBINEHMMSEARCHTBL.out.concatenated_result.view { "hmmsearch_concat - ${it}" }
 
     PARSEHMMSEARCHCOVERAGE(COMBINEHMMSEARCHTBL.out.concatenated_result)
     ch_versions = ch_versions.mix(PARSEHMMSEARCHCOVERAGE.out.versions)

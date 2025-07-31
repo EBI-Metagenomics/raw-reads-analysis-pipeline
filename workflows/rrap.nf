@@ -30,8 +30,16 @@ workflow PIPELINE {
     db_ch = Channel
         .from(
             params.databases.collect { k, v ->
-                if ((v instanceof Map) && v.containsKey('base_dir')) {
-                    return [id: k] + v
+                if (v instanceof Map) {
+                    if (v.containsKey('base_dir')) {
+                        return [id: k] + v
+                    } else if (v.containsKey('chunked') && v['chunked']) {
+                        v.collect { k_, v_ ->
+                            if (v_.containsKey('base_dir')) {
+                                return [id: k, chunk_id: k_, chunk_n: v.size()] + v_
+                            }
+                        }
+                    }
                 }
             }
         )
@@ -297,7 +305,6 @@ workflow PIPELINE {
         .map { meta, fp ->
             file("${fp}/${meta.base_dir}/${meta.files.hmm}")
         }
-        .first()
 
     PROFILE_HMMSEARCH_PFAM(
         merged_reads,
