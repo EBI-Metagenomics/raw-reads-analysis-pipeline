@@ -26,7 +26,7 @@ workflow PIPELINE {
     main:
     ch_versions = Channel.empty()
 
-    // Fetch databases
+   // Fetch databases
     db_ch = Channel
         .from(
             params.databases.collect { k, v ->
@@ -46,7 +46,6 @@ workflow PIPELINE {
             }.flatten()
         )
         .filter { it }
-    db_ch.view { "db_ch - ${it}" }
 
     FETCHDB(db_ch, "${projectDir}/${params.databases.cache_path}")
     dbs_path_ch = FETCHDB.out.dbs

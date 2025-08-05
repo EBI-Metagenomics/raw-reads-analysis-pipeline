@@ -105,15 +105,14 @@ if __name__ == '__main__':
 
     # get hmm coverage and read counts
     hmm_hits_coverage = {}
-    hmm_hit_count = defaultdict(set)
+    hmm_hit_count = defaultdict(int)
     for k,vs in top_read_hits.items():
         for d in vs:
-            hmm_hit_count[d['query_accession']].add(k)
+            hmm_hit_count[d['query_accession']] += 1
             if not d['query_accession'] in hmm_hits_coverage:
                 hmm_hits_coverage[d['query_accession']] = {i+1:0 for i in range(d['qlen'])}
             for i in range(d['hmm_coord_from'], d['hmm_coord_to']):
                 hmm_hits_coverage[d['query_accession']][i] += 1
-    hmm_hit_count = {k:len(vs) for k,vs in hmm_hit_count.items()}
 
     # Collect and write
     hmm_hits_coverage_stats = {}
