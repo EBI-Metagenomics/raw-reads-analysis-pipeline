@@ -3,7 +3,6 @@ include { CMSEARCHTBLOUTDEOVERLAP     } from '../../../modules/ebi-metagenomics/
 include { EASEL_ESLSFETCH             } from '../../../modules/ebi-metagenomics/easel/eslsfetch/main'
 include { EXTRACTCOORDS               } from '../../../modules/ebi-metagenomics/extractcoords/main'
 include { COMBINEHMMSEARCHTBL } from '../../../modules/local/combinehmmsearchtbl/main'
-include { CHUNKFASTX} from  '../../../modules/local/chunkfastx/main'
 
 workflow RRNA_EXTRACTION {
 

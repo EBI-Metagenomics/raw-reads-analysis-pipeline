@@ -302,18 +302,24 @@ workflow PIPELINE {
     )
 
 
-    // Pfam profiling
-    pfam_db = dbs.pfam
-        .map { meta, fp ->
-            file("${fp}/${meta.base_dir}/${meta.files.hmm}")
-        }
+    if (params.skip_functional) {
+        pfam_status = merged_reads.map { meta, _fp -> [meta.id, false] }
+    }
+    else {
+        // Pfam profiling
+        pfam_db = dbs.pfam
+            .map { meta, fp ->
+                file("${fp}/${meta.base_dir}/${meta.files.hmm}")
+            }
 
-    PROFILE_HMMSEARCH_PFAM(
-        merged_reads,
-        pfam_db,
-    )
-    ch_versions = ch_versions.mix(PROFILE_HMMSEARCH_PFAM.out.versions)
-
+        PROFILE_HMMSEARCH_PFAM(
+            merged_reads,
+            pfam_db,
+        )
+        ch_versions = ch_versions.mix(PROFILE_HMMSEARCH_PFAM.out.versions)
+        
+        pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
+    }
 
     // MultiQC
     ch_multiqc_config = Channel.fromPath(
@@ -404,8 +410,6 @@ workflow PIPELINE {
         .filter { meta, _fp -> meta.db_label == 'SILVA-LSU' }
         .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
 
-    pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
-
     run_status = reads_status
         .join(qc_status, remainder: true)
         .join(decontam_status, remainder: true)
@@ -415,8 +419,8 @@ workflow PIPELINE {
         .join(pfam_status, remainder: true)
 
     run_status
-        .filter { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> qc }
-        .map { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam ->
+        .filter { _meta_id, _reads, qc, _decontam, _motus, _silvassu, _silvalsu, _pfam -> qc }
+        .map { meta_id, _reads, _qc, decontam, motus, silvassu, silvalsu, pfam ->
             {
                 def status = "all_results"
                 if (decontam == false) {
@@ -434,8 +438,8 @@ workflow PIPELINE {
         .collectFile(name: "qc_passed_runs.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     run_status
-        .filter { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam -> !qc }
-        .map { meta_id, reads, qc, decontam, motus, silvassu, silvalsu, pfam ->
+        .filter { _meta_id, _reads, qc, _decontam, _motus, _silvassu, _silvalsu, _pfam -> !qc }
+        .map { meta_id, _reads, _qc, decontam, motus, silvassu, silvalsu, pfam ->
             {
                 def status = "all_results"
                 if (decontam == false) {
@@ -472,9 +476,5 @@ workflow PIPELINE {
 
     emit:
     versions = ch_versions // channel: [ path(versions.yml) ]
-    pfam_profile = PROFILE_HMMSEARCH_PFAM.out.profile // channel: [ meta, path ]
-    rrna_profile = ADDHEADER_RRNA.out.file_with_header // channel: [ meta, path ]
-    motus_profile = ADDHEADER_MOTUS.out.file_with_header // channel: [ meta, path ]
-    decontam_stats = decontam_stats // channel: [ meta, path ]
-    qc_stats = qc_stats // channel: [ meta, path ]
+    collated_versions = collated_versions // channel: [ path(versions.yml) ]
 }
