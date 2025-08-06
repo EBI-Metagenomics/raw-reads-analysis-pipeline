@@ -1,3 +1,0 @@
-study_accession,run_accession,fastq_1,fastq_2,library_layout,library_strategy,instrument_platform
-PRJEB51728,ERR10889174,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/074/ERR10889174/ERR10889174_1.fastq.gz,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/074/ERR10889174/ERR10889174_2.fastq.gz,PAIRED,WGS,ILLUMINA
-PRJEB51728,ERR10889182,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/082/ERR10889182/ERR10889182_1.fastq.gz,ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/082/ERR10889182/ERR10889182_2.fastq.gz,PAIRED,WGS,ILLUMINA

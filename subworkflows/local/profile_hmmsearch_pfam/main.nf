@@ -1,5 +1,5 @@
 include { SEQKIT_TRANSLATE } from '../../../modules/nf-core/seqkit/translate/main'
-include { HMMER_HMMSEARCH } from '../../../modules/local/hmmer/hmmsearch/main'
+include { HMMER_HMMSEARCH } from '../../../modules/nf-core/hmmer/hmmsearch/main'
 include { PARSEHMMSEARCHCOVERAGE } from '../../../modules/local/parsehmmsearchcoverage/main'
 include { COMBINEHMMSEARCHTBL } from '../../../modules/local/combinehmmsearchtbl/main'
 
