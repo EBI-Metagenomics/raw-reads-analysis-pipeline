@@ -12,6 +12,7 @@ include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
 include { ADDHEADER as ADDHEADER_RRNA } from '../modules/local/addheader/main'
 include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
 include { BBMAP_REFORMAT_STANDARDISE } from '../modules/local/bbmap/reformat_standardise/main'
+include { SEQKIT_SAMPLE } from '../modules/local/seqkit/sample/main'
 
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
@@ -312,8 +313,16 @@ workflow PIPELINE {
                 file("${fp}/${meta.base_dir}/${meta.files.hmm}")
             }
 
+        if (params.hmmsearch_subsampling == -1) {
+            pfam_reads = merged_reads
+        }
+        else {
+            SEQKIT_SAMPLE(merged_reads, params.hmmsearch_subsampling)
+            pfam_reads = SEQKIT_SAMPLE.out.fastx
+        }
+
         PROFILE_HMMSEARCH_PFAM(
-            merged_reads,
+            pfam_reads,
             pfam_db,
         )
         ch_versions = ch_versions.mix(PROFILE_HMMSEARCH_PFAM.out.versions)
