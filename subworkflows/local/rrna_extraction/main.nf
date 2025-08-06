@@ -41,8 +41,6 @@ workflow RRNA_EXTRACTION {
         INFERNAL_CMSEARCH.out.cmsearch_tbl.groupTuple()
     )
 
-    COMBINEHMMSEARCHTBL.out.concatenated_result.view { "cmsearch_concat - ${it}" }
-
     CMSEARCHTBLOUTDEOVERLAP(
         COMBINEHMMSEARCHTBL.out.concatenated_result,
         claninfo

@@ -36,8 +36,9 @@ process SEQKIT_SAMPLE {
         sample \\
         --threads ${task.cpus} \\
         ${args} \\
+        -p 1.0 \\
         ${fastx} \\
-        ${subsample_n} \\
+        | head -n ${subsample_n} \\
         ${call_gzip} \\
         > ${prefix}.${extension}
 
