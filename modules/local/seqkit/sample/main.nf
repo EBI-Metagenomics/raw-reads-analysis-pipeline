@@ -38,7 +38,7 @@ process SEQKIT_SAMPLE {
         ${args} \\
         -p 1.0 \\
         ${fastx} \\
-        | head -n ${subsample_n} \\
+        | seqkit head -n ${subsample_n} \\
         ${call_gzip} \\
         > ${prefix}.${extension}
 
