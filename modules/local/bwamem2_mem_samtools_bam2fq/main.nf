@@ -27,14 +27,14 @@ process BWAMEM2_MEM_SAMTOOLS_BAM2FQ {
     def database = task.ext.database ?: meta2.id
     def sam_flag = meta.single_end ? 4 : 12
 
-    def bam2fq_cmd = """
+    def bam2fq_cmd = """ \\
     samtools bam2fq \\
         $args3 \\
         -@ $task.cpus \\
         | gzip --no-name > ${prefix}_interleaved.fq.gz
     """
     if (split) {
-        bam2fq_cmd = """
+        bam2fq_cmd = """ \\
         samtools bam2fq \\
             $args3 \\
             -@ $task.cpus \\
@@ -54,9 +54,9 @@ process BWAMEM2_MEM_SAMTOOLS_BAM2FQ {
         -t $task.cpus \\
         \$INDEX \\
         $reads \\
-        | samtools view -@ ${task.cpus} -f ${sam_flag} $args2 - \\
-        | samtools sort -@ ${task.cpus} -O bam - \\
-        | ${bam2fq_cmd}
+    | samtools view -@ ${task.cpus} -f ${sam_flag} $args2 - \\
+    | samtools sort -@ ${task.cpus} -O bam - \\
+    | ${bam2fq_cmd}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

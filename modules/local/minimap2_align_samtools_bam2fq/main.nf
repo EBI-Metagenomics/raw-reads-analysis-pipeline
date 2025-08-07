@@ -33,14 +33,14 @@ process MINIMAP2_ALIGN_SAMTOOLS_BAM2FQ {
     def target = reference ?: (bam_input ? error("BAM input requires reference") : reads)
     def sam_flag = meta.single_end ? 4 : 12
 
-    def bam2fq_cmd = """
+    def bam2fq_cmd = """ \\
     samtools bam2fq \\
         $args3 \\
         -@ $task.cpus \\
         | gzip --no-name > ${prefix}_interleaved.fq.gz
     """
     if (split) {
-        bam2fq_cmd = """
+        bam2fq_cmd = """ \\
         samtools bam2fq \\
             $args3 \\
             -@ $task.cpus \\
@@ -58,9 +58,9 @@ process MINIMAP2_ALIGN_SAMTOOLS_BAM2FQ {
         -t $task.cpus \\
         $target \\
         $query \\
-        | samtools view -@ ${task.cpus} -f ${sam_flag} $args2 - \\
-        | samtools sort -@ ${task.cpus} -O bam - \\
-        | ${bam2fq_cmd}
+    | samtools view -@ ${task.cpus} -f ${sam_flag} $args2 - \\
+    | samtools sort -@ ${task.cpus} -O bam - \\
+    | ${bam2fq_cmd}
 
 
     cat <<-END_VERSIONS > versions.yml
