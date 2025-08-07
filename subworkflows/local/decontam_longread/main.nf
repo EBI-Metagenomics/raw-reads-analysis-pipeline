@@ -1,5 +1,4 @@
-include { MINIMAP2_ALIGN } from '../../../modules/nf-core/minimap2/align/main'
-include { DECONTAMBAM } from '../../../modules/local/decontambam/main'
+include { MINIMAP2_ALIGN_SAMTOOLS_BAM2FQ as DECONTAM } from '../../../modules/local/minimap2_align_samtools_bam2fq/main'
 include { CONCATENATE} from  '../../../modules/local/concatenate/main'
 
 workflow DECONTAM_LONGREAD {
@@ -60,24 +59,14 @@ workflow DECONTAM_LONGREAD {
                 }
             }
 
-        MINIMAP2_ALIGN(
-            chunked_reads,
+        DECONTAM(
+            chunked_reads
+                .map{ meta, fastq -> [meta, fastq, !meta.single_end] },
             reference_genome_index,
-            true,
-            "bai",
-            false,
-            false,
         )
-        ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
+        ch_versions = ch_versions.mix(DECONTAM.out.versions)
 
-        DECONTAMBAM(
-            MINIMAP2_ALIGN.out.bam.map { meta, bam ->
-                [meta, bam, !meta.single_end, ""]
-            }
-        )
-        ch_versions = ch_versions.mix(DECONTAMBAM.out.versions)
-
-        chunked_decontaminated_reads = DECONTAMBAM.out.unmapped_reads
+        chunked_decontaminated_reads = DECONTAM.out.reads
 
         concat_ch = chunked_decontaminated_reads
             .groupTuple()
