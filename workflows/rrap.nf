@@ -12,7 +12,7 @@ include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
 include { ADDHEADER as ADDHEADER_RRNA } from '../modules/local/addheader/main'
 include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
 include { BBMAP_REFORMAT_STANDARDISE } from '../modules/local/bbmap/reformat_standardise/main'
-include { SEQKIT_SAMPLE } from '../modules/local/seqkit/sample/main'
+include { SEQKIT_SHUFFLE_FASTA } from '../modules/local/seqkit_shuffle_fasta/main'
 
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
@@ -317,8 +317,8 @@ workflow PIPELINE {
             pfam_reads = merged_reads
         }
         else {
-            SEQKIT_SAMPLE(merged_reads, params.hmmsearch_subsampling)
-            pfam_reads = SEQKIT_SAMPLE.out.fastx
+            SEQKIT_SHUFFLE_FASTA(merged_reads, params.hmmsearch_subsampling)
+            pfam_reads = SEQKIT_SHUFFLE_FASTA.out.fastx
         }
 
         PROFILE_HMMSEARCH_PFAM(
