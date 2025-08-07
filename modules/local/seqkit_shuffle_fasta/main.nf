@@ -13,7 +13,7 @@ process SEQKIT_SHUFFLE_FASTA {
     val shuffle
 
     output:
-    tuple val(meta), path("${prefix}.*"), emit: fastx
+    tuple val(meta), path("${prefix}.*"), emit: fasta
     path "versions.yml", emit: versions
 
     when:

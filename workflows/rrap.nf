@@ -317,8 +317,8 @@ workflow PIPELINE {
             pfam_reads = merged_reads
         }
         else {
-            SEQKIT_SHUFFLE_FASTA(merged_reads, params.hmmsearch_subsampling)
-            pfam_reads = SEQKIT_SHUFFLE_FASTA.out.fastx
+            SEQKIT_SHUFFLE_FASTA(merged_reads, params.hmmsearch_subsampling, true)
+            pfam_reads = SEQKIT_SHUFFLE_FASTA.out.fasta
         }
 
         PROFILE_HMMSEARCH_PFAM(
