@@ -31,7 +31,7 @@ process BWAMEM2_MEM_SAMTOOLS_BAM2FQ {
     samtools bam2fq \\
         $args3 \\
         -@ $task.cpus \\
-        | gzip --no-name > ${prefix}_interleaved.fq.gz
+        | gzip --no-name > ${prefix}_interleaved.fq.gz \\
     """
     if (split) {
         bam2fq_cmd = """ \\
@@ -41,7 +41,7 @@ process BWAMEM2_MEM_SAMTOOLS_BAM2FQ {
             -1 ${prefix}_1.fq.gz \\
             -2 ${prefix}_2.fq.gz \\
             -0 ${prefix}_other.fq.gz \\
-            -s ${prefix}_singleton.fq.gz\\
+            -s ${prefix}_singleton.fq.gz \\
         """
     }
     
@@ -55,7 +55,6 @@ process BWAMEM2_MEM_SAMTOOLS_BAM2FQ {
         \$INDEX \\
         $reads \\
     | samtools view -@ ${task.cpus} -f ${sam_flag} $args2 - \\
-    | samtools sort -@ ${task.cpus} -O bam - \\
     | ${bam2fq_cmd}
 
     cat <<-END_VERSIONS > versions.yml

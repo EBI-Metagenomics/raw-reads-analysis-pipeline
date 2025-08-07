@@ -59,7 +59,6 @@ process MINIMAP2_ALIGN_SAMTOOLS_BAM2FQ {
         $target \\
         $query \\
     | samtools view -@ ${task.cpus} -f ${sam_flag} $args2 - \\
-    | samtools sort -@ ${task.cpus} -O bam - \\
     | ${bam2fq_cmd}
 
 
