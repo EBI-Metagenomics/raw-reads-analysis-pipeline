@@ -86,7 +86,6 @@ workflow DECONTAM_SHORTREAD {
 
             chunked_decontaminated_reads = DECONTAM_PHIX.out.reads
         }
-        chunked_decontaminated_reads.view{ "chunked_decontaminated_reads - ${it}" }
 
         if (host_genome != null) {
 

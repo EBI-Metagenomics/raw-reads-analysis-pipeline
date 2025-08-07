@@ -9,7 +9,7 @@ process MINIMAP2_ALIGN_SAMTOOLS_BAM2FQ {
         'community.wave.seqera.io/library/minimap2_samtools:33bb43c18d22e29c' }"
 
     input:
-    tuple val(meta), path(reads), val(split)
+    tuple val(meta), path(reads, stageAs: 'input/*'), val(split)
     tuple val(meta2), path(reference)
 
     output:

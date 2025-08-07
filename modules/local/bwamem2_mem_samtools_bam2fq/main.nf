@@ -7,7 +7,7 @@ process BWAMEM2_MEM_SAMTOOLS_BAM2FQ {
         'biocontainers/mulled-v2-e5d375990341c5aef3c9aff74f96f66f65375ef6:2d15960ccea84e249a150b7f5d4db3a42fc2d6c3-0' }"
 
     input:
-    tuple val(meta), path(reads), val(split)
+    tuple val(meta), path(reads, stageAs: 'input/*'), val(split)
     tuple val(meta2), path(index)
 
     output:
