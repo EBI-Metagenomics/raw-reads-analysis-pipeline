@@ -19,7 +19,7 @@ process FETCHUNZIP {
     def checksum_cmd = ""
     if (checksum) {
         checksum_cmd = """
-        file_checksum=$(md5sum ${fp} | cut -d ' ' -f1)
+        file_checksum=\$(md5sum ${fp} | cut -d ' ' -f1)
 
         remote_checksum=${checksum}
 
@@ -31,10 +31,10 @@ process FETCHUNZIP {
     }
     else if (checksum_path) {
         checksum_cmd = """
-        file_checksum=$(md5sum ${fp} \\
+        file_checksum=\$(md5sum ${fp} \\
         | cut -d ' ' -f1)
 
-        remote_checksum=$(cat ${checksum_path} \\
+        remote_checksum=\$(cat ${checksum_path} \\
         | cut -d ' ' -f1)
 
         if [[\$file_checksum != \$remote_checksum]]; then
