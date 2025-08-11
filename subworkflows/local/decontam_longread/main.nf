@@ -13,7 +13,7 @@ workflow DECONTAM_LONGREAD {
         .map { meta, fp ->
             [
                 meta,
-                file("${fp}/${meta.base_dir}/${meta.files.index}"),
+                file("${fp}/${meta.files.index}"),
             ]
         }
         .first()

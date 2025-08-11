@@ -35,12 +35,12 @@ workflow PIPELINE {
                     if (v.containsKey('chunked') && v['chunked']) {
                         v.collect { k_, v_ ->
                             if (v_ instanceof Map) {
-                                if (v_.containsKey('base_dir')) {
+                                if (v_.containsKey('files')) {
                                     return [id: k, chunk_id: k_] + v_
                                 }
                             }
                         }
-                    } else if (v.containsKey('base_dir')) {
+                    } else if (v.containsKey('files')) {
                         return [id: k] + v
                     }
                 }
@@ -218,7 +218,7 @@ workflow PIPELINE {
     // mOTUs
     motus_db = dbs.motus
         .map { meta, fp ->
-            file("${fp}/${meta.base_dir}")
+            file("${fp}/${meta.files.base_dir}")
         }
         .first()
 
@@ -237,13 +237,13 @@ workflow PIPELINE {
     // rrna_extraction
     rfam_db = dbs.rfam
         .map { meta, fp ->
-            file("${fp}/${meta.base_dir}/${meta.files.ribosomal_models_file}")
+            file("${fp}/${meta.files.models}")
         }
         .first()
 
     claninfo_db = dbs.rfam
         .map { meta, fp ->
-            file("${fp}/${meta.base_dir}/${meta.files.ribosomal_claninfo_file}")
+            file("${fp}/${meta.files.claninfo}")
         }
         .first()
 
@@ -258,10 +258,10 @@ workflow PIPELINE {
         .map { meta, fp ->
             [
                 [
-                    file("${fp}/${meta.base_dir}/${meta.files.fasta}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.tax}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.otu}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.mscluster}"),
+                    file("${fp}/${meta.files.fasta}"),
+                    file("${fp}/${meta.files.tax}"),
+                    file("${fp}/${meta.files.otu}"),
+                    file("${fp}/${meta.files.mscluster}"),
                     meta.id,
                 ]
             ]
@@ -272,10 +272,10 @@ workflow PIPELINE {
         .map { meta, fp ->
             [
                 [
-                    file("${fp}/${meta.base_dir}/${meta.files.fasta}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.tax}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.otu}"),
-                    file("${fp}/${meta.base_dir}/${meta.files.mscluster}"),
+                    file("${fp}/${meta.files.fasta}"),
+                    file("${fp}/${meta.files.tax}"),
+                    file("${fp}/${meta.files.otu}"),
+                    file("${fp}/${meta.files.mscluster}"),
                     meta.id,
                 ]
             ]
@@ -310,7 +310,7 @@ workflow PIPELINE {
         // Pfam profiling
         pfam_db = dbs.pfam
             .map { meta, fp ->
-                file("${fp}/${meta.base_dir}/${meta.files.hmm}")
+                file("${fp}/${meta.files.hmm}")
             }
 
         if (params.hmmsearch_subsampling == -1) {

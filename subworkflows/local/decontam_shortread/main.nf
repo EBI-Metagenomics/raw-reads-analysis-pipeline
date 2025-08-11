@@ -13,24 +13,15 @@ workflow DECONTAM_SHORTREAD {
 
     phix_genome_index = phix_genome
         .map { meta, fp ->
-            [meta, files("${fp}/${meta.base_dir}/${meta.files.bwa_index_prefix}.*")]
+            [meta, files("${fp}/${meta.files.bwa_index_prefix}.*")]
         }
         .first()
-    // phix_genome_fasta = phix_genome
-    //     .map { meta, fp ->
-    //         [meta, file("${fp}/${meta.base_dir}/${meta.files.genome}")]
-    //     }
-    //     .first()
+
     host_genome_index = host_genome
         .map { meta, fp ->
-            [meta, files("${fp}/${meta.base_dir}/${meta.files.bwa_index_prefix}.*")]
+            [meta, files("${fp}/${meta.files.bwa_index_prefix}.*")]
         }
         .first()
-    // host_genome_fasta = host_genome
-    //     .map { meta, fp ->
-    //         [meta, file("${fp}/${meta.base_dir}/${meta.files.genome}")]
-    //    }
-    //     .first()
 
 
     if (params.remove_phix || params.remove_host) {
