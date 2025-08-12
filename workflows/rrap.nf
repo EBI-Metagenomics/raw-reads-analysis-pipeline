@@ -25,6 +25,8 @@ include { samplesheetToList } from 'plugin/nf-schema'
 
 workflow PIPELINE {
     main:
+    println(new File("${projectDir}/assets/header.txt").text)
+
     ch_versions = Channel.empty()
 
    // Fetch databases
