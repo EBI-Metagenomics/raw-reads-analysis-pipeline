@@ -1,23 +1,17 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/ebi-metagenomics/rrap/master/assets/schema_input.json",
+    "$id": "https://raw.githubusercontent.com/ebi-metagenomics/raw-reads-analysis-pipeline/master/assets/schema_input.json",
     "title": "ebi-metagenomics/rrap pipeline - params.input schema",
     "description": "Schema for the file provided with params.input",
     "type": "array",
     "items": {
         "type": "object",
         "properties": {
-            "study": {
-                "type": "string",
-                "pattern": "^\\S+$",
-                "errorMessage": "Study name must be provided and cannot contain spaces",
-                "minLength": 3
-            },
             "sample": {
                 "type": "string",
                 "pattern": "^\\S+$",
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
-                "minLength": 3
+                "minLength": 1
             },
             "fastq_1": {
                 "type": "string",
@@ -37,22 +31,16 @@
                     }
                 ]
             },
-            "library_layout": {
-                "type": "string",
-                "enum": ["SINGLE", "PAIRED"],
-                "errorMessage": "library_layout should be only 'SINGLE' or 'PAIRED' value"
-            },
-            "library_strategy": {
-                "type": "string",
-                "enum": ["WGS", "METAGENOMIC"],
-                "errorMessage": "library strategy should be only value from list: 'METAGENOMIC', 'WGS'"
+            "single_end": {
+                "type": "boolean",
+                "errorMessage": "Strandedness must be provided and be either 0 (paired-end) or 1 (single-end)"
             },
             "instrument_platform": {
                 "type": "string",
                 "enum": ["ILLUMINA", "ONT", "PB"],
                 "errorMessage": "instrument platform should be only value from list: 'ILLUMINA', 'ONT', 'PB'"
-            },
+            }
         },
-        "required": ["study", "sample", "fastq_1", "library_layout", "library_strategy", "instrument_platform"]
+        "required": ["sample", "fastq_1", "single_end", "instrument_platform"]
     }
 }

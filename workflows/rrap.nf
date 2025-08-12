@@ -65,17 +65,15 @@ workflow PIPELINE {
         .set { dbs }
 
     // Parse samplesheet and fetch reads
-    def groupReads = { study, sample, fq1, fq2, library_layout, library_strategy, instrument_platform ->
+    def groupReads = { sample, fq1, fq2, library_layout, instrument_platform ->
         def single_end = (library_layout == 'SINGLE')
         def single_file = (fq2 == [])
         [
             [
                 'id': sample,
-                'study': study,
                 'single_end': single_end,
                 'interleaved': (!single_end) && single_file,
                 'library_layout': library_layout,
-                'library_strategy': library_strategy,
                 'instrument_platform': instrument_platform,
             ],
             single_file ? [file(fq1)] : [file(fq1), file(fq2)],

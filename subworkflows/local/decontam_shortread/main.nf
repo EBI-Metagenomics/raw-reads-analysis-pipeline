@@ -67,15 +67,22 @@ workflow DECONTAM_SHORTREAD {
             }
 
         if (params.remove_phix) {
+            
+            decontam_phix_ch = chunked_decontaminated_reads.branch { 
+                meta, _reads ->
+                illumina: meta.instrument_platform=='ILLUMINA'
+                not_illumina : !(meta.instrument_platform=='ILLUMINA')
+            }
 
             DECONTAM_PHIX(
-                chunked_decontaminated_reads
+                decontam_phix_ch.illumina
                     .map{ meta, fastq -> [meta, fastq, !meta.single_end] },
                 phix_genome_index,
             )
             ch_versions = ch_versions.mix(DECONTAM_PHIX.out.versions)
 
             chunked_decontaminated_reads = DECONTAM_PHIX.out.reads
+                .mix(decontam_phix_ch.not_illumina)
         }
 
         if (host_genome != null) {
