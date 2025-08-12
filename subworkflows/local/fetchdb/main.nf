@@ -13,6 +13,7 @@ workflow FETCHDB {
     cache_path_ch = fetch_ch
         .filter { meta -> ((!meta.local_path) && meta.remote_path) }
         .map { meta -> [meta, file("${cache_path}/${meta.id}")] }
+    cache_path_ch.view{ "cache_path_ch - ${it}" }
 
     download_ch = cache_path_ch
         .filter { _meta, cache_fp -> (cache_path.isEmpty() || (!cache_fp.exists()) || params.force_download_dbs==true) }
@@ -32,10 +33,12 @@ workflow FETCHDB {
             }
             [meta, meta.id, file(meta.remote_path, checkIfExists: true), checksum_path, checksum] 
         }
+    download_ch.view{ "download_ch - ${it}" }
 
     cache_ch = cache_path_ch
        .filter { _meta, cache_fp -> ((!cache_path.isEmpty()) && cache_fp.exists() && (params.force_download_dbs==false)) }
        .map { meta, cache_fp -> [meta, cache_fp] }
+    cache_ch.view{ "cache_ch - ${it}" }
 
     FETCHUNZIP(download_ch)
     downloaded_ch = FETCHUNZIP.out
