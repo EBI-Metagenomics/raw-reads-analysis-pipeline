@@ -48,7 +48,7 @@ workflow PIPELINE {
         )
         .filter { it }
 
-    FETCHDB(db_ch, "${projectDir}/${params.databases.cache_path}")
+    FETCHDB(db_ch, "${launchDir}/${params.databases.cache_path}")
     dbs_path_ch = FETCHDB.out.dbs
 
     dbs_path_ch
