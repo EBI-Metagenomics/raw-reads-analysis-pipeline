@@ -19,10 +19,15 @@ process ADDHEADER {
 
     script:
     def args = task.ext.args ?: ''
-
+    
     def echo_cmd = "touch \$out_fp"
     if ((header_str instanceof String) && (header_str.size()>0)){
         echo_cmd = "echo -e \"${header_str}\" > \$out_fp"
+    }
+
+    def cat_cmd = ""
+    if (in_fp.exists()) {
+        cat_cmd = "cat ${in_fp} >> \$out_fp"
     }
 
     def gzip_cmd = ""
@@ -35,7 +40,7 @@ process ADDHEADER {
     mkdir -p output
     out_fp=output/\$fn
     ${echo_cmd}
-    cat $in_fp >> \$out_fp
+    ${cat_cmd}
     ${gzip_cmd}
     """
 
