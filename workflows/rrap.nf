@@ -308,7 +308,7 @@ workflow PIPELINE {
     rrna_out_ch = MAPSEQ_OTU_KRONA.out.krona_input
         .join(merged_reads, remainder: true)
         .map { meta, result, _reads -> 
-            def result_ = result ? result : "${meta.id}.txt"
+            def result_ = result ? result : []
             def out_fn = result ? false : "${meta.id}.tsv"
             return [meta, result_, out_fn] 
         }
@@ -346,7 +346,7 @@ workflow PIPELINE {
         pfam_out_ch = PROFILE_HMMSEARCH_PFAM.out.profile
             .join(clean_reads, remainder: true)
             .map { meta, result, _reads -> 
-                def result_ = result ? result : "${meta.id}.tsv"
+                def result_ = result ? result : []
                 def out_fn = result ? false : "${meta.id}.tsv"
                 return [meta, result_, out_fn] 
             }
