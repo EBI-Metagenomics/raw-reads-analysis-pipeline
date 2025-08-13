@@ -11,6 +11,7 @@ include { DECONTAM_LONGREAD } from '../subworkflows/local/decontam_longread/main
 include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
 include { ADDHEADER as ADDHEADER_RRNA } from '../modules/local/addheader/main'
 include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
+include { ADDHEADER as ADDHEADER_PFAM } from '../modules/local/addheader/main'
 include { BBMAP_REFORMAT_STANDARDISE } from '../modules/local/bbmap/reformat_standardise/main'
 include { SEQKIT_SHUFFLE_FASTA } from '../modules/local/seqkit_shuffle_fasta/main'
 
@@ -226,9 +227,13 @@ workflow PIPELINE {
     )
     ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)
 
+    motus_out_ch = MOTUS_KRONA.out.krona
+        .join(clean_reads, remainder: true)
+        .map { meta, result, _reads -> [meta, result] }
     ADDHEADER_MOTUS(
-        MOTUS_KRONA.out.krona,
+        motus_out_ch,
         "# ${params.results_file_headers.motus_taxonomy.join('\t')}",
+        true
     )
 
 
@@ -295,9 +300,14 @@ workflow PIPELINE {
     MAPSEQ_OTU_KRONA(rrna_chs.seqs, rrna_chs.db)
     ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
 
+
+    rrna_out_ch = MAPSEQ_OTU_KRONA.out.krona_input
+        .join(merged_reads, remainder: true)
+        .map { meta, result, _reads -> [meta, result] }
     ADDHEADER_RRNA(
-        MAPSEQ_OTU_KRONA.out.krona_input,
+        rrna_out_ch,
         "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
+        true
     )
 
 
@@ -324,8 +334,14 @@ workflow PIPELINE {
             pfam_db,
         )
         ch_versions = ch_versions.mix(PROFILE_HMMSEARCH_PFAM.out.versions)
-        
-        pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
+
+        pfam_out_ch = PROFILE_HMMSEARCH_PFAM.out.profile
+            .join(clean_reads, remainder: true)
+            .map { meta, result, _reads -> [meta, result] }
+        ADDHEADER_PFAM(pfam_out_ch, false, true)
+            
+        pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
+            .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
     }
 
     // MultiQC
@@ -407,15 +423,16 @@ workflow PIPELINE {
 
     decontam_status = clean_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
 
-    motus_status = ADDHEADER_MOTUS.out.file_with_header.map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
+    motus_status = ADDHEADER_MOTUS.out.file_with_header
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
 
     silvassu_status = ADDHEADER_RRNA.out.file_with_header
         .filter { meta, _fp -> meta.db_label == 'SILVA-SSU' }
-        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
 
     silvalsu_status = ADDHEADER_RRNA.out.file_with_header
         .filter { meta, _fp -> meta.db_label == 'SILVA-LSU' }
-        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
 
     run_status = reads_status
         .join(qc_status, remainder: true)

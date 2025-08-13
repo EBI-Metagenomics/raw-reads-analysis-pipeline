@@ -9,6 +9,7 @@ process ADDHEADER {
     input:
     tuple val(meta), path(in_fp)
     val header_str
+    val gzip
 
     output:
     tuple val(meta), path("output/*"), emit: file_with_header
@@ -19,19 +20,34 @@ process ADDHEADER {
     script:
     def args = task.ext.args ?: ''
 
+    def echo_cmd = "touch \$out_fp"
+    if ((header_str instanceof String) && (header_str.size()>0)){
+        echo_cmd = "echo -e \"${header_str}\" > \$out_fp"
+    }
+
+    def gzip_cmd = ""
+    if (gzip) {
+        gzip_cmd = "gzip \$out_fp"
+    } 
+
     """
     fn=\$(basename $in_fp)
     mkdir -p output
     out_fp=output/\$fn
-    echo -e "$header_str" > \$out_fp
+    ${echo_cmd}
     cat $in_fp >> \$out_fp
+    ${gzip_cmd}
     """
 
     stub:
     def args = task.ext.args ?: ''
+    def in_fp_ = in_fp
+    if (gzip) {
+        in_fp_ = in_fp_ + '.gz'
+    }
 
     """
-    fn=\$(basename $in_fp)
+    fn=\$(basename $in_fp_)
     mkdir -p output
     out_fp = output/\$fn
     touch \$out_fp
