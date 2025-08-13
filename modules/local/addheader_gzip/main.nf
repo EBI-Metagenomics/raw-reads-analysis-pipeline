@@ -21,7 +21,12 @@ process ADDHEADER_GZIP {
     def args = task.ext.args ?: ''
     
     if (!out_fn) {
-        out_fn = in_fp.name
+        if (in_fp) {
+            out_fn = in_fp.name
+        }
+        else {
+            out_fn = "file"
+        }
     }
 
     def echo_cmd = "touch \$out_fp"
@@ -30,7 +35,7 @@ process ADDHEADER_GZIP {
     }
 
     def cat_cmd = ""
-    if (in_fp.exists()) {
+    if (in_fp) {
         cat_cmd = "cat ${in_fp} >> \$out_fp"
     }
 
