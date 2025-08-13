@@ -9,9 +9,9 @@ include { READSMERGE } from '../subworkflows/local/readsmerge/main'
 include { DECONTAM_SHORTREAD } from '../subworkflows/local/decontam_shortread/main'
 include { DECONTAM_LONGREAD } from '../subworkflows/local/decontam_longread/main'
 include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
-include { ADDHEADER as ADDHEADER_RRNA } from '../modules/local/addheader/main'
-include { ADDHEADER as ADDHEADER_MOTUS } from '../modules/local/addheader/main'
-include { ADDHEADER as ADDHEADER_PFAM } from '../modules/local/addheader/main'
+include { ADDHEADER_GZIP as ADDHEADER_GZIP_RRNA } from '../modules/local/addheader_gzip/main'
+include { ADDHEADER_GZIP as ADDHEADER_GZIP_MOTUS } from '../modules/local/addheader_gzip/main'
+include { ADDHEADER_GZIP as ADDHEADER_GZIP_PFAM } from '../modules/local/addheader_gzip/main'
 include { BBMAP_REFORMAT_STANDARDISE } from '../modules/local/bbmap/reformat_standardise/main'
 include { SEQKIT_SHUFFLE_FASTA } from '../modules/local/seqkit_shuffle_fasta/main'
 
@@ -233,7 +233,7 @@ workflow PIPELINE {
             def result_ = result ? result : "${meta.id}.tsv"
             return [meta, result_] 
         }
-    ADDHEADER_MOTUS(
+    ADDHEADER_GZIP_MOTUS(
         motus_out_ch,
         "# ${params.results_file_headers.motus_taxonomy.join('\t')}",
         true
@@ -310,7 +310,7 @@ workflow PIPELINE {
             def result_ = result ? result : "${meta.id}.txt"
             return [meta, result_] 
         }
-    ADDHEADER_RRNA(
+    ADDHEADER_GZIP_RRNA(
         rrna_out_ch,
         "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
         true
@@ -347,7 +347,7 @@ workflow PIPELINE {
                 def result_ = result ? result : "${meta.id}.tsv"
                 return [meta, result_] 
             }
-        ADDHEADER_PFAM(pfam_out_ch, false, true)
+        ADDHEADER_GZIP_PFAM(pfam_out_ch, false, true)
             
         pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
             .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
@@ -460,10 +460,10 @@ workflow PIPELINE {
                     status = "no_reads"
                 }
                 if (![motus, silvassu, silvalsu, pfam].any()) {
-                    status = "no_results"
+                    status = "all_empty_results"
                 }
                 if (![motus, silvassu, silvalsu, pfam].every()) {
-                    status = "missing_results"
+                    status = "some_empty_results"
                 }
                 return "${meta_id},${status}"
             }
@@ -479,10 +479,10 @@ workflow PIPELINE {
                     status = "no_reads"
                 }
                 if (![motus, silvassu, silvalsu, pfam].any()) {
-                    status = "no_results"
+                    status = "all_empty_results"
                 }
                 if (![motus, silvassu, silvalsu, pfam].every()) {
-                    status = "missing_results"
+                    status = "some_empty_results"
                 }
                 return "${meta_id},${status}"
             }
@@ -497,10 +497,10 @@ workflow PIPELINE {
                     status = "no_reads"
                 }
                 if (![motus, silvassu, silvalsu, pfam].any()) {
-                    status = "no_results"
+                    status = "all_empty_results"
                 }
                 if (![motus, silvassu, silvalsu, pfam].every()) {
-                    status = "missing_results"
+                    status = "some_empty_results"
                 }
                 return "${meta_id},${status},${reads ? "reads_yes" : "read_no"},${qc ? "qc_yes" : "qc_no"},${decontam ? "decontam_yes" : "decontam_no"},${motus ? "motus_yes" : "motus_no"},${silvassu ? "silva-ssu_yes" : "silva-ssu_no"},${silvalsu ? "silva-lsu_yes" : "silva-lsu_no"},${pfam ? "pfam_yes" : "pfam_no"}"
             }

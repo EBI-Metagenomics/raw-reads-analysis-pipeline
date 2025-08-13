@@ -1,4 +1,4 @@
-process ADDHEADER {
+process ADDHEADER_GZIP {
     tag "${meta.id}"
     label 'process_single'
 
