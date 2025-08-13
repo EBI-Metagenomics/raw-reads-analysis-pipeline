@@ -48,8 +48,7 @@ process BWAMEM2_MEM_SAMTOOLS_BAM2FQ {
     """
     INDEX=`find -L ./ -name "*.amb" | sed 's/\\.amb\$//'`
 
-    bwa-mem2 \\
-        mem \\
+    bwa-mem2 mem \\
         $args \\
         -t $task.cpus \\
         \$INDEX \\

@@ -426,7 +426,7 @@ workflow PIPELINE {
         .join(pfam_status, remainder: true)
 
     run_status
-        .filter { _meta_id, _reads, qc, _decontam, _motus, _silvassu, _silvalsu, _pfam -> qc }
+        .filter { _meta_id, _reads, _qc, decontam, _motus, _silvassu, _silvalsu, _pfam -> decontam }
         .map { meta_id, _reads, _qc, decontam, motus, silvassu, silvalsu, pfam ->
             {
                 def status = "all_results"
@@ -445,7 +445,7 @@ workflow PIPELINE {
         .collectFile(name: "qc_passed_runs.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     run_status
-        .filter { _meta_id, _reads, qc, _decontam, _motus, _silvassu, _silvalsu, _pfam -> !qc }
+        .filter { _meta_id, _reads, _qc, decontam, _motus, _silvassu, _silvalsu, _pfam -> !decontam }
         .map { meta_id, _reads, _qc, decontam, motus, silvassu, silvalsu, pfam ->
             {
                 def status = "all_results"
