@@ -306,7 +306,7 @@ workflow PIPELINE {
 
 
     rrna_out_ch = MAPSEQ_OTU_KRONA.out.krona_input
-        .join(merged_reads, remainder: true)
+        .join(rrna_chs.seqs, remainder: true)
         .map { meta, result, _reads -> 
             def result_ = result ? result : []
             def out_fn = result ? false : "${meta.id}.tsv"
