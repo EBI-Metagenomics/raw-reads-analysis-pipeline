@@ -7,7 +7,7 @@ process ADDHEADER_GZIP {
         'biocontainers/mgnify-pipelines-toolkit:0.1.1--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(in_fp)
+    tuple val(meta), path(in_fp), val(out_fn)
     val header_str
     val gzip
 
@@ -20,6 +20,10 @@ process ADDHEADER_GZIP {
     script:
     def args = task.ext.args ?: ''
     
+    if (!out_fn) {
+        out_fn = in_fp.name
+    }
+
     def echo_cmd = "touch \$out_fp"
     if ((header_str instanceof String) && (header_str.size()>0)){
         echo_cmd = "echo -e \"${header_str}\" > \$out_fp"
@@ -36,9 +40,8 @@ process ADDHEADER_GZIP {
     } 
 
     """
-    fn=\$(basename $in_fp)
     mkdir -p output
-    out_fp=output/\$fn
+    out_fp=output/$out_fn
     ${echo_cmd}
     ${cat_cmd}
     ${gzip_cmd}
@@ -46,15 +49,17 @@ process ADDHEADER_GZIP {
 
     stub:
     def args = task.ext.args ?: ''
-    def in_fp_ = in_fp
+
+    if (!out_fn) {
+        out_fn = in_fp.name
+    }
     if (gzip) {
-        in_fp_ = in_fp_ + '.gz'
+        out_fn = out_fn + '.gz'
     }
 
     """
-    fn=\$(basename $in_fp_)
     mkdir -p output
-    out_fp = output/\$fn
+    out_fp = output/$out_fn
     touch \$out_fp
     """
 }

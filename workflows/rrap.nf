@@ -230,8 +230,9 @@ workflow PIPELINE {
     motus_out_ch = MOTUS_KRONA.out.krona
         .join(clean_reads, remainder: true)
         .map { meta, result, _reads -> 
-            def result_ = result ? result : "${meta.id}.tsv"
-            return [meta, result_] 
+            def result_ = result ? result : []
+            def out_fn = result ? false : "${meta.id}.tsv"
+            return [meta, result_, out_fn] 
         }
     ADDHEADER_GZIP_MOTUS(
         motus_out_ch,
@@ -308,7 +309,8 @@ workflow PIPELINE {
         .join(merged_reads, remainder: true)
         .map { meta, result, _reads -> 
             def result_ = result ? result : "${meta.id}.txt"
-            return [meta, result_] 
+            def out_fn = result ? false : "${meta.id}.tsv"
+            return [meta, result_, out_fn] 
         }
     ADDHEADER_GZIP_RRNA(
         rrna_out_ch,
@@ -345,7 +347,8 @@ workflow PIPELINE {
             .join(clean_reads, remainder: true)
             .map { meta, result, _reads -> 
                 def result_ = result ? result : "${meta.id}.tsv"
-                return [meta, result_] 
+                def out_fn = result ? false : "${meta.id}.tsv"
+                return [meta, result_, out_fn] 
             }
         ADDHEADER_GZIP_PFAM(pfam_out_ch, false, true)
             
