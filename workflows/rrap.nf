@@ -350,7 +350,7 @@ workflow PIPELINE {
         ADDHEADER_PFAM(pfam_out_ch, false, true)
             
         pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
-            .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 0)] }
+            .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
     }
 
     // MultiQC
@@ -432,16 +432,16 @@ workflow PIPELINE {
 
     decontam_status = clean_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
 
-    motus_status = ADDHEADER_MOTUS.out.file_with_header
-        .map { meta, fp -> [meta.id, fp.exists() && (fp.length() > 0) && (fp.readLines().size() > 1)] }
+    motus_status = MOTUS_KRONA.out.krona
+        .map { meta, fp -> [meta.id, fp.exists() & (fp.readLines().size() > 0)]}
 
-    silvassu_status = ADDHEADER_RRNA.out.file_with_header
+    silvassu_status = MAPSEQ_OTU_KRONA.out.krona_input
         .filter { meta, _fp -> meta.db_label == 'SILVA-SSU' }
-        .map { meta, fp -> [meta.id, fp.exists() && (fp.length() > 0) && (fp.readLines().size() > 1)] }
+        .map { meta, fp -> [meta.id, fp.exists() & (fp.readLines().size() > 0)]}
 
-    silvalsu_status = ADDHEADER_RRNA.out.file_with_header
+    silvalsu_status = MAPSEQ_OTU_KRONA.out.krona_input
         .filter { meta, _fp -> meta.db_label == 'SILVA-LSU' }
-        .map { meta, fp -> [meta.id, fp.exists() && (fp.length() > 0) && (fp.readLines().size() > 1)] }
+        .map { meta, fp -> [meta.id, fp.exists() & (fp.readLines().size() > 0)]}
 
     run_status = reads_status
         .join(qc_status, remainder: true)
