@@ -229,7 +229,10 @@ workflow PIPELINE {
 
     motus_out_ch = MOTUS_KRONA.out.krona
         .join(clean_reads, remainder: true)
-        .map { meta, result, _reads -> [meta, result] }
+        .map { meta, result, _reads -> 
+            def result_ = result ? result : "${meta.id}.tsv"
+            return [meta, result_] 
+        }
     ADDHEADER_MOTUS(
         motus_out_ch,
         "# ${params.results_file_headers.motus_taxonomy.join('\t')}",
@@ -303,7 +306,10 @@ workflow PIPELINE {
 
     rrna_out_ch = MAPSEQ_OTU_KRONA.out.krona_input
         .join(merged_reads, remainder: true)
-        .map { meta, result, _reads -> [meta, result] }
+        .map { meta, result, _reads -> 
+            def result_ = result ? result : "${meta.id}.txt"
+            return [meta, result_] 
+        }
     ADDHEADER_RRNA(
         rrna_out_ch,
         "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
@@ -337,7 +343,10 @@ workflow PIPELINE {
 
         pfam_out_ch = PROFILE_HMMSEARCH_PFAM.out.profile
             .join(clean_reads, remainder: true)
-            .map { meta, result, _reads -> [meta, result] }
+            .map { meta, result, _reads -> 
+                def result_ = result ? result : "${meta.id}.tsv"
+                return [meta, result_] 
+            }
         ADDHEADER_PFAM(pfam_out_ch, false, true)
             
         pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
