@@ -41,7 +41,6 @@ process ADDHEADER_GZIP {
 
     def gzip_cmd = ""
     if (gzip) {
-        out_fn = out_fn + '.gz'
         gzip_cmd = "gzip \$out_fp"
     } 
 
