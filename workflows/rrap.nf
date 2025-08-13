@@ -433,15 +433,15 @@ workflow PIPELINE {
     decontam_status = clean_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
 
     motus_status = ADDHEADER_MOTUS.out.file_with_header
-        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.length() > 0) && (fp.readLines().size() > 1)] }
 
     silvassu_status = ADDHEADER_RRNA.out.file_with_header
         .filter { meta, _fp -> meta.db_label == 'SILVA-SSU' }
-        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.length() > 0) && (fp.readLines().size() > 1)] }
 
     silvalsu_status = ADDHEADER_RRNA.out.file_with_header
         .filter { meta, _fp -> meta.db_label == 'SILVA-LSU' }
-        .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
+        .map { meta, fp -> [meta.id, fp.exists() && (fp.length() > 0) && (fp.readLines().size() > 1)] }
 
     run_status = reads_status
         .join(qc_status, remainder: true)
