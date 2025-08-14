@@ -30,7 +30,7 @@ process ADDHEADER_GZIP {
     }
 
     def echo_cmd = "touch \$out_fp"
-    if ((header_str instanceof String) && (header_str.length()>0)){
+    if (header_str && (header_str.length()>0)){
         echo_cmd = "echo -e \"${header_str}\" > \$out_fp"
     }
 
