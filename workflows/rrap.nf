@@ -295,11 +295,23 @@ workflow PIPELINE {
 
     lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
         .join(merged_reads, remainder: true)
-        .map { meta, fp, reads -> [meta + ['db_label': 'SILVA-LSU', 'empty': reads ? true : false], fp] }
+        .map { meta, fp, reads ->
+            def empty = true
+            if (reads && reads.exists() && reads.byte.size()>0){
+                empty = false
+            } 
+            [meta + ['db_label': 'SILVA-LSU', 'empty': empty], fp] 
+        }
         .combine(lsu_db)
     ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
         .join(merged_reads, remainder: true)
-        .map { meta, fp, reads -> [meta + ['db_label': 'SILVA-SSU', 'empty': reads ? true : false], fp] }
+        .map { meta, fp, reads ->
+            def empty = true
+            if (reads && reads.exists() && reads.byte.size()>0){
+                empty = false
+            } 
+            [meta + ['db_label': 'SILVA-SSU', 'empty': empty], fp] 
+        }
         .combine(ssu_db)
     rrna_ch = lsu_ch.mix(ssu_ch)
     rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
