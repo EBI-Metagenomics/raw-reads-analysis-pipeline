@@ -300,7 +300,7 @@ workflow PIPELINE {
             if (reads && reads.exists()){
                 empty = false
             } 
-            [meta + ['db_label': 'SILVA-LSU', 'empty': empty], fp] 
+            return [meta + ['db_label': 'SILVA-LSU', 'empty': empty], fp] 
         }
         .combine(lsu_db)
     ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
@@ -310,7 +310,7 @@ workflow PIPELINE {
             if (reads && reads.exists()){
                 empty = false
             } 
-            [meta + ['db_label': 'SILVA-SSU', 'empty': empty], fp] 
+            return [meta + ['db_label': 'SILVA-SSU', 'empty': empty], fp] 
         }
         .combine(ssu_db)
     rrna_ch = lsu_ch.mix(ssu_ch)
@@ -318,6 +318,10 @@ workflow PIPELINE {
         seqs: [meta, seqs]
         db: db
     }
+
+    rrna_chs.seqs
+        .filter{ meta, _fp -> !meta.empty }
+        .view{ "rrna_chs.seq - ${it}" }
 
     MAPSEQ_OTU_KRONA(
         rrna_chs.seqs.filter{ meta, _fp -> !meta.empty }, 
