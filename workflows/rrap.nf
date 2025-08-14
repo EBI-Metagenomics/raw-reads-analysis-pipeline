@@ -297,7 +297,7 @@ workflow PIPELINE {
         .join(merged_reads, remainder: true)
         .map { meta, fp, reads ->
             def empty = true
-            if (reads && reads.exists() && reads.bytes.size()>0){
+            if (reads && reads.exists()){
                 empty = false
             } 
             [meta + ['db_label': 'SILVA-LSU', 'empty': empty], fp] 
