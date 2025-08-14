@@ -232,7 +232,7 @@ workflow PIPELINE {
         .map { meta, result, _reads -> 
             def result_ = []
             def out_fn = "${meta.id}.txt"
-            if (result.exists()) {
+            if (result && result.exists()) {
                 result_ = result
                 out_fn = "${meta.id}.txt"
             }
@@ -319,7 +319,7 @@ workflow PIPELINE {
         .map { meta, result, _reads -> 
             def result_ = []
             def out_fn = "${meta.id}.txt"
-            if (result.exists()) {
+            if (result && result.exists()) {
                 result_ = result
                 out_fn = "${meta.id}.txt"
             }
@@ -362,7 +362,7 @@ workflow PIPELINE {
             .map { meta, result, _reads -> 
                 def result_ = []
                 def out_fn = "${meta.id}.txt"
-                if (result.exists()) {
+                if (result && result.exists()) {
                     result_ = result
                     out_fn = "${meta.id}.txt"
                 }
