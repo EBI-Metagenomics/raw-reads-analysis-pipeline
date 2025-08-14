@@ -309,7 +309,7 @@ workflow PIPELINE {
         .join(rrna_chs.seqs, remainder: true)
         .map { meta, result, _reads -> 
             def result_ = result ? result : []
-            def out_fn = result ? false : "${meta.id}.tsv"
+            def out_fn = result ? false : "${meta.id}.txt"
             return [meta, result_, out_fn] 
         }
     ADDHEADER_GZIP_RRNA(
@@ -456,10 +456,10 @@ workflow PIPELINE {
 
     run_status
         .filter { _meta_id, _reads, _qc, decontam, _motus, _silvassu, _silvalsu, _pfam -> decontam }
-        .map { meta_id, _reads, _qc, decontam, motus, silvassu, silvalsu, pfam ->
+        .map { meta_id, _reads, qc, _decontam, motus, silvassu, silvalsu, pfam ->
             {
                 def status = "all_results"
-                if (decontam == false) {
+                if (qc == false) {
                     status = "no_reads"
                 }
                 if (![motus, silvassu, silvalsu, pfam].any()) {
@@ -475,10 +475,10 @@ workflow PIPELINE {
 
     run_status
         .filter { _meta_id, _reads, _qc, decontam, _motus, _silvassu, _silvalsu, _pfam -> !decontam }
-        .map { meta_id, _reads, _qc, decontam, motus, silvassu, silvalsu, pfam ->
+        .map { meta_id, _reads, qc, _decontam, motus, silvassu, silvalsu, pfam ->
             {
                 def status = "all_results"
-                if (decontam == false) {
+                if (qc == false) {
                     status = "no_reads"
                 }
                 if (![motus, silvassu, silvalsu, pfam].any()) {
