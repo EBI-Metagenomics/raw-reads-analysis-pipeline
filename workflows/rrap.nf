@@ -317,6 +317,7 @@ workflow PIPELINE {
             def out_fn = result ? false : "${meta.id}.txt"
             return [meta, result_, out_fn] 
         }
+    rrna_out_ch.view{ "rrna_out_ch - ${it}" }
     ADDHEADER_GZIP_RRNA(
         rrna_out_ch,
         "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
