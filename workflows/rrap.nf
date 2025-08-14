@@ -320,11 +320,11 @@ workflow PIPELINE {
     }
 
     rrna_chs.seqs
-        .filter{ meta, _fp -> !meta.empty }
+        .filter{ meta, fp -> (!meta.empty) && fp }
         .view{ "rrna_chs.seq - ${it}" }
 
     MAPSEQ_OTU_KRONA(
-        rrna_chs.seqs.filter{ meta, _fp -> !meta.empty }, 
+        rrna_chs.seqs.filter{ meta, fp -> (!meta.empty) && fp }, 
         rrna_chs.db
     )
     ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
