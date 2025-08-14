@@ -305,10 +305,6 @@ workflow PIPELINE {
         db: db
     }
 
-    rrna_chs.seqs
-        .filter{ _meta, fp -> fp }
-        .view{ "rrna_chs.seq - ${it}" }
-
     MAPSEQ_OTU_KRONA(
         rrna_chs.seqs.filter{ _meta, fp -> fp }, 
         rrna_chs.db
