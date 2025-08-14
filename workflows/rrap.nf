@@ -325,7 +325,8 @@ workflow PIPELINE {
             }
             return [meta, result_, out_fn] 
         }
-    rrna_out_ch.view{ "rrna_out_ch - ${it}" }
+    MAPSEQ_OTU_KRONA.out.krona_input
+        .join(rrna_chs.seqs, remainder: true).view{ "rrna_out_ch - ${it}" }
     ADDHEADER_GZIP_RRNA(
         rrna_out_ch,
         "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
