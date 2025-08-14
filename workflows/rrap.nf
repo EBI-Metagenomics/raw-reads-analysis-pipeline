@@ -234,7 +234,7 @@ workflow PIPELINE {
             def out_fn = "${meta.id}.txt"
             if (result && result.exists()) {
                 result_ = result
-                out_fn = "${meta.id}.txt"
+                out_fn = false
             }
             return [meta, result_, out_fn] 
         }
@@ -321,7 +321,7 @@ workflow PIPELINE {
             def out_fn = "${meta.id}.txt"
             if (result && result.exists()) {
                 result_ = result
-                out_fn = "${meta.id}.txt"
+                out_fn = false
             }
             return [meta, result_, out_fn] 
         }
@@ -363,7 +363,7 @@ workflow PIPELINE {
                 def out_fn = "${meta.id}.txt"
                 if (result && result.exists()) {
                     result_ = result
-                    out_fn = "${meta.id}.txt"
+                    out_fn = false
                 }
                 return [meta, result_, out_fn] 
             }
