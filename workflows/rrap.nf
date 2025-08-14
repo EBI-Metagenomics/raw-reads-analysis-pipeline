@@ -290,10 +290,12 @@ workflow PIPELINE {
         .first()
 
     lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
-        .map { meta, fp -> [meta + ['db_label': 'SILVA-LSU'], fp] }
+        .join(merged_reads, remainder: true)
+        .map { meta, fp, reads -> [meta + ['db_label': 'SILVA-LSU', 'empty': reads ? true : false], fp] }
         .combine(lsu_db)
     ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
-        .map { meta, fp -> [meta + ['db_label': 'SILVA-SSU'], fp] }
+        .join(merged_reads, remainder: true)
+        .map { meta, fp, reads -> [meta + ['db_label': 'SILVA-SSU', 'empty': reads ? true : false], fp] }
         .combine(ssu_db)
     rrna_ch = lsu_ch.mix(ssu_ch)
     rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
@@ -301,7 +303,10 @@ workflow PIPELINE {
         db: db
     }
 
-    MAPSEQ_OTU_KRONA(rrna_chs.seqs, rrna_chs.db)
+    MAPSEQ_OTU_KRONA(
+        rrna_chs.seqs.filter{ meta, _fp -> !meta.empty }, 
+        rrna_chs.db
+    )
     ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
 
 
