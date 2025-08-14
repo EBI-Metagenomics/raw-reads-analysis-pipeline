@@ -297,7 +297,7 @@ workflow PIPELINE {
         .join(merged_reads, remainder: true)
         .map { meta, fp, reads ->
             def empty = true
-            if (reads && reads.exists() && reads.byte.size()>0){
+            if (reads && reads.exists() && reads.bytes.size()>0){
                 empty = false
             } 
             [meta + ['db_label': 'SILVA-LSU', 'empty': empty], fp] 
@@ -307,7 +307,7 @@ workflow PIPELINE {
         .join(merged_reads, remainder: true)
         .map { meta, fp, reads ->
             def empty = true
-            if (reads && reads.exists() && reads.byte.size()>0){
+            if (reads && reads.exists() && reads.bytes.size()>0){
                 empty = false
             } 
             [meta + ['db_label': 'SILVA-SSU', 'empty': empty], fp] 
@@ -337,8 +337,6 @@ workflow PIPELINE {
             }
             return [meta, result_, out_fn] 
         }
-    MAPSEQ_OTU_KRONA.out.krona_input
-        .join(rrna_chs.seqs, remainder: true).view{ "rrna_out_ch - ${it}" }
     ADDHEADER_GZIP_RRNA(
         rrna_out_ch,
         "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
