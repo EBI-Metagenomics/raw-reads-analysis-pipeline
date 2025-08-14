@@ -294,10 +294,8 @@ workflow PIPELINE {
         .first()
 
     lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
-        .join(merged_reads, remainder: true)
         .combine(lsu_db)
     ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
-        .join(merged_reads, remainder: true)
         .combine(ssu_db)
     rrna_ch = lsu_ch.mix(ssu_ch)
     rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
