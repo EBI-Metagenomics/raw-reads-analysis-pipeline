@@ -230,8 +230,12 @@ workflow PIPELINE {
     motus_out_ch = MOTUS_KRONA.out.krona
         .join(clean_reads, remainder: true)
         .map { meta, result, _reads -> 
-            def result_ = result ? result : []
-            def out_fn = result ? false : "${meta.id}.tsv"
+            def result_ = []
+            def out_fn = "${meta.id}.txt"
+            if (result.exists()) {
+                result_ = result
+                out_fn = "${meta.id}.txt"
+            }
             return [meta, result_, out_fn] 
         }
     ADDHEADER_GZIP_MOTUS(
@@ -313,8 +317,12 @@ workflow PIPELINE {
     rrna_out_ch = MAPSEQ_OTU_KRONA.out.krona_input
         .join(rrna_chs.seqs, remainder: true)
         .map { meta, result, _reads -> 
-            def result_ = result ? result : []
-            def out_fn = result ? false : "${meta.id}.txt"
+            def result_ = []
+            def out_fn = "${meta.id}.txt"
+            if (result.exists()) {
+                result_ = result
+                out_fn = "${meta.id}.txt"
+            }
             return [meta, result_, out_fn] 
         }
     rrna_out_ch.view{ "rrna_out_ch - ${it}" }
@@ -352,8 +360,12 @@ workflow PIPELINE {
         pfam_out_ch = PROFILE_HMMSEARCH_PFAM.out.profile
             .join(clean_reads, remainder: true)
             .map { meta, result, _reads -> 
-                def result_ = result ? result : []
-                def out_fn = result ? false : "${meta.id}.tsv"
+                def result_ = []
+                def out_fn = "${meta.id}.txt"
+                if (result.exists()) {
+                    result_ = result
+                    out_fn = "${meta.id}.txt"
+                }
                 return [meta, result_, out_fn] 
             }
         ADDHEADER_GZIP_PFAM(pfam_out_ch, false, true)
