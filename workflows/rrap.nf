@@ -229,14 +229,14 @@ workflow PIPELINE {
 
     motus_out_ch = MOTUS_KRONA.out.krona
         .join(clean_reads, remainder: true)
-        .map { meta, result, _reads -> 
+        .map { meta, result, _reads ->
             def result_ = []
             def out_fn = "${meta.id}.txt"
             if (result && result.exists()) {
                 result_ = result
                 out_fn = false
             }
-            return [meta, result_, out_fn] 
+            return [meta, result_, out_fn]
         }
     ADDHEADER_GZIP_MOTUS(
         motus_out_ch,
@@ -308,7 +308,7 @@ workflow PIPELINE {
     }
 
     MAPSEQ_OTU_KRONA(
-        rrna_chs.seqs.filter{ _meta, fp -> fp }, 
+        rrna_chs.seqs.filter{ _meta, fp -> fp },
         rrna_chs.db
     )
     ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
@@ -316,14 +316,14 @@ workflow PIPELINE {
 
     rrna_out_ch = MAPSEQ_OTU_KRONA.out.krona_input
         .join(rrna_chs.seqs, remainder: true)
-        .map { meta, result, _reads -> 
+        .map { meta, result, _reads ->
             def result_ = []
             def out_fn = "${meta.id}.txt"
             if (result && result.exists()) {
                 result_ = result
                 out_fn = false
             }
-            return [meta, result_, out_fn] 
+            return [meta, result_, out_fn]
         }
     ADDHEADER_GZIP_RRNA(
         rrna_out_ch,
@@ -358,17 +358,17 @@ workflow PIPELINE {
 
         pfam_out_ch = PROFILE_HMMSEARCH_PFAM.out.profile
             .join(clean_reads, remainder: true)
-            .map { meta, result, _reads -> 
+            .map { meta, result, _reads ->
                 def result_ = []
                 def out_fn = "${meta.id}.txt"
                 if (result && result.exists()) {
                     result_ = result
                     out_fn = false
                 }
-                return [meta, result_, out_fn] 
+                return [meta, result_, out_fn]
             }
         ADDHEADER_GZIP_PFAM(pfam_out_ch, false, true)
-            
+
         pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
             .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
     }
