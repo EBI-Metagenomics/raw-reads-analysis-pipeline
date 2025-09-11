@@ -1,2 +1,2 @@
-study,sample,fastq_1,fastq_2,library_layout,library_strategy,instrument_platform
-test_study,test_sample,/hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/tests/fixtures/rrap/reads_1.fastq.gz,/hps/nobackup/rdf/metagenomics/service-team/users/timrozday/rrap/tests/fixtures/rrap/reads_2.fastq.gz,PAIRED,WGS,ILLUMINA
+sample,fastq_1,fastq_2,single_end,instrument_platform
+test_sample,../../../tests/fixtures/rrap/reads_1_mini.fastq.gz,../../../tests/fixtures/rrap/reads_2_mini.fastq.gz,false,ILLUMINA
