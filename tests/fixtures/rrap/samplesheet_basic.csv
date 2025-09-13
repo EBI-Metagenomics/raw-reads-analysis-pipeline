@@ -1,2 +1,2 @@
 sample,fastq_1,fastq_2,single_end,instrument_platform
-test_sample,../../../tests/fixtures/rrap/reads_1_mini.fastq.gz,../../../tests/fixtures/rrap/reads_2_mini.fastq.gz,false,ILLUMINA
+test_sample,../../../tests/fixtures/rrap/ERR10889056_1.mini.fastq.gz,../../../tests/fixtures/rrap/ERR10889056_2.mini.fastq.gz,false,ILLUMINA
