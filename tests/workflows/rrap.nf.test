@@ -19,6 +19,9 @@ nextflow_workflow {
                     motus {
                         remote_path = "${projectDir}/tests/fixtures/dbs/motus_mini.tar.gz"
                         local_path = ''
+                    files {
+                        base_dir = 'motus_mini/db_mOTU'
+                    }
                     }
 
                     host_genome {

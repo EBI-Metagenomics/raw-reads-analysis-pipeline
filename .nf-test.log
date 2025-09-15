@@ -1,21 +1,21 @@
-Sep-11 15:02:49.848 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.2
-Sep-11 15:02:49.858 [main] INFO  com.askimed.nf.test.App - Arguments: [test, tests/workflows/rrap.nf.test, --profile, local]
-Sep-11 15:02:50.413 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 24.10.5
-Sep-11 15:02:50.413 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Load config from file /Users/timrozday/Documents/Pipelines/raw-reads-analysis-pipeline/nf-test.config...
-Sep-11 15:02:50.606 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 125 files from directory /Users/timrozday/Documents/Pipelines/raw-reads-analysis-pipeline in 0.057 sec
-Sep-11 15:02:50.607 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 1 files containing tests.
-Sep-11 15:02:50.607 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: [/Users/timrozday/Documents/Pipelines/raw-reads-analysis-pipeline/tests/workflows/rrap.nf.test]
-Sep-11 15:02:50.726 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 1 tests to execute.
-Sep-11 15:02:50.727 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Started test plan
-Sep-11 15:02:50.727 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Test Workflow PIPELINE' from file '/Users/timrozday/Documents/Pipelines/raw-reads-analysis-pipeline/tests/workflows/rrap.nf.test'.
-Sep-11 15:02:50.727 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '160357bf: Should run without failures'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
-Sep-11 15:04:47.067 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '160357bf: Should run without failures' finished. status: FAILED
+Sep-15 12:16:43.789 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.2
+Sep-15 12:16:43.796 [main] INFO  com.askimed.nf.test.App - Arguments: [test, tests/workflows/rrap.nf.test, --profile, local]
+Sep-15 12:16:44.363 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 24.10.5
+Sep-15 12:16:44.363 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Load config from file /Users/timrozday/Documents/Pipelines/raw-reads-analysis-pipeline/nf-test.config...
+Sep-15 12:16:44.594 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 125 files from directory /Users/timrozday/Documents/Pipelines/raw-reads-analysis-pipeline in 0.086 sec
+Sep-15 12:16:44.595 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 1 files containing tests.
+Sep-15 12:16:44.595 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: [/Users/timrozday/Documents/Pipelines/raw-reads-analysis-pipeline/tests/workflows/rrap.nf.test]
+Sep-15 12:16:44.733 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 1 tests to execute.
+Sep-15 12:16:44.733 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Started test plan
+Sep-15 12:16:44.733 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Running testsuite 'Test Workflow PIPELINE' from file '/Users/timrozday/Documents/Pipelines/raw-reads-analysis-pipeline/tests/workflows/rrap.nf.test'.
+Sep-15 12:16:44.733 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Run test '160357bf: Should run without failures'. type: com.askimed.nf.test.lang.workflow.WorkflowTest
+Sep-15 12:18:03.910 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Test '160357bf: Should run without failures' finished. status: FAILED
 org.codehaus.groovy.runtime.powerassert.PowerAssertionError: assert workflow.success
        |        |
        workflow false
 	at org.codehaus.groovy.runtime.InvokerHelper.assertFailed(InvokerHelper.java:432)
 	at org.codehaus.groovy.runtime.ScriptBytecodeAdapter.assertFailed(ScriptBytecodeAdapter.java:670)
-	at rrap_nf$_run_closure1$_closure2$_closure4.doCall(rrap.nf.test:113)
+	at rrap_nf$_run_closure1$_closure2$_closure4.doCall(rrap.nf.test:116)
 	at rrap_nf$_run_closure1$_closure2$_closure4.doCall(rrap.nf.test)
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
@@ -42,5 +42,5 @@ org.codehaus.groovy.runtime.powerassert.PowerAssertionError: assert workflow.suc
 	at picocli.CommandLine.execute(CommandLine.java:2078)
 	at com.askimed.nf.test.App.run(App.java:39)
 	at com.askimed.nf.test.App.main(App.java:46)
-Sep-11 15:04:47.070 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Test Workflow PIPELINE' finished. snapshot file: false, skipped tests: false, failed tests: true
-Sep-11 15:04:47.070 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Executed 1 tests. 1 tests failed. Done!
+Sep-15 12:18:03.914 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Testsuite 'Test Workflow PIPELINE' finished. snapshot file: false, skipped tests: false, failed tests: true
+Sep-15 12:18:03.914 [main] INFO  com.askimed.nf.test.core.TestExecutionEngine - Executed 1 tests. 1 tests failed. Done!
