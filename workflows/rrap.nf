@@ -85,7 +85,7 @@ workflow PIPELINE {
     fetch_reads_transformed = samplesheet.map(groupReads)
     classified_reads = fetch_reads_transformed.map { meta, reads ->
         // Long reads
-        if (["ONT", "PB"].contains(meta.instrument_platform)) {
+        if (["OXFORD_NANOPORE", "PACBIO_SMRT"].contains(meta.instrument_platform)) {
             return [meta + [long_reads: true], reads]
         }
         else {
@@ -96,7 +96,7 @@ workflow PIPELINE {
     classified_reads
     .filter { meta, _reads -> (meta.long_reads && (!meta.single_end)) }
     .collect { meta, _reads ->
-        error "Error: Long reads (ONT or PB) cannot be paired-end — ${meta}"
+        error "Error: Long reads (OXFORD_NANOPORE or PACBIO_SMRT) cannot be paired-end — ${meta}"
     }
 
     // De-interleave interleaved paired-end reads
