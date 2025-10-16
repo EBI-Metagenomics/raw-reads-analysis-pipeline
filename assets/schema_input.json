@@ -37,8 +37,8 @@
             },
             "instrument_platform": {
                 "type": "string",
-                "enum": ["ILLUMINA", "ONT", "PB"],
-                "errorMessage": "instrument platform should be only value from list: 'ILLUMINA', 'ONT', 'PB'"
+                "enum": ["ILLUMINA", "OXFORD_NANOPORE", "PACBIO_SMRT", "ION_TORRENT", "LS454", "DNBSEQ", "BGISEQ", "ULTIMA", "COMPLETE_GENOMICS"],
+                "errorMessage": "Instrument platform should be only value from list: 'ILLUMINA', 'OXFORD_NANOPORE', 'PACBIO_SMRT', 'ION_TORRENT', 'LS454', 'DNBSEQ', 'BGISEQ', 'ULTIMA', 'COMPLETE_GENOMICS'"
             }
         },
         "required": ["sample", "fastq_1", "single_end", "instrument_platform"]
