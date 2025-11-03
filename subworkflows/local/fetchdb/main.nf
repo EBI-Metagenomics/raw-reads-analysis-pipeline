@@ -23,7 +23,9 @@ workflow FETCHDB {
                 if (meta.remote_checksum_path==true) {
                     checksum_path = file(meta.remote_path + '.md5', checkIfExists: true)
                 } else {
-                    checksum_path = file(meta.remote_checksum_path, checkIfExists: true)
+                    if (meta.remote_checksum_path!=false) {
+                        checksum_path = file(meta.remote_checksum_path, checkIfExists: true)
+                    }
                 }
             }
             def checksum = false

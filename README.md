@@ -76,7 +76,6 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | databases.pfam.local_path                 | Local (filesystem) path to Pfam-A database (Default: `''`)                             |
 | databases.pfam.base_dir                   | Root directory of Pfam-A database (Default: `'.'`)                                     |
 | force_download_dbs                        | Force downloading databases overwriting cache (Default: `false`                        |
-| download_dbs                              | Enable downloading databases (Default: `true`)                                         |
 
 #### Advanced
 
