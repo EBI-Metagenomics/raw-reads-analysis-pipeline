@@ -28,10 +28,10 @@ workflow PIPELINE {
     main:
     println(new File("${projectDir}/assets/header.txt").text)
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
    // Fetch databases
-    db_ch = Channel
+    db_ch = channel
         .from(
             params.databases.collect { k, v ->
                 if (v instanceof Map) {
@@ -49,7 +49,7 @@ workflow PIPELINE {
                 }
             }.flatten()
         )
-        .filter { it }
+        .filter { it -> it }
 
     FETCHDB(db_ch, "${launchDir}/${params.databases.cache_path}")
     dbs_path_ch = FETCHDB.out.dbs
@@ -80,7 +80,7 @@ workflow PIPELINE {
             single_file ? [file(fq1)] : [file(fq1), file(fq2)],
         ]
     }
-    samplesheet = Channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
+    samplesheet = channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
 
     fetch_reads_transformed = samplesheet.map(groupReads)
     classified_reads = fetch_reads_transformed.map { meta, reads ->
@@ -106,7 +106,7 @@ workflow PIPELINE {
     // QC
     if (params.skip_qc) {
         classified_reads.set { qc_reads }
-        qc_stats = Channel.empty()
+        qc_stats = channel.empty()
     }
     else {
         QC(classified_reads)
@@ -139,7 +139,7 @@ workflow PIPELINE {
 
 
     // DECONTAMINATION
-    decontam_stats = Channel.empty()
+    decontam_stats = channel.empty()
 
     if (params.skip_decontam) {
         qc_reads.set { clean_reads }
@@ -374,16 +374,16 @@ workflow PIPELINE {
     }
 
     // MultiQC
-    ch_multiqc_config = Channel.fromPath(
+    ch_multiqc_config = channel.fromPath(
         "${projectDir}/assets/multiqc_config.yml",
         checkIfExists: true
     )
     ch_multiqc_custom_config = params.multiqc_config
-        ? Channel.fromPath(params.multiqc_config, checkIfExists: true)
-        : Channel.empty()
+        ? channel.fromPath(params.multiqc_config, checkIfExists: true)
+        : channel.empty()
     ch_multiqc_logo = params.multiqc_logo
-        ? Channel.fromPath(params.multiqc_logo, checkIfExists: true)
-        : Channel.empty()
+        ? channel.fromPath(params.multiqc_logo, checkIfExists: true)
+        : channel.empty()
 
     trim_meta = { meta, v ->
         [
@@ -421,10 +421,10 @@ workflow PIPELINE {
             names: (1..files.size()).collect { meta.id }
             files: files
         }
-    multiqc_study_ch = Channel
+    multiqc_study_ch = channel
         .value([id: "study"])
         .combine(multiqc_study_ch.files.flatten().collect())
-        .map { new Tuple(it[0], it[1..-1]) }
+        .map { it -> [it[0], it[1..-1]] }
 
     MULTIQC_STUDY(
         multiqc_study_ch,
