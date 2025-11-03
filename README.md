@@ -123,6 +123,7 @@ The pipeline performs the following:
     * Check cache directory
     * Automatically download if needed/available
 2. Quality control (QC)
+    * Standardise paired-end reads with `bbmap`
     * Use `fastp` to trim and filter reads
 3. Decontamination of host (and phiX)
     * Map reads to reference host genome (human by default)
