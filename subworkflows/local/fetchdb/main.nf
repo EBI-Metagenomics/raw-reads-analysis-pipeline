@@ -18,7 +18,7 @@ workflow FETCHDB {
         .filter { _meta, cache_fp -> (cache_path.isEmpty() || (!cache_fp.exists()) || params.force_download_dbs==true) }
         .map { 
             meta, _cache_fp -> 
-            def checksum_path = false
+            def checksum_path = []
             if (meta.containsKey('remote_checksum_path')) {
                 if (meta.remote_checksum_path==true) {
                     checksum_path = file(meta.remote_path + '.md5', checkIfExists: true)
