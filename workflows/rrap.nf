@@ -244,6 +244,7 @@ workflow PIPELINE {
         true
     )
 
+    motus_profile = ADDHEADER_GZIP_MOTUS.out.file_with_header
 
     // rrna_extraction
     rfam_db = dbs.rfam
@@ -331,9 +332,12 @@ workflow PIPELINE {
         true
     )
 
+    rrna_profile = ADDHEADER_GZIP_RRNA.out.file_with_header
+
 
     if (params.skip_functional) {
         pfam_status = merged_reads.map { meta, _fp -> [meta.id, false] }
+        pfam_profile = channel.fromList([])
     }
     else {
         // Pfam profiling
@@ -371,6 +375,8 @@ workflow PIPELINE {
 
         pfam_status = PROFILE_HMMSEARCH_PFAM.out.profile
             .map { meta, fp -> [meta.id, fp.exists() && (fp.readLines().size() > 1)] }
+
+        pfam_profile = ADDHEADER_GZIP_PFAM.out.file_with_header
     }
 
     // MultiQC
@@ -528,6 +534,9 @@ workflow PIPELINE {
         .collectFile(name: "run_status.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     emit:
-    versions = ch_versions // channel: [ path(versions.yml) ]
-    collated_versions = collated_versions // channel: [ path(versions.yml) ]
+    motus_profile = motus_profile
+    rrna_profile = rrna_profile
+    pfam_profile = pfam_profile
+    versions = ch_versions  // channel: [ path(versions.yml) ]
+    collated_versions = collated_versions  // channel: [ path(versions.yml) ]
 }
