@@ -2,120 +2,40 @@
     "Should run without failures": {
         "content": [
             [
-                [
-                    "\"PIPELINE:RRNA_EXTRACTION:INFERNAL_CMSEARCH\":",
-                    "    cmsearch: 1.1.5"
-                ],
-                [
-                    "\"PIPELINE:MAPSEQ_OTU_KRONA:MAPSEQ\":",
-                    "    mapseq: 2.1.1b"
-                ],
-                [
-                    "\"PIPELINE:MAPSEQ_OTU_KRONA:KRONA_KTIMPORTTEXT\":",
-                    "    krona: 2.8.1 "
-                ],
-                [
-                    "\"PIPELINE:RRNA_EXTRACTION:EXTRACTCOORDS\":",
-                    "    mgnify-pipelines-toolkit: 1.0.4"
-                ],
-                [
-                    "\"PIPELINE:MOTUS_KRONA:MOTUS_PROFILE\":",
-                    "    motus: 2.6.0"
-                ],
-                [
-                    "\"PIPELINE:MOTUS_KRONA:MOTUS2KRONA\":",
-                    "    python: 3.11.8"
-                ],
-                [
-                    "\"PIPELINE:DECONTAM_SHORTREAD:DECONTAM_PHIX\":",
-                    "    bwamem2: 2.2.1",
-                    "    samtools: 1.19.2 "
-                ],
-                [
-                    "\"PIPELINE:QC:FASTP\":",
-                    "    fastp: 0.24.0"
-                ],
-                [
-                    "\"PIPELINE:RRNA_EXTRACTION:EASEL_ESLSFETCH\":",
-                    "    easel: 0.49"
-                ],
-                [
-                    "\"PIPELINE:DECONTAM_SHORTREAD:DECONTAM_HOST\":",
-                    "    bwamem2: 2.2.1",
-                    "    samtools: 1.19.2 "
-                ],
-                [
-                    "\"PIPELINE:RRNA_EXTRACTION:CMSEARCHTBLOUTDEOVERLAP\":",
-                    "    cmsearch_tblout_deoverlap: v0.09"
-                ],
-                [
-                    "\"PIPELINE:MAPSEQ_OTU_KRONA:MAPSEQ2BIOM\":",
-                    "    mapseq2biom: 0.1.1"
-                ],
-                [
-                    "\"PIPELINE:MOTUS_KRONA:KRONA_KTIMPORTTEXT\":",
-                    "    krona: 2.8.1 "
-                ]
+                "",
+                "function-summary",
+                "function-summary/pfam",
+                "function-summary/pfam/test_sample_pfam.stats.json",
+                "function-summary/pfam/test_sample_pfam.txt.gz",
+                "qc",
+                "qc/test_sample_decontamination.fastp.json",
+                "qc/test_sample_multiqc_report.html",
+                "qc/test_sample_qc.fastp.json",
+                "taxonomy-summary",
+                "taxonomy-summary/motus",
+                "taxonomy-summary/motus/test_sample_motus.html",
+                "taxonomy-summary/motus/test_sample_motus.txt.gz",
+                "taxonomy-summary/silva-lsu",
+                "taxonomy-summary/silva-lsu/test_sample_silva-lsu.html",
+                "taxonomy-summary/silva-lsu/test_sample_silva-lsu.txt.gz",
+                "taxonomy-summary/silva-ssu",
+                "taxonomy-summary/silva-ssu/test_sample_silva-ssu.html",
+                "taxonomy-summary/silva-ssu/test_sample_silva-ssu.txt.gz"
             ],
             [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "test_sample",
-                        "single_end": false,
-                        "interleaved": false,
-                        "instrument_platform": "ILLUMINA",
-                        "short_reads": true,
-                        "read_count": 20000,
-                        "qc_read_count": 19884,
-                        "reads_n": 2,
-                        "clean_read_count": 19882,
-                        "merged_read_count": 19626
-                    },
-                    "test_sample_krona.tsv.gz:md5,200e14493ea87181d9f3a01728ab812a"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_sample",
-                        "single_end": false,
-                        "interleaved": false,
-                        "instrument_platform": "ILLUMINA",
-                        "short_reads": true,
-                        "read_count": 20000,
-                        "qc_read_count": 19884,
-                        "reads_n": 2,
-                        "clean_read_count": 19882,
-                        "merged_read_count": 19626,
-                        "db_label": "SILVA-LSU"
-                    },
-                    "test_sample.txt.gz:md5,2186a26a1be44ca50d855c21c138a1ab"
-                ],
-                [
-                    {
-                        "id": "test_sample",
-                        "single_end": false,
-                        "interleaved": false,
-                        "instrument_platform": "ILLUMINA",
-                        "short_reads": true,
-                        "read_count": 20000,
-                        "qc_read_count": 19884,
-                        "reads_n": 2,
-                        "clean_read_count": 19882,
-                        "merged_read_count": 19626,
-                        "db_label": "SILVA-SSU"
-                    },
-                    "test_sample.txt.gz:md5,4db0cc9f568584cf7300a217639da805"
-                ]
+                "test_sample_pfam.stats.json:md5,097f23d280452214f42549f5a8ca69f2",
+                "test_sample_pfam.txt.gz:md5,0255099c4e549c0a337dacc368c279fc",
+                "test_sample_decontamination.fastp.json:md5,e6f15cfb36ea5b8900b6a9c4274df4e9",
+                "test_sample_qc.fastp.json:md5,baa329f4fe8c5b91a9f4857c5bbff5d2",
+                "test_sample_motus.txt.gz:md5,200e14493ea87181d9f3a01728ab812a",
+                "test_sample_silva-lsu.txt.gz:md5,2186a26a1be44ca50d855c21c138a1ab",
+                "test_sample_silva-ssu.txt.gz:md5,4db0cc9f568584cf7300a217639da805"
             ]
         ],
         "meta": {
             "nf-test": "0.9.2",
             "nextflow": "25.04.6"
         },
-        "timestamp": "2025-11-05T09:47:58.677080067"
+        "timestamp": "2025-11-10T10:11:34.41131909"
     }
 }

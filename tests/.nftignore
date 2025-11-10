@@ -1,0 +1,5 @@
+*.html
+taxonomy-summary/motus/test_sample_motus.html
+taxonomy-summary/silva-lsu/test_sample_silva-lsu.html
+taxonomy-summary/silva-ssu/test_sample_silva-ssu.html
+qc/test_sample_multiqc_report.html

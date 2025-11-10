@@ -9,7 +9,7 @@ nextflow_workflow {
         when {
             params {
 	            samplesheet = "${projectDir}/tests/fixtures/rrap/samplesheet_basic.csv"
-		        outdir = "results"
+		        outdir = "$outputDir"
                 force_download_dbs = false
 
                 databases {
@@ -109,23 +109,21 @@ nextflow_workflow {
         }
 
         then {
-            def pfam_profile = workflow.out.pfam_profile
-                .collect{ meta, fp -> [meta, file(fp)] }
-            def motus_profile = workflow.out.motus_profile
-                .collect{ meta, fp -> [meta, file(fp)] }
-            def rrna_profile = workflow.out.rrna_profile
-                .collect{ meta, fp -> [meta, file(fp)] }
-            def versions = workflow.out.versions
-                .collect{ fp -> file(fp).text.readLines() }
-                .sort()
+            def sample_outdir = "${params.outdir}/test_sample"
+            def stable_path = getAllFilesFromDir(
+                sample_outdir, relative: true, includeDir: true, 
+                ignore: ['pipeline_info/*.{html,json,txt}',]
+            )
+            // stable_md5: All files in ${params.outdir}/test_sample/ with stable content
+            def stable_md5 = getAllFilesFromDir(sample_outdir, ignoreFile: 'tests/.nftignore')
 
-            assert workflow.success
-            assert snapshot(
-                versions,
-                pfam_profile,
-                motus_profile,
-                rrna_profile
-            ).match()
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    stable_path,
+                    stable_md5,
+                ).match() }
+            ) 
         }
     }
 }
