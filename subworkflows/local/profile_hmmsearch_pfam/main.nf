@@ -13,6 +13,7 @@ workflow PROFILE_HMMSEARCH_PFAM {
 
     SEQKIT_TRANSLATE(reads_fasta)
 
+    // chunk seqs
     ch_chunked_fasta = SEQKIT_TRANSLATE.out.fastx
         .splitFasta(
             size: params.hmmsearch_chunksize,
@@ -20,13 +21,14 @@ workflow PROFILE_HMMSEARCH_PFAM {
             file: true
         )
 
+    // combine after chunking to allow for a chunked pfam database
     ch_chunked_pfam_in = ch_chunked_fasta
         .combine(pfam_db)
         .map { meta, reads, db -> tuple(meta, tuple(reads, db)) }
     
     ch_chunked_pfam_in = ch_chunked_pfam_in
-        .groupTuple()
-        .flatMap {
+        .groupTuple()  // group to count the number of chunks
+        .flatMap {  // un-group with information about the number of chunks (to aid re-grouping)
             meta, chunks ->
             def chunks_ = chunks instanceof Collection ? chunks : [chunks]
             def chunksize = chunks_.size()

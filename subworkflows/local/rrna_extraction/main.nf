@@ -14,14 +14,15 @@ workflow RRNA_EXTRACTION {
     main:
     ch_versions = Channel.empty()
 
+    // chunk input seqs
     ch_chunked_fasta = ch_fasta
         .splitFasta(
             size: params.cmsearch_chunksize,
             elem: 1,
             file: true
         )
-        .groupTuple()
-        .flatMap {
+        .groupTuple()  // group to count the number of chunks
+        .flatMap {  // un-group with information about the number of chunks (to aid re-grouping)
             meta, chunks ->
             def chunks_ = chunks instanceof Collection ? chunks : [chunks]
             def chunksize = chunks_.size()

@@ -6,28 +6,35 @@ workflow FETCHDB {
     cache_path // String
 
     main:
+    // DBs with local paths
     local_ch = fetch_ch
         .filter { meta -> meta.local_path }
         .map { meta -> [meta, file(meta.local_path, checkIfExists: true)] }
 
-    cache_path_ch = fetch_ch
+    // if not local path and there is a remote path then the files may be in the cache
+    remote_ch = fetch_ch
         .filter { meta -> ((!meta.local_path) && meta.remote_path) }
         .map { meta -> [meta, file("${cache_path}/${meta.id}")] }
 
-    download_ch = cache_path_ch
+    // if the remote DBs are not in the cache, or if force_download_dbs param is true then download the files 
+    download_ch = remote_ch
         .filter { _meta, cache_fp -> (cache_path.isEmpty() || (!cache_fp.exists()) || params.force_download_dbs==true) }
-        .map { 
+        .map {  // Add checksum if it exists
             meta, _cache_fp -> 
-            def checksum_path = []
+            // checksum might be at apath to download from remote
+            def checksum_path = []  // by default there is no checksum path
             if (meta.containsKey('remote_checksum_path')) {
+                // if checksum is simply `true` then assume that the path is the remote path + '.md5' 
                 if (meta.remote_checksum_path==true) {
                     checksum_path = file(meta.remote_path + '.md5', checkIfExists: true)
                 } else {
+                    // otherwise, if the checksum path exists then set it
                     if (meta.remote_checksum_path!=false) {
                         checksum_path = file(meta.remote_checksum_path, checkIfExists: true)
                     }
                 }
             }
+            // checksum can also be directly specified in parameters 
             def checksum = false
             if (meta.containsKey('remote_checksum')) {
                 checksum = meta.remote_checksum
@@ -35,7 +42,8 @@ workflow FETCHDB {
             [meta, meta.id, file(meta.remote_path, checkIfExists: true), checksum_path, checksum] 
         }
 
-    cache_ch = cache_path_ch
+    // collect channel of remote DBs that are in the cache
+    cache_ch = remote_ch
        .filter { _meta, cache_fp -> ((!cache_path.isEmpty()) && cache_fp.exists() && (params.force_download_dbs==false)) }
        .map { meta, cache_fp -> [meta, cache_fp] }
 
