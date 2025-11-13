@@ -125,5 +125,12 @@ nextflow_workflow {
                 ).match() }
             ) 
         }
+
+        cleanup {
+            // new File("${launchDir}/meta").deleteDir()
+            // new File("${launchDir}/results").deleteDir()
+            new File("${launchDir}/download_cache").deleteDir()
+            new File("${workDir}").deleteDir()
+        }
     }
 }
