@@ -35,6 +35,8 @@ workflow DECONTAM_SHORTREAD {
             se: meta.single_end
             pe: !meta.single_end
         }
+        
+        // chunk single-end and paired-end reads seperately
         chunked_decontaminated_reads = pe_se_reads.se
             .map { meta, reads_ ->
                 def reads__ = reads_ instanceof Collection ? reads_[0] : reads_
@@ -45,7 +47,7 @@ workflow DECONTAM_SHORTREAD {
                 elem: 1,
                 file: true
             )
-            .groupTuple()
+            .groupTuple()  // group to count the number of chunks
             .mix(
                 pe_se_reads.pe
                 .map { meta, reads_ -> [meta] + reads_ }
@@ -57,7 +59,7 @@ workflow DECONTAM_SHORTREAD {
                 .map { meta, reads1, reads2 -> tuple(meta, [reads1, reads2])}
                 .groupTuple()
             )
-            .flatMap {
+            .flatMap {  // un-group with information about the number of chunks (to aid re-grouping)
                 meta, chunks ->
                 def chunks_ = chunks instanceof Collection ? chunks : [chunks]
                 return chunks_.collect {
@@ -97,6 +99,7 @@ workflow DECONTAM_SHORTREAD {
             chunked_decontaminated_reads = DECONTAM_HOST.out.reads
         }
 
+        // join the chunked reads back together
         concat_ch = chunked_decontaminated_reads
             .groupTuple()
             .flatMap {

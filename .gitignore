@@ -5,7 +5,7 @@
 .nextflow*
 work/
 results/
-.nf-test*
+.nf-test.log
 .nf-test/*
 .editorconfig
 reads/

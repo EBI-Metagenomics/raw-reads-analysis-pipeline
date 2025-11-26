@@ -76,7 +76,6 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | databases.pfam.local_path                 | Local (filesystem) path to Pfam-A database (Default: `''`)                             |
 | databases.pfam.base_dir                   | Root directory of Pfam-A database (Default: `'.'`)                                     |
 | force_download_dbs                        | Force downloading databases overwriting cache (Default: `false`                        |
-| download_dbs                              | Enable downloading databases (Default: `true`)                                         |
 
 #### Advanced
 
@@ -263,7 +262,7 @@ Example output directory for a study with a single run `ERR10889056`:
 │   │       ├── ERR10889056_silva-ssu.txt.gz
 │   │       └── ERR10889056_silva-ssu.html
 │   └── function-summary
-│       └── pfam-a
+│       └── pfam
 │           ├── ERR10889056_pfam.txt.gz
 │           └── ERR10889056_pfam.stats.json
 ├── study_multiqc_report.html
@@ -286,7 +285,7 @@ Example output directory for a study with a single run `ERR10889056`:
   * `<run_accession>/taxonomy-summary/silva-ssu/<run_accession>_silva-ssu.txt.gz`
   * `<run_accession>/taxonomy-summary/silva-lsu/<run_accession>_silva-lsu.txt.gz`
 * Functional
-  * `<run_accession>/function-summary/pfam-a/<run_accession>_pfam.txt.gz`
+  * `<run_accession>/function-summary/pfam/<run_accession>_pfam.txt.gz`
 
 #### QC
 * `<run_accession>/qc/<run_accession>_qc.json`

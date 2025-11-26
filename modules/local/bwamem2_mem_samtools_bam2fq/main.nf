@@ -1,5 +1,5 @@
 process BWAMEM2_MEM_SAMTOOLS_BAM2FQ {
-    label 'process_high'
+    label 'process_low'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

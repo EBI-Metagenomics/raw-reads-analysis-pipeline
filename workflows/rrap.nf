@@ -244,7 +244,6 @@ workflow PIPELINE {
         true
     )
 
-
     // rrna_extraction
     rfam_db = dbs.rfam
         .map { meta, fp ->
@@ -528,6 +527,6 @@ workflow PIPELINE {
         .collectFile(name: "run_status.csv", storeDir: params.outdir, newLine: true, cache: false)
 
     emit:
-    versions = ch_versions // channel: [ path(versions.yml) ]
-    collated_versions = collated_versions // channel: [ path(versions.yml) ]
+    versions = ch_versions  // channel: [ path(versions.yml) ]
+    collated_versions = collated_versions  // channel: [ path(versions.yml) ]
 }
