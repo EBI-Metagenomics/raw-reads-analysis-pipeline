@@ -15,25 +15,20 @@ nextflow_workflow {
 
         then {
             def sample_outdir = "${params.outdir}/test_sample"
-            def stable_path = getAllFilesFromDir(
+            def stable_name = getAllFilesFromDir(
                 sample_outdir, relative: true, includeDir: true, 
                 ignore: ['pipeline_info/*.{html,json,txt}',]
             )
-            // stable_md5: All files in ${params.outdir}/test_sample/ with stable content
-            def stable_md5 = getAllFilesFromDir(sample_outdir, ignoreFile: 'tests/.nftignore')
+            // stable_path: All files in ${params.outdir}/test_sample/ with stable content
+            def stable_path = getAllFilesFromDir(sample_outdir, ignoreFile: 'tests/.nftignore')
 
             assertAll(
                 { assert workflow.success },
                 { assert snapshot(
+                    stable_name,
                     stable_path,
-                    stable_md5,
                 ).match() }
             ) 
-        }
-
-        cleanup {
-            new File("${launchDir}/download_cache").deleteDir()
-            new File("${workDir}").deleteDir()
         }
     }
 }
