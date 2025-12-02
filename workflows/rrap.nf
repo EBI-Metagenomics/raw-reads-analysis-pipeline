@@ -82,6 +82,7 @@ workflow PIPELINE {
         ]
     }
     samplesheet = channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
+        .map(groupReads)
 
     if (params.use_fire_download) {
         /*
@@ -93,12 +94,11 @@ workflow PIPELINE {
         )
 
         ch_versions = ch_versions.mix(DOWNLOAD_FROM_FIRE.out.versions.first())
-        samplesheet = DOWNLOAD_FROM_FIRE.out.downloaded_files
+        fetch_reads_transformed = DOWNLOAD_FROM_FIRE.out.downloaded_files
     } else {
-        samplesheet = samplesheet.map { meta, reads -> [meta, reads.collect{ it -> file(it) }]} 
+        fetch_reads_transformed = samplesheet.map { meta, reads -> [meta, reads.collect{ it -> file(it) }]} 
     }
 
-    fetch_reads_transformed = samplesheet.map(groupReads)
     classified_reads = fetch_reads_transformed.map { meta, reads ->
         // Long reads
         if (["OXFORD_NANOPORE", "PACBIO_SMRT"].contains(meta.instrument_platform)) {
