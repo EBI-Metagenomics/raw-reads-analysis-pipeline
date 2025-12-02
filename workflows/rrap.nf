@@ -3,6 +3,7 @@
      Imports
     ~~~~~~~~~~~~~~~~~~
 */
+include { DOWNLOAD_FROM_FIRE } from '../modules/ebi-metagenomics/downloadfromfire/main'
 include { FETCHDB } from '../subworkflows/local/fetchdb/main'
 include { QC } from '../subworkflows/local/qc/main'
 include { READSMERGE } from '../subworkflows/local/readsmerge/main'
@@ -77,10 +78,25 @@ workflow PIPELINE {
                 'interleaved': (!single_end) && single_file,
                 'instrument_platform': instrument_platform,
             ],
-            single_file ? [file(fq1)] : [file(fq1), file(fq2)],
+            single_file ? [fq1] : [fq1, fq2],
         ]
     }
     samplesheet = channel.fromList(samplesheetToList(params.samplesheet, "${workflow.projectDir}/assets/schema_input.json"))
+
+    if (params.use_fire_download) {
+        /*
+         * For private studies we need to bypass Nextflow S3 integration until https://github.com/nextflow-io/nextflow/issues/4873 is fixed
+         * The EBI parameter is needed as this only works on EBI network, FIRE is not accessible otherwise
+        */
+        DOWNLOAD_FROM_FIRE(
+            samplesheet
+        )
+
+        ch_versions = ch_versions.mix(DOWNLOAD_FROM_FIRE.out.versions.first())
+        samplesheet = DOWNLOAD_FROM_FIRE.out.downloaded_files
+    } else {
+        samplesheet = samplesheet.map { meta, reads -> [meta, reads.collect{ it -> file(it) }]} 
+    }
 
     fetch_reads_transformed = samplesheet.map(groupReads)
     classified_reads = fetch_reads_transformed.map { meta, reads ->
