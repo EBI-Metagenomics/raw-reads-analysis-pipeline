@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
-    "title": ". pipeline parameters",
+    "title": "Raw reads analysis pipeline parameters",
     "description": "",
     "type": "object",
     "properties": {
@@ -244,25 +244,6 @@
         "databases.silva_lsu.variables.label": {
             "type": "string",
             "default": "LSU"
-        },
-        "databases.pfam.remote_path": {
-            "type": "string",
-            "default": "ftp://ftp.ebi.ac.uk/pub/databases/metagenomics/pipelines/tool-dbs/pfam/pfam-a_38.0.hmm.gz"
-        },
-        "databases.pfam.remote_checksum_path": {
-            "type": "string",
-            "default": "ftp://ftp.ebi.ac.uk/pub/databases/metagenomics/pipelines/tool-dbs/pfam/pfam-a_38.0.hmm.gz.md5sum"
-        },
-        "databases.pfam.local_path": {
-            "type": "string"
-        },
-        "databases.pfam.files.hmm": {
-            "type": "string",
-            "default": "pfam-a_38.0.hmm"
-        },
-        "databases.pfam.variables.num_models": {
-            "type": "integer",
-            "default": 21979
         },
         "qc_params.filter_amplicon": {
             "type": "boolean",
