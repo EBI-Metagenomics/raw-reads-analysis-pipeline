@@ -9,7 +9,7 @@ nextflow_pipeline {
             params {
 	            samplesheet = "${projectDir}/tests/fixtures/rrap/samplesheet_basic.csv"
 		        outdir = "$outputDir"
-                dummy = true
+                decontam_short_chunksize = "lots"
             }
         }
 
