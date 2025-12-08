@@ -1,8 +1,7 @@
-nextflow_workflow {
+nextflow_pipeline {
 
-    name "Test Main Workflow"
+    name "Test Whole Pipeline"
     script "main.nf"
-    workflow ""
 
     test("Should run without failures") {
 
