@@ -422,7 +422,6 @@ workflow PIPELINE {
 
     MULTIQC_RUN(
         multiqc_run_ch,
-        [],
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList(),
@@ -446,7 +445,6 @@ workflow PIPELINE {
 
     MULTIQC_STUDY(
         multiqc_study_ch,
-        [],
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList(),
