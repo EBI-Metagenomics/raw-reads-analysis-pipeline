@@ -115,9 +115,12 @@ workflow PIPELINE {
         error "Error: Long reads (OXFORD_NANOPORE or PACBIO_SMRT) cannot be paired-end — ${meta}"
     }
 
-    // De-interleave interleaved paired-end reads
-    BBMAP_REFORMAT_STANDARDISE(classified_reads, 'fastq.gz')
-    classified_reads = BBMAP_REFORMAT_STANDARDISE.out.reformated
+    if (!params.skip_standardise) {
+        // De-interleave interleaved paired-end reads
+        BBMAP_REFORMAT_STANDARDISE(classified_reads, 'fastq.gz')
+        ch_versions = ch_versions.mix(BBMAP_REFORMAT_STANDARDISE.out.versions)
+        classified_reads = BBMAP_REFORMAT_STANDARDISE.out.reformated
+    }
 
     // QC
     if (params.skip_qc) {
