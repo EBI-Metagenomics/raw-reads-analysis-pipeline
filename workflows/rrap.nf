@@ -118,6 +118,7 @@ workflow PIPELINE {
     if (!params.skip_standardise) {
         // De-interleave interleaved paired-end reads
         BBMAP_REFORMAT_STANDARDISE(classified_reads, 'fastq.gz')
+        ch_versions = ch_versions.mix(BBMAP_REFORMAT_STANDARDISE.out.versions)
         classified_reads = BBMAP_REFORMAT_STANDARDISE.out.reformated
     }
 
