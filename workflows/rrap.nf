@@ -421,7 +421,7 @@ workflow PIPELINE {
         .groupTuple()
 
     MULTIQC_RUN(
-        multiqc_run_ch,
+        multiqc_run_ch.map {_meta, results -> results },
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList(),
@@ -444,7 +444,7 @@ workflow PIPELINE {
         .map { it -> [it[0], it[1..-1]] }
 
     MULTIQC_STUDY(
-        multiqc_study_ch,
+        multiqc_study_ch.map {_meta, results -> results },
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList(),
