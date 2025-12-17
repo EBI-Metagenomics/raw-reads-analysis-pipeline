@@ -9,7 +9,6 @@
                 "function-summary/pfam/test_sample_pfam.txt.gz",
                 "qc",
                 "qc/test_sample_decontamination.fastp.json",
-                "qc/test_sample_multiqc_report.html",
                 "qc/test_sample_qc.fastp.json",
                 "taxonomy-summary",
                 "taxonomy-summary/motus",
@@ -25,8 +24,8 @@
             [
                 "test_sample_pfam.stats.json:md5,097f23d280452214f42549f5a8ca69f2",
                 "test_sample_pfam.txt.gz:md5,0255099c4e549c0a337dacc368c279fc",
-                "test_sample_decontamination.fastp.json:md5,76ce3f45c65d86e88e29348080a2b146",
-                "test_sample_qc.fastp.json:md5,16a50fee34550679c7755b457961f57a",
+                "test_sample_decontamination.fastp.json:md5,460c122ace45e33f77b716a8a3ba6cf5",
+                "test_sample_qc.fastp.json:md5,4c3014bccc2d04b3f463d3120d2d40dd",
                 "test_sample_motus.txt.gz:md5,200e14493ea87181d9f3a01728ab812a",
                 "test_sample_silva-lsu.txt.gz:md5,2186a26a1be44ca50d855c21c138a1ab",
                 "test_sample_silva-ssu.txt.gz:md5,4db0cc9f568584cf7300a217639da805"
@@ -36,6 +35,6 @@
             "nf-test": "0.9.2",
             "nextflow": "25.10.2"
         },
-        "timestamp": "2025-12-16T12:50:08.176481099"
+        "timestamp": "2025-12-16T14:41:39.877484"
     }
 }
