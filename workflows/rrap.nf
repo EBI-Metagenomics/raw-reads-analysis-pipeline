@@ -126,7 +126,7 @@ workflow PIPELINE {
         paired_single_reads = classified_reads
             .branch { meta, _reads -> 
                 single: meta.single_end
-                paired: meta.paired_end
+                paired: !meta.single_end
             }
         BBMAP_REPAIR(paired_single_reads.paired, false)
         ch_versions = ch_versions.mix(BBMAP_REPAIR.out.versions)
