@@ -14,6 +14,7 @@ include { ADDHEADER_GZIP as ADDHEADER_GZIP_RRNA } from '../modules/local/addhead
 include { ADDHEADER_GZIP as ADDHEADER_GZIP_MOTUS } from '../modules/local/addheader_gzip/main'
 include { ADDHEADER_GZIP as ADDHEADER_GZIP_PFAM } from '../modules/local/addheader_gzip/main'
 include { BBMAP_REFORMAT_STANDARDISE } from '../modules/local/bbmap/reformat_standardise/main'
+include { BBMAP_REPAIR } from '../modules/nf-core/bbmap/repair/main'
 include { SEQKIT_SHUFFLE_FASTA } from '../modules/local/seqkit_shuffle_fasta/main'
 
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
@@ -110,16 +111,26 @@ workflow PIPELINE {
     }
 
     classified_reads
-    .filter { meta, _reads -> (meta.long_reads && (!meta.single_end)) }
-    .collect { meta, _reads ->
-        error "Error: Long reads (OXFORD_NANOPORE or PACBIO_SMRT) cannot be paired-end — ${meta}"
-    }
+        .filter { meta, _reads -> (meta.long_reads && (!meta.single_end)) }
+        .collect { meta, _reads ->
+            error "Error: Long reads (OXFORD_NANOPORE or PACBIO_SMRT) cannot be paired-end — ${meta}"
+        }
 
     if (!params.skip_standardise) {
-        // De-interleave interleaved paired-end reads
+        // Standardise headers, De-interleave interleaved paired-end reads
         BBMAP_REFORMAT_STANDARDISE(classified_reads, 'fastq.gz')
         ch_versions = ch_versions.mix(BBMAP_REFORMAT_STANDARDISE.out.versions)
         classified_reads = BBMAP_REFORMAT_STANDARDISE.out.reformated
+        
+        // Remove un-paired reads (if they should be paired)
+        paired_single_reads = classified_reads
+            .branch { meta, _reads -> 
+                single: meta.single_end
+                paired: meta.paired_end
+            }
+        BBMAP_REPAIR(paired_single_reads.paired, false)
+        ch_versions = ch_versions.mix(BBMAP_REPAIR.out.versions)
+        classified_reads = BBMAP_REPAIR.out.repaired.mix(paired_single_reads.reads.single)
     }
 
     // QC
