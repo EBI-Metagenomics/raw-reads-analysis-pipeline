@@ -130,7 +130,7 @@ workflow PIPELINE {
             }
         BBMAP_REPAIR(paired_single_reads.paired, false)
         ch_versions = ch_versions.mix(BBMAP_REPAIR.out.versions)
-        classified_reads = BBMAP_REPAIR.out.repaired.mix(paired_single_reads.reads.single)
+        classified_reads = BBMAP_REPAIR.out.repaired.mix(paired_single_reads.single)
     }
 
     // QC
