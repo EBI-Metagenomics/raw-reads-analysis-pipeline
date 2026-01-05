@@ -20,7 +20,7 @@ include { SEQKIT_SHUFFLE_FASTA } from '../modules/local/seqkit_shuffle_fasta/mai
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { MULTIQC as MULTIQC_RUN } from '../modules/nf-core/multiqc/main'
+include { MULTIQC_RUN } from '../modules/local/multiqcrun/main'
 include { MULTIQC as MULTIQC_STUDY } from '../modules/nf-core/multiqc/main'
 include { PROFILE_HMMSEARCH_PFAM } from '../subworkflows/local/profile_hmmsearch_pfam/main'
 include { samplesheetToList } from 'plugin/nf-schema'
