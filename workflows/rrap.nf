@@ -433,6 +433,7 @@ workflow PIPELINE {
 
     MULTIQC_RUN(
         multiqc_run_ch,
+        [],
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList(),
@@ -456,6 +457,7 @@ workflow PIPELINE {
 
     MULTIQC_STUDY(
         multiqc_study_ch.map { _meta, files -> files }.collect().map { files -> [[id:"samplesheet"], files] },
+        [],
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList(),

@@ -9,7 +9,7 @@ Changes in module 'nf-core/multiqc'
      conda "${moduleDir}/environment.yml"
      container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
 @@ -7,7 +8,8 @@
-         'biocontainers/multiqc:1.25.1--pyhdfd78af_0' }"
+        'community.wave.seqera.io/library/multiqc:1.33--ee7739d47738383b' }"
  
      input:
 -    path  multiqc_files, stageAs: "?/*"
