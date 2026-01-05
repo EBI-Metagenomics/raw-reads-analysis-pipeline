@@ -20,7 +20,7 @@ include { SEQKIT_SHUFFLE_FASTA } from '../modules/local/seqkit_shuffle_fasta/mai
 include { RRNA_EXTRACTION } from '../subworkflows/local/rrna_extraction/main'
 include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_krona/main'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { MULTIQC_RUN } from '../modules/local/multiqc_run/main'
+include { MULTIQC as MULTIQC_RUN } from '../modules/nf-core/multiqc/main'
 include { MULTIQC as MULTIQC_STUDY } from '../modules/nf-core/multiqc/main'
 include { PROFILE_HMMSEARCH_PFAM } from '../subworkflows/local/profile_hmmsearch_pfam/main'
 include { samplesheetToList } from 'plugin/nf-schema'
@@ -455,7 +455,7 @@ workflow PIPELINE {
         .map { it -> [it[0], it[1..-1]] }
 
     MULTIQC_STUDY(
-        multiqc_study_ch.map {_meta, results -> results },
+        multiqc_study_ch.map { _meta, files -> files }.collect().map { files -> [[id:"samplesheet"], files] },
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList(),
