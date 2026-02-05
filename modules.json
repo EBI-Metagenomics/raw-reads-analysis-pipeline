@@ -1,6 +1,6 @@
 {
-    "name": "nf-core/rrap",
-    "homePage": "https://github.com/nf-core/rrap",
+    "name": "raw-reads-analysis-pipeline",
+    "homePage": "https://github.com/EBI-Metagenomics/raw-reads-analysis-pipeline",
     "repos": {
         "git@github.com:EBI-Metagenomics/nf-modules.git": {
             "modules": {
