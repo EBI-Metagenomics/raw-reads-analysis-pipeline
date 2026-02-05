@@ -207,7 +207,7 @@ Numerous `nf-core` modules are used throughout the pipeline, and the `nf-core` t
 
 | Tool                                                 | Version  | Purpose                                                                                 |
 | ---------------------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
-| [bbmap](https://github.com/BioInfoTools/BBMap)       | 35.85    | Standardise paired-end fastq files                                                      |
+| [bbmap](https://sourceforge.net/projects/bbmap)      | 35.85    | Standardise paired-end fastq files                                                      |
 | [fastp](https://github.com/OpenGene/fastp)           | 0.24.0   | Quality control reads, and merging paired-end reads                                     |
 | [seqtk](https://github.com/lh3/seqtk)                | 1.3-r106 | Coverting fastq to fasta                                                                |
 | [seqkit](https://github.com/shenwei356/seqkit)       | 2.9.0    | Translating nucleotide to amino acid sequences, and randomly subsampling sequence files |
