@@ -3,7 +3,7 @@
 nextflow.enable.dsl = 2
 
 include { validateParameters; paramsHelp; paramsSummaryLog; } from 'plugin/nf-schema'
-include { PIPELINE } from './workflows/rrap.nf'
+include { PIPELINE } from './workflows/rawr.nf'
 
 workflow {
     // Validate input parameters
