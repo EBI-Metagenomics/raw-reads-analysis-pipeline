@@ -16,7 +16,7 @@
 
 - [bbmap](https://sourceforge.net/projects/bbmap)
 
-> Bushnell, B. (2014). BBMap: A Fast, Accurate, Splice-Aware Aligner. Lawrence Berkeley National Laboratory. LBNL Report #: LBNL-7065E. Retrieved from https://escholarship.org/uc/item/1h3515gn
+> Bushnell, B. (2014). BBMap: A Fast, Accurate, Splice-Aware Aligner. Lawrence Berkeley National Laboratory. LBNL Report Number : LBNL-7065E. Retrieved from https://escholarship.org/uc/item/1h3515gn
 
 [fastp](https://github.com/OpenGene/fastp) 
 
@@ -26,7 +26,7 @@
 
 [seqkit](https://github.com/shenwei356/seqkit) 
 
-> Wei Shen*, Botond Sipos, and Liuyang Zhao. 2024. SeqKit2: A Swiss Army Knife for Sequence and Alignment Processing. iMeta e191. doi:10.1002/imt2.191.
+> Wei Shen, Botond Sipos, and Liuyang Zhao. 2024. SeqKit2: A Swiss Army Knife for Sequence and Alignment Processing. iMeta e191. doi:10.1002/imt2.191.
 
 [bwa-mem2](https://github.com/bwa-mem2/bwa-mem2) 
 
@@ -64,13 +64,13 @@ GigaScience, Volume 10, Issue 2, February 2021, giab008, https://doi.org/10.1093
 
 [mOTUs](https://github.com/motu-tool/mOTUs)
 
-> Hans-Joachim Ruscheweyh* , Alessio Milanese*, Lucas Paoli, Nicolai Karcher, Quentin Clayssen, Marisa Isabell Metzger, Jakob Wirbel, Peer Bork, Daniel R. Mende, Georg Zeller# & Shinichi Sunagawa#. Reference genome-independent taxonomic profiling of microbiomes with mOTUs3. Microbiome (2022), doi: 10.1186/s40168-022-01410-z
+> Hans-Joachim Ruscheweyh , Alessio Milanese, Lucas Paoli, Nicolai Karcher, Quentin Clayssen, Marisa Isabell Metzger, Jakob Wirbel, Peer Bork, Daniel R. Mende, Georg Zeller & Shinichi Sunagawa. Reference genome-independent taxonomic profiling of microbiomes with mOTUs3. Microbiome (2022), doi: 10.1186/s40168-022-01410-z
 
 ## Reference databases
 
 mOTUs 
 
-> Marija Dmitrijeva* , Hans-Joachim Ruscheweyh* , Lilith Feer , Kang Li , Samuel Miravet-Verde , Anna Sintsova , Daniel R Mende , Georg Zeller , Shinichi Sunagawa#. The mOTUs online database provides web-accessible genomic context to taxonomic profiling of microbial communities. Nucleic Acids Research (2025), doi: https://doi.org/10.1093/nar/gkae1004
+> Marija Dmitrijeva , Hans-Joachim Ruscheweyh , Lilith Feer , Kang Li , Samuel Miravet-Verde , Anna Sintsova , Daniel R Mende , Georg Zeller , Shinichi Sunagawa. The mOTUs online database provides web-accessible genomic context to taxonomic profiling of microbial communities. Nucleic Acids Research (2025), doi: https://doi.org/10.1093/nar/gkae1004
 
 Rfam
 
