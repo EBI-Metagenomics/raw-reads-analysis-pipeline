@@ -97,7 +97,7 @@ workflow PIPELINE {
         ch_versions = ch_versions.mix(DOWNLOAD_FROM_FIRE.out.versions.first())
         fetch_reads_transformed = DOWNLOAD_FROM_FIRE.out.downloaded_files
     } else {
-        fetch_reads_transformed = samplesheet.map { meta, reads -> [meta, reads.collect{ it -> file(it) }]} 
+        fetch_reads_transformed = samplesheet.map { meta, reads -> [meta, reads.collect{ it -> file(it) }]}
     }
 
     classified_reads = fetch_reads_transformed.map { meta, reads ->
@@ -121,10 +121,10 @@ workflow PIPELINE {
         BBMAP_REFORMAT_STANDARDISE(classified_reads, 'fastq.gz')
         ch_versions = ch_versions.mix(BBMAP_REFORMAT_STANDARDISE.out.versions)
         classified_reads = BBMAP_REFORMAT_STANDARDISE.out.reformated
-        
+
         // Remove un-paired reads (if they should be paired)
         paired_single_reads = classified_reads
-            .branch { meta, _reads -> 
+            .branch { meta, _reads ->
                 single: meta.single_end
                 paired: !meta.single_end
             }
@@ -244,122 +244,140 @@ workflow PIPELINE {
         }
         .filter{ meta, _reads -> meta.merged_read_count > 0 }
 
-    // mOTUs
-    motus_db = dbs.motus
-        .map { meta, fp ->
-            file("${fp}/${meta.files.base_dir}")
-        }
-        .first()
-
-    MOTUS_KRONA(
-        clean_reads,
-        motus_db,
-    )
-    ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)
-
-    motus_out_ch = MOTUS_KRONA.out.krona
-        .join(clean_reads, remainder: true)
-        .map { meta, result, _reads ->
-            def result_ = []
-            def out_fn = "${meta.id}.txt"
-            if (result && result.exists()) {
-                result_ = result
-                out_fn = false
-            }
-            return [meta, result_, out_fn]
-        }
-    ADDHEADER_GZIP_MOTUS(
-        motus_out_ch,
-        "# ${params.results_file_headers.motus_taxonomy.join('\t')}",
-        true
-    )
-
-    // rrna_extraction
-    rfam_db = dbs.rfam
-        .map { meta, fp ->
-            file("${fp}/${meta.files.models}")
-        }
-        .first()
-
-    claninfo_db = dbs.rfam
-        .map { meta, fp ->
-            file("${fp}/${meta.files.claninfo}")
-        }
-        .first()
-
-    RRNA_EXTRACTION(
-        merged_reads,
-        rfam_db,
-        claninfo_db,
-    )
-    ch_versions = ch_versions.mix(RRNA_EXTRACTION.out.versions)
-
-    lsu_db = dbs.silva_lsu
-        .map { meta, fp ->
-            [
-                [
-                    file("${fp}/${meta.files.fasta}"),
-                    file("${fp}/${meta.files.tax}"),
-                    file("${fp}/${meta.files.otu}"),
-                    file("${fp}/${meta.files.mscluster}"),
-                    meta.id,
-                ]
-            ]
-        }
-        .first()
-
-    ssu_db = dbs.silva_ssu
-        .map { meta, fp ->
-            [
-                [
-                    file("${fp}/${meta.files.fasta}"),
-                    file("${fp}/${meta.files.tax}"),
-                    file("${fp}/${meta.files.otu}"),
-                    file("${fp}/${meta.files.mscluster}"),
-                    meta.id,
-                ]
-            ]
-        }
-        .first()
-
-    lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
-        .join(merged_reads, remainder: true)
-        .map{ meta, seqs, _reads -> [meta + ['db_label': 'SILVA-LSU'], seqs]}
-        .combine(lsu_db)
-    ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
-        .join(merged_reads, remainder: true)
-        .map{ meta, seqs, _reads -> [meta + ['db_label': 'SILVA-SSU'], seqs]}
-        .combine(ssu_db)
-    rrna_ch = lsu_ch.mix(ssu_ch)
-    rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
-        seqs: [meta, seqs]
-        db: db
+    if (params.skip_taxonomic) {
+        motus_status = clean_reads.map { meta, _fp -> [meta.id, false] }
+        silvassu_status = merged_reads.map { meta, _fp -> [meta.id, false] }
+        silvalsu_status = merged_reads.map { meta, _fp -> [meta.id, false] }
     }
-
-    MAPSEQ_OTU_KRONA(
-        rrna_chs.seqs.filter{ _meta, fp -> fp },
-        rrna_chs.db
-    )
-    ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
-
-
-    rrna_out_ch = MAPSEQ_OTU_KRONA.out.krona_input
-        .join(rrna_chs.seqs, remainder: true)
-        .map { meta, result, _reads ->
-            def result_ = []
-            def out_fn = "${meta.id}.txt"
-            if (result && result.exists()) {
-                result_ = result
-                out_fn = false
+    else {
+        // mOTUs
+        motus_db = dbs.motus
+            .map { meta, fp ->
+                file("${fp}/${meta.files.base_dir}")
             }
-            return [meta, result_, out_fn]
-        }
-    ADDHEADER_GZIP_RRNA(
-        rrna_out_ch,
-        "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
-        true
-    )
+            .first()
 
+        MOTUS_KRONA(
+            clean_reads,
+            motus_db,
+        )
+        ch_versions = ch_versions.mix(MOTUS_KRONA.out.versions)
+
+        motus_out_ch = MOTUS_KRONA.out.krona
+            .join(clean_reads, remainder: true)
+            .map { meta, result, _reads ->
+                def result_ = []
+                def out_fn = "${meta.id}.txt"
+                if (result && result.exists()) {
+                    result_ = result
+                    out_fn = false
+                }
+                return [meta, result_, out_fn]
+            }
+        ADDHEADER_GZIP_MOTUS(
+            motus_out_ch,
+            "# ${params.results_file_headers.motus_taxonomy.join('\t')}",
+            true
+        )
+
+        // rrna_extraction
+        rfam_db = dbs.rfam
+            .map { meta, fp ->
+                file("${fp}/${meta.files.models}")
+            }
+            .first()
+
+        claninfo_db = dbs.rfam
+            .map { meta, fp ->
+                file("${fp}/${meta.files.claninfo}")
+            }
+            .first()
+
+        RRNA_EXTRACTION(
+            merged_reads,
+            rfam_db,
+            claninfo_db,
+        )
+        ch_versions = ch_versions.mix(RRNA_EXTRACTION.out.versions)
+
+        lsu_db = dbs.silva_lsu
+            .map { meta, fp ->
+                [
+                    [
+                        file("${fp}/${meta.files.fasta}"),
+                        file("${fp}/${meta.files.tax}"),
+                        file("${fp}/${meta.files.otu}"),
+                        file("${fp}/${meta.files.mscluster}"),
+                        meta.id,
+                    ]
+                ]
+            }
+            .first()
+
+        ssu_db = dbs.silva_ssu
+            .map { meta, fp ->
+                [
+                    [
+                        file("${fp}/${meta.files.fasta}"),
+                        file("${fp}/${meta.files.tax}"),
+                        file("${fp}/${meta.files.otu}"),
+                        file("${fp}/${meta.files.mscluster}"),
+                        meta.id,
+                    ]
+                ]
+            }
+            .first()
+
+        lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
+            .join(merged_reads, remainder: true)
+            .map{ meta, seqs, _reads -> [meta + ['db_label': 'SILVA-LSU'], seqs]}
+            .combine(lsu_db)
+        ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
+            .join(merged_reads, remainder: true)
+            .map{ meta, seqs, _reads -> [meta + ['db_label': 'SILVA-SSU'], seqs]}
+            .combine(ssu_db)
+        rrna_ch = lsu_ch.mix(ssu_ch)
+        rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
+            seqs: [meta, seqs]
+            db: db
+        }
+
+        MAPSEQ_OTU_KRONA(
+            rrna_chs.seqs.filter{ _meta, fp -> fp },
+            rrna_chs.db
+        )
+        ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
+
+
+        rrna_out_ch = MAPSEQ_OTU_KRONA.out.krona_input
+            .join(rrna_chs.seqs, remainder: true)
+            .map { meta, result, _reads ->
+                def result_ = []
+                def out_fn = "${meta.id}.txt"
+                if (result && result.exists()) {
+                    result_ = result
+                    out_fn = false
+                }
+                return [meta, result_, out_fn]
+            }
+        ADDHEADER_GZIP_RRNA(
+            rrna_out_ch,
+            "# ${params.results_file_headers.silva_taxonomy.join('\t')}",
+            true
+        )
+
+        motus_status = MOTUS_KRONA.out.krona
+        .map { meta, fp -> [meta.id, fp.exists() & (fp.readLines().size() > 0)]}
+
+        silvassu_status = MAPSEQ_OTU_KRONA.out.krona_input
+        .filter { meta, _fp -> meta.db_label == 'SILVA-SSU' }
+        .map { meta, fp -> [meta.id, fp.exists() & (fp.readLines().size() > 0)]}
+
+        silvalsu_status = MAPSEQ_OTU_KRONA.out.krona_input
+        .filter { meta, _fp -> meta.db_label == 'SILVA-LSU' }
+        .map { meta, fp -> [meta.id, fp.exists() & (fp.readLines().size() > 0)]}
+
+    }
 
     if (params.skip_functional) {
         pfam_status = merged_reads.map { meta, _fp -> [meta.id, false] }
@@ -480,17 +498,6 @@ workflow PIPELINE {
     qc_status = qc_reads.map { meta, _reads -> [meta.id, meta.qc_read_count > 0] }
 
     decontam_status = clean_reads.map { meta, _reads -> [meta.id, meta.clean_read_count > 0] }
-
-    motus_status = MOTUS_KRONA.out.krona
-        .map { meta, fp -> [meta.id, fp.exists() & (fp.readLines().size() > 0)]}
-
-    silvassu_status = MAPSEQ_OTU_KRONA.out.krona_input
-        .filter { meta, _fp -> meta.db_label == 'SILVA-SSU' }
-        .map { meta, fp -> [meta.id, fp.exists() & (fp.readLines().size() > 0)]}
-
-    silvalsu_status = MAPSEQ_OTU_KRONA.out.krona_input
-        .filter { meta, _fp -> meta.db_label == 'SILVA-LSU' }
-        .map { meta, fp -> [meta.id, fp.exists() & (fp.readLines().size() > 0)]}
 
     run_status = reads_status
         .join(qc_status, remainder: true)
