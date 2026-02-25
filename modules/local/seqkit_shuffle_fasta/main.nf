@@ -31,10 +31,10 @@ process SEQKIT_SHUFFLE_FASTA {
     seqkit seq --name --only-id ${fasta} \\
     | ${head_cmd} \\
     > seq_ids
-    
+
     seqkit faidx --region-file seq_ids --full-head ${fasta} \\
     ${call_gzip} \\
-    > ${prefix}.fasta.${extension}
+    > ${prefix}.fasta${extension}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -46,7 +46,7 @@ process SEQKIT_SHUFFLE_FASTA {
     prefix = task.ext.prefix ? "${task.ext.prefix}.${meta.id}" : "${meta.id}"
     extension = fasta.toString().endsWith('.gz') ? '.gz' : ''
     """
-    touch ${prefix}.fasta.${extension}
+    touch ${prefix}.fasta${extension}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

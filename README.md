@@ -49,6 +49,7 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | outdir               | Path to results directory (Default: `'./results'`)                               |
 | skip_qc              | Skip Qaulity Control (QC) (Default: `false`)                                     |
 | skip_decontam        | Skip Decontamination (Default: `false`)                                          |
+| skip_taxonomic       | Skip Taxonomic profiling (Default: `false`)                                      |
 | skip_functional      | Skip Functional profiling (Default: `true`)                                      |
 | remove_phix          | Toggle removing phiX-mapped reads (Default: `true`)                              |
 | remove_host          | Toggle removing host-mapped reads (Default: `true`)                              |
