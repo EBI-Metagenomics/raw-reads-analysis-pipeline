@@ -1,4 +1,30 @@
 {
+    "Skip taxonomic Should run without failures": {
+        "content": [
+            [
+                "",
+                "function-summary",
+                "function-summary/pfam",
+                "function-summary/pfam/test_sample_pfam.stats.json",
+                "function-summary/pfam/test_sample_pfam.txt.gz",
+                "qc",
+                "qc/test_sample_decontamination.fastp.json",
+                "qc/test_sample_multiqc_report.html",
+                "qc/test_sample_qc.fastp.json"
+            ],
+            [
+                "test_sample_pfam.stats.json:md5,097f23d280452214f42549f5a8ca69f2",
+                "test_sample_pfam.txt.gz:md5,0255099c4e549c0a337dacc368c279fc",
+                "test_sample_decontamination.fastp.json:md5,8bad8b44fd86db42db3b3d4ff4ca849b",
+                "test_sample_qc.fastp.json:md5,151817020501968c3db33ac038fc5eb7"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.10.2"
+        },
+        "timestamp": "2026-02-25T10:58:12.10883"
+    },
     "Should run without failures": {
         "content": [
             [
