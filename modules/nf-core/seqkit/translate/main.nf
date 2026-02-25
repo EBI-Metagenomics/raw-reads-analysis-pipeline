@@ -20,7 +20,7 @@ process SEQKIT_TRANSLATE {
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
-    prefix = task.ext.prefix ?: "output/${meta.id}"
+    prefix = task.ext.prefix ?: "${meta.id}"
     def extension = "fastq"
     if ("${fastx}" ==~ /.+\.fasta|.+\.fasta.gz|.+\.fa|.+\.fa.gz|.+\.fas|.+\.fas.gz|.+\.fna|.+\.fna.gz|.+\.fsa|.+\.fsa.gz/) {
         extension = "fasta"
@@ -31,7 +31,6 @@ process SEQKIT_TRANSLATE {
         error("Input and output names are the same, use \"task.ext.prefix\" to disambiguate!")
     }
     """
-    mkdir output
     seqkit \\
         translate \\
         --threads ${task.cpus} \\
