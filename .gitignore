@@ -12,3 +12,5 @@ reads/
 download_cache/
 conda_cache/
 singularity_cache/
+.claude/*
+CLAUDE.md

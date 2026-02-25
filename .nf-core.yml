@@ -2,14 +2,64 @@ repository_type: pipeline
 
 nf_core_version: 3.2.0
 
-lint: {}
+org_path: ebi-metagenomics
+
+lint:
+  files_unchanged:
+    - .prettierignore
+    - CODE_OF_CONDUCT.md
+    - .github/CONTRIBUTING.md
+    - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/workflows/linting.yml
+    - assets/email_template.txt
+    - assets/email_template.html
+    - assets/sendmail_template.txt
+    - docs/README.md
+    - LICENSE
+    - .prettierrc.yml
+  nextflow_config:
+    - manifest.name
+    - manifest.homePage
+    - validation.help.beforeText
+    - validation.help.afterText
+    - validation.summary.beforeText
+    - validation.summary.afterText
+  multiqc_config:
+    - report_comment
+  files_exist:
+    - .github/workflows/nf-test.yml
+    - .github/actions/get-shards/action.yml
+    - .github/actions/nf-test/action.yml
+    - .github/workflows/linting_comment.yml
+    - .github/workflows/branch.yml
+    - conf/igenomes.config
+    - conf/igenomes_ignored.config
+    - CHANGELOG.md
+    - CODE_OF_CONDUCT.md
+    - assets/nf-core-rrap_logo_light.png
+    - docs/images/nf-core-rrap_logo_light.png
+    - docs/images/nf-core-rrap_logo_dark.png
+    - .github/ISSUE_TEMPLATE/config.yml
+    - .github/workflows/awstest.yml
+    - .github/workflows/awsfulltest.yml
+  nf_test_content:
+    - tests/nextflow.config
+  merge_markers: []
+  template_strings: []
 
 template:
-  org: nf-core
+  org: ebi-metagenomics
   name: rrap
   description: Raw Reads Analysis Pipeline - taxonomic and functional analysis of raw reads.
   author: Timothy Rozday
   version: 1.0.0dev
   force: true
   outdir: .
-  is_nfcore: true
+  skip_features:
+    - igenomes
+    - gitpod
+    - fastqc
+    - changelog
+    - adaptivecard
+    - slackreport
+  is_nfcore: false

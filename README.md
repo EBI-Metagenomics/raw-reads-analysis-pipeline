@@ -49,6 +49,7 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | outdir               | Path to results directory (Default: `'./results'`)                               |
 | skip_qc              | Skip Qaulity Control (QC) (Default: `false`)                                     |
 | skip_decontam        | Skip Decontamination (Default: `false`)                                          |
+| skip_taxonomic       | Skip Taxonomic profiling (Default: `false`)                                      |
 | skip_functional      | Skip Functional profiling (Default: `true`)                                      |
 | remove_phix          | Toggle removing phiX-mapped reads (Default: `true`)                              |
 | remove_host          | Toggle removing host-mapped reads (Default: `true`)                              |
@@ -248,8 +249,8 @@ Example output directory for a study with a single run `ERR10889056`:
 ```
 ├── ERR10889056
 │   ├── qc
-│   │   ├── ERR10889056_qc.json
-│   │   ├── ERR10889056_decontamination.json
+│   │   ├── ERR10889056_qc.fastp.json
+│   │   ├── ERR10889056_decontamination.fastp.json
 │   │   └── ERR10889056_multiqc_report.html
 │   ├── taxonomy-summary
 │   │   ├── motus
@@ -288,8 +289,8 @@ Example output directory for a study with a single run `ERR10889056`:
   * `<run_accession>/function-summary/pfam/<run_accession>_pfam.txt.gz`
 
 #### QC
-* `<run_accession>/qc/<run_accession>_qc.json`
-* `<run_accession>/qc/<run_accession>_decontamination.json`
+* `<run_accession>/qc/<run_accession>_qc.fastp.json`
+* `<run_accession>/qc/<run_accession>_decontamination.fastp.json`
 * `<run_accession>/qc/<run_accession>_multiqc_report.html`
 * `study_multiqc_report.html`
 
