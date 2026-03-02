@@ -94,7 +94,7 @@ if __name__ == '__main__':
             start, end = d['read_frame'][1:3]
 
             m = lambda x: (start-1)+direction*(x-1)*3 + (phase-1)
-            nt_base_idxs = list(range(*list(sorted((m(d['ali_coord_from']), m(d['ali_coord_to']))))))
+            nt_base_idxs = list(range(*list(sorted((m(d['ali_coord_from']), m(d['ali_coord_to']+1))))))
 
             if not any([i in ali_coverage for i in nt_base_idxs]):
                 deoverlapped.append(d)
