@@ -120,6 +120,8 @@ if __name__ == '__main__':
     for k,d in hmm_hits_coverage.items():
         if not len(d)>0:
             continue
+        if not sum(list(d.values()))>0:
+            continue
         depth = sum(list(d.values()))/len(d)
         breadth = sum([v>0 for _,v in d.items()])/len(d)
 
