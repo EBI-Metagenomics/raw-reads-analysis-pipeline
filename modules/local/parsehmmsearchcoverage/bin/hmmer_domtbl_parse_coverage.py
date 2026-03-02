@@ -94,7 +94,7 @@ if __name__ == '__main__':
             start, end = d['read_frame'][1:3]
 
             m = lambda x: (start-1)+direction*(x-1)*3 + (phase-1)
-            nt_base_idxs = list(range(*list(sorted((m(d['ali_coord_from']), m(d['ali_coord_to']))))))
+            nt_base_idxs = list(range(*list(sorted((m(d['ali_coord_from']), m(d['ali_coord_to']+1))))))
 
             if not any([i in ali_coverage for i in nt_base_idxs]):
                 deoverlapped.append(d)
@@ -111,7 +111,7 @@ if __name__ == '__main__':
             hmm_hit_count[d['query_accession']].add(k)
             if not d['query_accession'] in hmm_hits_coverage:
                 hmm_hits_coverage[d['query_accession']] = {i+1:0 for i in range(d['qlen'])}
-            for i in range(d['hmm_coord_from'], d['hmm_coord_to']):
+            for i in range(d['hmm_coord_from'], d['hmm_coord_to']+1):
                 hmm_hits_coverage[d['query_accession']][i] += 1
     hmm_hit_count = {k:len(vs) for k,vs in hmm_hit_count.items()}
 
