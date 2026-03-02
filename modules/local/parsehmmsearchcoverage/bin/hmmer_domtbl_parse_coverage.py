@@ -111,7 +111,7 @@ if __name__ == '__main__':
             hmm_hit_count[d['query_accession']].add(k)
             if not d['query_accession'] in hmm_hits_coverage:
                 hmm_hits_coverage[d['query_accession']] = {i+1:0 for i in range(d['qlen'])}
-            for i in range(d['hmm_coord_from'], d['hmm_coord_to']):
+            for i in range(d['hmm_coord_from'], d['hmm_coord_to']+1):
                 hmm_hits_coverage[d['query_accession']][i] += 1
     hmm_hit_count = {k:len(vs) for k,vs in hmm_hit_count.items()}
 
@@ -119,8 +119,6 @@ if __name__ == '__main__':
     hmm_hits_coverage_stats = {}
     for k,d in hmm_hits_coverage.items():
         if not len(d)>0:
-            continue
-        if not sum(list(d.values()))>0:
             continue
         depth = sum(list(d.values()))/len(d)
         breadth = sum([v>0 for _,v in d.items()])/len(d)
