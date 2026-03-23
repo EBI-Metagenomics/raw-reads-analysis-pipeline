@@ -56,8 +56,8 @@
                         "installed_by": ["mapseq_otu_krona", "modules"]
                     },
                     "mapseq2biom": {
-                        "branch": "main",
-                        "git_sha": "fe16b0221649bc7ca3bfa69f722e8a89fab1de16",
+                        "branch": "amplicon_update",
+                        "git_sha": "993d69737e0dfa6fb9d0ea6743baf972c6d3ad7f",
                         "installed_by": ["mapseq_otu_krona", "modules"]
                     },
                     "samtools/bam2fq": {
@@ -75,8 +75,8 @@
             "subworkflows": {
                 "ebi-metagenomics": {
                     "mapseq_otu_krona": {
-                        "branch": "main",
-                        "git_sha": "cc01ecb29008656fce3b4899a588c3c8b79547d4",
+                        "branch": "amplicon_update",
+                        "git_sha": "993d69737e0dfa6fb9d0ea6743baf972c6d3ad7f",
                         "installed_by": ["subworkflows"]
                     }
                 }
