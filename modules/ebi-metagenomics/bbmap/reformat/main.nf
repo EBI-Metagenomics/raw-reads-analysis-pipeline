@@ -1,6 +1,6 @@
 process BBMAP_REFORMAT {
     tag "$meta.id"
-    label 'process_single'
+    label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -12,18 +12,19 @@ process BBMAP_REFORMAT {
     val(out_fmt)
 
     output:
-    tuple val(meta), path("*_reformated.${out_fmt}")       , emit: reformated
-    path  "versions.yml"                                      , emit: versions
-    path  "*.log"                                             , emit: log
+    tuple val(meta), path("*_reformated.${out_fmt}")                                             , emit: reformated
+    tuple val("${task.process}"), val('bbmap'), eval('bbversion.sh | grep -v "Duplicate cpuset"'), emit: versions_bbmap, topic: versions
+    path  "versions.yml"                                                                         , emit: versions
+    path  "*.log"                                                                                , emit: log
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args   = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
-    in_reads  = "in=${reads}"
-    out_reads = "out=${prefix}_reformated.${out_fmt}"
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def in_reads  = "in=${reads}"
+    def out_reads = "out=${prefix}_reformated.${out_fmt}"
 
     """
     maxmem=\$(echo \"$task.memory\"| sed 's/ GB/g/g')
@@ -32,8 +33,6 @@ process BBMAP_REFORMAT {
         $in_reads \\
         $out_reads \\
         threads=${task.cpus} \\
-        uniquenames=t \\
-        trimreaddescription=t \\
         ${args} \\
         &> ${prefix}.reformat.sh.log
 
@@ -44,11 +43,10 @@ process BBMAP_REFORMAT {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo "" | gzip > ${prefix}_reformated.${out_fmt}
-    echo "" | gzip > ${prefix}_singleton.${out_fmt}
-    touch ${prefix}.repair.sh.log
+    touch ${prefix}.reformat.sh.log
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

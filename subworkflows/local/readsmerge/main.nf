@@ -1,4 +1,4 @@
-include { BBMAP_REFORMAT } from '../../../modules/local/bbmap/reformat/main'
+include { BBMAP_REFORMAT } from '../../../modules/ebi-metagenomics/bbmap/reformat/main'
 include { FASTP as FASTP_SE } from '../../../modules/nf-core/fastp/main'
 include { FASTP as FASTP_PE } from '../../../modules/nf-core/fastp/main'
 
@@ -7,7 +7,7 @@ workflow READSMERGE {
     ch_reads // channel: [ val(meta), [ fastq ] ]
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // split single-end and paired-end reads
     ch_se_reads = ch_reads.filter { meta, _reads -> meta.single_end }
