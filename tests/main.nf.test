@@ -19,13 +19,52 @@ nextflow_pipeline {
                 ignore: ['pipeline_info/*.{html,json,txt}',]
             )
             // stable_path: All files in ${params.outdir}/test_sample/ with stable content
-            def stable_path = getAllFilesFromDir(sample_outdir, ignoreFile: 'tests/.nftignore')
+            def stable_path = getAllFilesFromDir(
+                sample_outdir,
+                ignoreFile: 'tests/.nftignore',
+                ignore: ['qc/*.fastp.json']
+            )
+            def fastp_json_line_counts = getAllFilesFromDir(
+                "${sample_outdir}/qc",
+                include: ['*.fastp.json']
+            )
+                .collect { file -> "${file.name} - ${file.readLines().size()} lines" }
+                .sort()
+            def qc_fastp = new groovy.json.JsonSlurper().parseText(
+                path("${sample_outdir}/qc/test_sample_qc.fastp.json").text
+            )
+            def decontam_fastp = new groovy.json.JsonSlurper().parseText(
+                path("${sample_outdir}/qc/test_sample_decontamination.fastp.json").text
+            )
 
             assertAll(
                 { assert workflow.success },
+                { assert qc_fastp instanceof Map },
+                { assert qc_fastp.summary },
+                { assert qc_fastp.filtering_result },
+                { assert qc_fastp.summary.fastp_version == "0.24.0" },
+                { assert qc_fastp.summary.sequencing == "paired end (125 cycles + 125 cycles)" },
+                { assert qc_fastp.summary.before_filtering.total_reads == 20000 },
+                { assert qc_fastp.summary.after_filtering.total_reads == 19884 },
+                { assert qc_fastp.filtering_result.passed_filter_reads == 19884 },
+                { assert qc_fastp.filtering_result.too_short_reads == 116 },
+                { assert qc_fastp.adapter_cutting },
+                { assert qc_fastp.insert_size },
+                { assert decontam_fastp instanceof Map },
+                { assert decontam_fastp.summary },
+                { assert decontam_fastp.filtering_result },
+                { assert decontam_fastp.summary.fastp_version == "0.24.0" },
+                { assert decontam_fastp.summary.sequencing == "paired end (125 cycles + 125 cycles)" },
+                { assert decontam_fastp.summary.before_filtering.total_reads == 19882 },
+                { assert decontam_fastp.summary.after_filtering.total_reads == 19626 },
+                { assert decontam_fastp.filtering_result.passed_filter_reads == 19882 },
+                { assert decontam_fastp.filtering_result.corrected_reads == 3 },
+                { assert decontam_fastp.filtering_result.corrected_bases == 4 },
+                { assert decontam_fastp.insert_size },
                 { assert snapshot(
                     stable_name,
                     stable_path,
+                    fastp_json_line_counts,
                 ).match() }
             ) 
         }
@@ -48,13 +87,52 @@ nextflow_pipeline {
                 ignore: ['pipeline_info/*.{html,json,txt}',]
             )
             // stable_path: All files in ${params.outdir}/test_sample/ with stable content
-            def stable_path = getAllFilesFromDir(sample_outdir, ignoreFile: 'tests/.nftignore')
+            def stable_path = getAllFilesFromDir(
+                sample_outdir,
+                ignoreFile: 'tests/.nftignore',
+                ignore: ['qc/*.fastp.json']
+            )
+            def fastp_json_line_counts = getAllFilesFromDir(
+                "${sample_outdir}/qc",
+                include: ['*.fastp.json']
+            )
+                .collect { file -> "${file.name} - ${file.readLines().size()} lines" }
+                .sort()
+            def qc_fastp = new groovy.json.JsonSlurper().parseText(
+                path("${sample_outdir}/qc/test_sample_qc.fastp.json").text
+            )
+            def decontam_fastp = new groovy.json.JsonSlurper().parseText(
+                path("${sample_outdir}/qc/test_sample_decontamination.fastp.json").text
+            )
 
             assertAll(
                 { assert workflow.success },
+                { assert qc_fastp instanceof Map },
+                { assert qc_fastp.summary },
+                { assert qc_fastp.filtering_result },
+                { assert qc_fastp.summary.fastp_version == "0.24.0" },
+                { assert qc_fastp.summary.sequencing == "paired end (125 cycles + 125 cycles)" },
+                { assert qc_fastp.summary.before_filtering.total_reads == 20000 },
+                { assert qc_fastp.summary.after_filtering.total_reads == 19884 },
+                { assert qc_fastp.filtering_result.passed_filter_reads == 19884 },
+                { assert qc_fastp.filtering_result.too_short_reads == 116 },
+                { assert qc_fastp.adapter_cutting },
+                { assert qc_fastp.insert_size },
+                { assert decontam_fastp instanceof Map },
+                { assert decontam_fastp.summary },
+                { assert decontam_fastp.filtering_result },
+                { assert decontam_fastp.summary.fastp_version == "0.24.0" },
+                { assert decontam_fastp.summary.sequencing == "paired end (125 cycles + 125 cycles)" },
+                { assert decontam_fastp.summary.before_filtering.total_reads == 19882 },
+                { assert decontam_fastp.summary.after_filtering.total_reads == 19626 },
+                { assert decontam_fastp.filtering_result.passed_filter_reads == 19882 },
+                { assert decontam_fastp.filtering_result.corrected_reads == 3 },
+                { assert decontam_fastp.filtering_result.corrected_bases == 4 },
+                { assert decontam_fastp.insert_size },
                 { assert snapshot(
                     stable_name,
                     stable_path,
+                    fastp_json_line_counts,
                 ).match() }
             ) 
         }

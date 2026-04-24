@@ -1,6 +1,6 @@
 /*
     ~~~~~~~~~~~~~~~~~~
-     Imports
+    Imports
     ~~~~~~~~~~~~~~~~~~
 */
 include { DOWNLOAD_FROM_FIRE } from '../modules/ebi-metagenomics/downloadfromfire/main'
@@ -13,7 +13,7 @@ include { MOTUS_KRONA } from '../subworkflows/local/motus_krona/main'
 include { ADDHEADER_GZIP as ADDHEADER_GZIP_RRNA } from '../modules/local/addheader_gzip/main'
 include { ADDHEADER_GZIP as ADDHEADER_GZIP_MOTUS } from '../modules/local/addheader_gzip/main'
 include { ADDHEADER_GZIP as ADDHEADER_GZIP_PFAM } from '../modules/local/addheader_gzip/main'
-include { BBMAP_REFORMAT_STANDARDISE } from '../modules/local/bbmap/reformat_standardise/main'
+include { BBMAP_REFORMAT_STANDARDISE } from '../modules/ebi-metagenomics/bbmap/reformat_standardise/main'
 include { BBMAP_REPAIR } from '../modules/nf-core/bbmap/repair/main'
 include { SEQKIT_SHUFFLE_FASTA } from '../modules/local/seqkit_shuffle_fasta/main'
 
@@ -32,7 +32,7 @@ workflow PIPELINE {
 
     ch_versions = channel.empty()
 
-   // Fetch databases
+    // Fetch databases
     db_ch = channel
         .from(
             params.databases.collect { k, v ->
@@ -118,7 +118,16 @@ workflow PIPELINE {
 
     if (!params.skip_standardise) {
         // Standardise headers, De-interleave interleaved paired-end reads
-        BBMAP_REFORMAT_STANDARDISE(classified_reads, 'fastq.gz')
+        standardise_input = classified_reads.multiMap{
+            meta, reads ->
+            reads: [meta, reads]
+            interleaved: meta.interleaved
+        }
+        BBMAP_REFORMAT_STANDARDISE(
+            standardise_input.reads,
+            standardise_input.interleaved,
+            'fastq.gz'
+        )
         ch_versions = ch_versions.mix(BBMAP_REFORMAT_STANDARDISE.out.versions)
         classified_reads = BBMAP_REFORMAT_STANDARDISE.out.reformated
 

@@ -14,12 +14,14 @@
             ],
             [
                 "test_sample_pfam.stats.json:md5,097f23d280452214f42549f5a8ca69f2",
-                "test_sample_pfam.txt.gz:md5,0b58cbccbf672ec4e6adf3b993f8403d",
-                "test_sample_decontamination.fastp.json:md5,8bad8b44fd86db42db3b3d4ff4ca849b",
-                "test_sample_qc.fastp.json:md5,151817020501968c3db33ac038fc5eb7"
+                "test_sample_pfam.txt.gz:md5,0b58cbccbf672ec4e6adf3b993f8403d"
+            ],
+            [
+                "test_sample_decontamination.fastp.json - 315 lines",
+                "test_sample_qc.fastp.json - 412 lines"
             ]
         ],
-        "timestamp": "2026-03-02T10:05:10.917917",
+        "timestamp": "2026-04-24T10:07:09.381586",
         "meta": {
             "nf-test": "0.9.4",
             "nextflow": "25.10.4"
@@ -51,14 +53,16 @@
             [
                 "test_sample_pfam.stats.json:md5,097f23d280452214f42549f5a8ca69f2",
                 "test_sample_pfam.txt.gz:md5,0b58cbccbf672ec4e6adf3b993f8403d",
-                "test_sample_decontamination.fastp.json:md5,8bad8b44fd86db42db3b3d4ff4ca849b",
-                "test_sample_qc.fastp.json:md5,151817020501968c3db33ac038fc5eb7",
                 "test_sample_motus.txt.gz:md5,200e14493ea87181d9f3a01728ab812a",
                 "test_sample_silva-lsu.txt.gz:md5,2186a26a1be44ca50d855c21c138a1ab",
                 "test_sample_silva-ssu.txt.gz:md5,4db0cc9f568584cf7300a217639da805"
+            ],
+            [
+                "test_sample_decontamination.fastp.json - 315 lines",
+                "test_sample_qc.fastp.json - 412 lines"
             ]
         ],
-        "timestamp": "2026-03-02T10:04:29.150549",
+        "timestamp": "2026-04-24T10:06:12.88969",
         "meta": {
             "nf-test": "0.9.4",
             "nextflow": "25.10.4"
