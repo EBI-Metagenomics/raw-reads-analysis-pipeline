@@ -1,4 +1,4 @@
-name: Full end-to-end pipeline test
+name: All modules test
 
 on:
   push:
@@ -7,8 +7,11 @@ on:
     branches: [master, dev]
 
 jobs:
-  e2e-test:
+  modules-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1, 2, 3, 4]
 
     steps:
       - name: Checkout
@@ -31,7 +34,7 @@ jobs:
           install-pdiff: true
 
       - name: Run Tests
-        run: nf-test test --verbose --ci tests/main.nf.test
+        run: nf-test test --ci --shard ${{ matrix.shard }}/${{ strategy.job-total }} --tag modules
 
       - name: Move .nf-test output to non-hidden folder for artifact upload
         if: always()
