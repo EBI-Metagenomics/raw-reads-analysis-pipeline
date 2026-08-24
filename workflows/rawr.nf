@@ -312,6 +312,7 @@ workflow PIPELINE {
         lsu_db = dbs.silva_lsu
             .map { meta, fp ->
                 [
+                    [id: meta.id, db_label: 'SILVA-LSU'],
                     [
                         file("${fp}/${meta.files.fasta}"),
                         file("${fp}/${meta.files.tax}"),
@@ -321,11 +322,11 @@ workflow PIPELINE {
                     ]
                 ]
             }
-            .first()
 
         ssu_db = dbs.silva_ssu
             .map { meta, fp ->
                 [
+                    [id: meta.id, db_label: 'SILVA-SSU'],
                     [
                         file("${fp}/${meta.files.fasta}"),
                         file("${fp}/${meta.files.tax}"),
@@ -335,31 +336,27 @@ workflow PIPELINE {
                     ]
                 ]
             }
-            .first()
 
-        lsu_ch = RRNA_EXTRACTION.out.lsu_fasta
+        // Get all reads (including samples with no rRNA) for join-back
+        ch_rrna_all = RRNA_EXTRACTION.out.ssu_fasta
             .join(merged_reads, remainder: true)
-            .map{ meta, seqs, _reads -> [meta + ['db_label': 'SILVA-LSU'], seqs]}
-            .combine(lsu_db)
-        ssu_ch = RRNA_EXTRACTION.out.ssu_fasta
-            .join(merged_reads, remainder: true)
-            .map{ meta, seqs, _reads -> [meta + ['db_label': 'SILVA-SSU'], seqs]}
-            .combine(ssu_db)
-        rrna_ch = lsu_ch.mix(ssu_ch)
-        rrna_chs = rrna_ch.multiMap { meta, seqs, db ->
-            seqs: [meta, seqs]
-            db: db
-        }
+            .map { meta, seqs, _reads -> [meta + [db_id: 'silva_ssu', db_label: 'SILVA-SSU'], seqs] }
+            .mix(
+                RRNA_EXTRACTION.out.lsu_fasta
+                    .join(merged_reads, remainder: true)
+                    .map { meta, seqs, _reads -> [meta + [db_id: 'silva_lsu', db_label: 'SILVA-LSU'], seqs] }
+            )
 
-        MAPSEQ_OTU_KRONA(
-            rrna_chs.seqs.filter{ _meta, fp -> fp },
-            rrna_chs.db
-        )
+        // Filter to only samples with reads
+        ch_rrna_reads = ch_rrna_all.filter { _meta, fp -> fp }
+
+        ch_rrna_dbs = ssu_db.mix(lsu_db)
+
+        MAPSEQ_OTU_KRONA(ch_rrna_reads, ch_rrna_dbs)
         ch_versions = ch_versions.mix(MAPSEQ_OTU_KRONA.out.versions)
 
-
         rrna_out_ch = MAPSEQ_OTU_KRONA.out.krona_input
-            .join(rrna_chs.seqs, remainder: true)
+            .join(ch_rrna_all, remainder: true)
             .map { meta, result, _reads ->
                 def result_ = []
                 def out_fn = "${meta.id}.txt"

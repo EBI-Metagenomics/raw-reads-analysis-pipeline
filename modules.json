@@ -48,17 +48,17 @@
                     "krona/ktimporttext": {
                         "branch": "main",
                         "git_sha": "172e93318ac2e2db5f9885b07ffb80443e67848a",
-                        "installed_by": ["mapseq_otu_krona"]
+                        "installed_by": ["mapseq_otu_krona", "modules"]
                     },
                     "mapseq": {
                         "branch": "main",
-                        "git_sha": "1375e8b3072c40346eb4f7d9c1ae15459c07b620",
-                        "installed_by": ["mapseq_otu_krona", "modules"]
+                        "git_sha": "901ae828e0fdfb98ac31e2a8ee93d56a8c6167e8",
+                        "installed_by": ["mapseq_otu_krona"]
                     },
                     "mapseq2biom": {
                         "branch": "main",
-                        "git_sha": "fe16b0221649bc7ca3bfa69f722e8a89fab1de16",
-                        "installed_by": ["mapseq_otu_krona", "modules"]
+                        "git_sha": "901ae828e0fdfb98ac31e2a8ee93d56a8c6167e8",
+                        "installed_by": ["mapseq_otu_krona"]
                     },
                     "samtools/bam2fq": {
                         "branch": "main",
@@ -76,7 +76,7 @@
                 "ebi-metagenomics": {
                     "mapseq_otu_krona": {
                         "branch": "main",
-                        "git_sha": "cc01ecb29008656fce3b4899a588c3c8b79547d4",
+                        "git_sha": "f165749011d4fe61bd04f61c6cefa57fe8595b0f",
                         "installed_by": ["subworkflows"]
                     }
                 }
