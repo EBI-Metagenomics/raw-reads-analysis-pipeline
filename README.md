@@ -238,7 +238,7 @@ Numerous `nf-core` modules are used throughout the pipeline, and the `nf-core` t
 | ---------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------ |
 | [mOTUs](https://motu-tool.org/)                                        | 3.0.3      | Database for mOTUs tools                                                                   |
 | [Rfam](https://rfam.org/)                                              | 15.0       | Ribosomal covariance models                                                                |
-| [Pfam](https://www.ebi.ac.uk/interpro/entry/pfam)                      | 38.0       | Protein hidden markov models (HMMs)                                                        |
+| [Pfam](https://www.ebi.ac.uk/interpro/entry/pfam)                      | 38.2       | Protein hidden markov models (HMMs)                                                        |
 | [SILVA](https://www.arb-silva.de/)                                     | 138.1      | LSU and SSU 16S database with taxonomy                                                     |
 | [hg38](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000001405.40/) | GRCh38.p14 | Human host reference genome for decontaminations                                           |
 | [phiX](https://www.ncbi.nlm.nih.gov/nuccore/9626372)                   | phiX174    | DNA sometimes introduced by Illumina sequencing platforms to be removed in decontamination |

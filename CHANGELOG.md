@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Pfam moves from 38.0 to 38.2 (30,134 models), the release behind MGnify's protein annotations, so Pfam profiles change. Existing `pfam` database caches must be cleared or refreshed with `--force_download_dbs`.
 - `bbmap/reformat` and `bbmap/reformat_standardise` replaced with the shared modules from [ebi-metagenomics/nf-modules](https://github.com/EBI-Metagenomics/nf-modules), with the channel and `modules.config` changes that required ([#26](https://github.com/EBI-Metagenomics/raw-reads-analysis-pipeline/pull/26)).
 - GitHub Actions now runs the nf-test suite on `master` under the Docker profile.
 - End-to-end tests assert on `.fastp.json` content and line counts instead of md5 checksums, which were not stable across runs.
