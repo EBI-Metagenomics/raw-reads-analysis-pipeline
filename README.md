@@ -85,6 +85,8 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | cmsearch_chunksize            | Size of reads chunks for `cmsearch` (Default: `3.GB`)                                      |
 | hmmsearch_chunksize           | Size of reads chunks for `hmmsearch` (Default: `1.GB`)                                     |
 | hmmsearch_subsampling         | Number of reads to subsample for `hmmsearch`, `-1` for no subsampling (Default: `2000000`) |
+| pfam_orf_filter               | Search only ORFs in FragGeneScanRs's frame and others scoring highly (Default: `false`)    |
+| pfam_orf_filter_threshold     | Coding score for ORFs outside FragGeneScanRs's frame (Default: `-5`)                       |
 | pfam_search_engine            | `hmmsearch`, or `nail` for nail candidates checked by HMMER (Default: `hmmsearch`)         |
 | pfam_nail_seed_pvalue         | nail's seeding filter `-S`, used with `pfam_search_engine = nail` (Default: `0.01`)        |
 | decontam_short_chunksize      | Size of reads chunks for short-read decontamination (Default: `1280000000`)                |

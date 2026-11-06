@@ -80,6 +80,16 @@
             "type": "integer",
             "default": 2000000
         },
+        "pfam_orf_filter": {
+            "type": "boolean",
+            "default": false,
+            "description": "Search only ORFs in FragGeneScanRs's frame, plus other ORFs with a hexamer coding score at or above `pfam_orf_filter_threshold`."
+        },
+        "pfam_orf_filter_threshold": {
+            "type": "number",
+            "default": -5,
+            "description": "Coding score for ORFs outside FragGeneScanRs's frame, used when `pfam_orf_filter` is on."
+        },
         "pfam_search_engine": {
             "type": "string",
             "default": "hmmsearch",

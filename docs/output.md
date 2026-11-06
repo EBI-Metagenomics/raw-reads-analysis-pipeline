@@ -68,6 +68,7 @@ The `function-summary` directory contains files related to functional profiling 
 Output files:
 *	**`ERZ12345_pfam.txt.gz`**: This text file contains a tab-separated table of read counts for each detected Pfam-A profile (or “function”).
 *	**`ERZ12345_pfam.stats.json`**: This `json` file contains a summary of the numebr of reads mapped to Pfam, the number of Pfam models with hits and a sum of the number of hits across all Pfam models.
+*	**`ERZ12345_pfam_orf_filter.stats.json`**: Only with `pfam_orf_filter`. ORFs and residues before and after the filter, reads with and without a gene call, and whether the filter kept all ORFs because too few reads had a call.
 *	**`ERZ12345_pfam_alignments.parquet`**: Only with `pfam_search_engine = nail`. One row per domain that passes Pfam's gathering thresholds: read and ORF coordinates, scores, HMM and ORF coordinates, and the alignment as a CIGAR string against the HMM, the aligned residues and HMMER's posterior characters.
 
 ```
@@ -75,6 +76,7 @@ function-summary
 └── pfam
     ├── ERZ12345_pfam.txt.gz
     ├── ERZ12345_pfam.stats.json
+    ├── ERZ12345_pfam_orf_filter.stats.json
     └── ERZ12345_pfam_alignments.parquet
 ```
 

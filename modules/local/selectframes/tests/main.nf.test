@@ -1,0 +1,61 @@
+nextflow_process {
+
+    name "Test Process SELECTFRAMES"
+    script "../main.nf"
+    process "SELECTFRAMES"
+
+    tag "modules"
+    tag "modules_"
+    tag "selectframes"
+
+    test("too few calls keep every ORF") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['id': 'test'],
+                    file("${projectDir}/tests/fixtures/profile_hmmsearch_pfam/ERR10889147.mini.fasta.gz", checkIfExists: true),
+                    file("${projectDir}/tests/fixtures/hmmer_pairs/orfs.faa.gz", checkIfExists: true),
+                    file("${projectDir}/tests/fixtures/selectframes/calls.out", checkIfExists: true),
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def kept = path(process.out.orfs[0][1]).linesGzip.findAll { it.startsWith('>') }
+            def all = path("${projectDir}/tests/fixtures/hmmer_pairs/orfs.faa.gz").linesGzip.findAll { it.startsWith('>') }
+            assert kept == all
+            assert path(process.out.stats[0][1]).text.contains('"fallback_kept_all_orfs": true')
+        }
+    }
+
+    test("enough calls give a named subset of the ORFs") {
+
+        config "./filter.config"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['id': 'test'],
+                    file("${projectDir}/tests/fixtures/profile_hmmsearch_pfam/ERR10889147.mini.fasta.gz", checkIfExists: true),
+                    file("${projectDir}/tests/fixtures/hmmer_pairs/orfs.faa.gz", checkIfExists: true),
+                    file("${projectDir}/tests/fixtures/selectframes/calls.out", checkIfExists: true),
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def kept = path(process.out.orfs[0][1]).linesGzip.findAll { it.startsWith('>') }
+            def all = path("${projectDir}/tests/fixtures/hmmer_pairs/orfs.faa.gz").linesGzip.findAll { it.startsWith('>') }
+            assert kept.size() > 0 && kept.size() < all.size()
+            assert all.containsAll(kept)
+            assert path(process.out.stats[0][1]).text.contains('"fallback_kept_all_orfs": false')
+        }
+    }
+}

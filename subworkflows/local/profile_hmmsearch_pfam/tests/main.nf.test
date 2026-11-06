@@ -183,4 +183,35 @@ nextflow_workflow {
             assert path(workflow.out.profile[0][1]).readLines().size() == 1
         }
     }
+
+    test("ORF filter and nail together, with too few calls for the filter to act") {
+
+        config "./nextflow.config"
+
+        when {
+            params {
+                pfam_search_engine = 'nail'
+                pfam_orf_filter = true
+            }
+            workflow {
+                """
+                input[0] = Channel.of(
+                    [
+                        ['id': 'test1', 'single_end': false, 'platform': 'wgs'],
+                        file("${projectDir}/tests/fixtures/profile_hmmsearch_pfam/ERR10889147.matches.fasta.gz", checkIfExists: true),
+                    ]
+                )
+                input[1] = Channel.value(
+                    file("${projectDir}/tests/fixtures/dbs/pfam_mini/Pfam-A.hmm", checkIfExists: true)
+                )
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert path(workflow.out.profile[0][1]).readLines().size() > 1
+            assert file(workflow.out.alignments[0][1]).size() > 0
+        }
+    }
 }

@@ -3,6 +3,8 @@ include { HMMER_HMMSEARCH } from '../../../modules/nf-core/hmmer/hmmsearch/main'
 include { PARSEHMMSEARCHCOVERAGE } from '../../../modules/local/parsehmmsearchcoverage/main'
 include { COMBINEHMMSEARCHTBL } from '../../../modules/local/combinehmmsearchtbl/main'
 include { NAIL_HMMER } from '../nail_hmmer/main'
+include { FRAGGENESCANRS } from '../../../modules/local/fraggenescanrs/main'
+include { SELECTFRAMES } from '../../../modules/local/selectframes/main'
 
 workflow PROFILE_HMMSEARCH_PFAM {
     take:
@@ -14,17 +16,27 @@ workflow PROFILE_HMMSEARCH_PFAM {
 
     SEQKIT_TRANSLATE(reads_fasta)
 
+    ch_orfs = SEQKIT_TRANSLATE.out.fastx
+
+    if (params.pfam_orf_filter) {
+        // Reads with no sequence have no ORFs either, and FragGeneScanRs needs input
+        FRAGGENESCANRS(reads_fasta.filter { _meta, fasta -> fasta.countFasta(limit: 1) > 0 })
+        SELECTFRAMES(reads_fasta.join(SEQKIT_TRANSLATE.out.fastx).join(FRAGGENESCANRS.out.calls))
+        ch_versions = ch_versions.mix(FRAGGENESCANRS.out.versions, SELECTFRAMES.out.versions)
+        ch_orfs = SELECTFRAMES.out.orfs
+    }
+
     ch_alignments = Channel.empty()
 
     if (params.pfam_search_engine == 'nail') {
-        NAIL_HMMER(SEQKIT_TRANSLATE.out.fastx, pfam_db)
+        NAIL_HMMER(ch_orfs, pfam_db)
         ch_versions = ch_versions.mix(NAIL_HMMER.out.versions)
         ch_alignments = NAIL_HMMER.out.alignments
         ch_domtbl = NAIL_HMMER.out.domtbl
     }
     else {
         // chunk seqs
-        ch_chunked_fasta = SEQKIT_TRANSLATE.out.fastx
+        ch_chunked_fasta = ch_orfs
             .splitFasta(
                 size: params.hmmsearch_chunksize,
                 elem: 1,

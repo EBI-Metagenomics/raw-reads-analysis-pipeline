@@ -58,6 +58,10 @@ GigaScience, Volume 10, Issue 2, February 2021, giab008, https://doi.org/10.1093
 
 > Ondov, Brian D., Nicholas H. Bergman, and Adam M. Phillippy. "Interactive metagenomic visualization in a Web browser." BMC bioinformatics 12.1 (2011): 385.
 
+[FragGeneScanRs](https://github.com/unipept/FragGeneScanRs)
+
+> Felix Van der Jeugt, Peter Dawyndt, and Bart Mesuere. 2022. FragGeneScanRs: faster gene prediction for short reads. BMC Bioinformatics 23, 198. doi:10.1186/s12859-022-04736-5.
+
 [nail](https://github.com/TravisWheelerLab/nail)
 
 > Jack W. Roddy, David H. Rich, and Travis J. Wheeler. 2024. nail: software for high-speed, high-sensitivity protein sequence annotation. bioRxiv. doi:10.1101/2024.01.27.577580.
