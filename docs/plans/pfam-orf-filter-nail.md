@@ -1,0 +1,224 @@
+# Plan: ORF filter and nail + HMMER for Pfam profiling
+
+Branch `pfam-orf-filter-nail`, from `origin/master`. Both features are off by default. Pfam moves to 38.2 for every run, so default output changes only through that commit.
+
+## Goal
+
+1. **Pfam 38.2 everywhere**, the release behind MGnify's protein annotations (`mgy_proteins_pfam`).
+2. **ORF filter:** keep ORFs in FragGeneScanRs's (FGS's) frame, plus other ORFs with hexamer coding score ≥ −5.
+3. **Search engine `nail`:** nail finds candidate (model, ORF) pairs. `pyhmmer` then checks only those pairs at `--cut_ga` thresholds, and its alignments are stored in Parquet.
+4. **Compare nail's and HMMER's alignments during development.** If they are the same, drop the HMMER step and use nail alone.
+
+```
+pfam_reads ─┬─ SEQKIT_TRANSLATE ───┐
+            └─ FRAGGENESCANRS ─────┴─ SELECTFRAMES ─┐      (filter on; otherwise ORFs pass straight through)
+                                                    │
+      engine = hmmsearch:  splitFasta ─ HMMER_HMMSEARCH ─ COMBINEHMMSEARCHTBL ─┐
+      engine = nail:       NAIL_SEED ─ HMMER_PAIRS ────────────────────────────┤
+                                     └─ alignments.parquet                     │
+                                                       PARSEHMMSEARCHCOVERAGE ─┴─ profile
+```
+
+`PARSEHMMSEARCHCOVERAGE` does not change. It reads a domtbl and needs seqkit's `_frame=_begin=_end=` names, so every new step keeps those names.
+
+## Evidence so far
+
+All on one sample, `ERR10889147`: 50,000 unmerged reads (309,149 ORFs), on a laptop at up to 6 threads, with Pfam 38.2 (30,134 models). Recall is against `hmmsearch` at Z = 20 M, E ≤ 1000, binned by best-domain score relative to GA.
+
+**Candidates, with `pyhmmer` reporting down to E ≤ 1000:**
+
+| Candidates | Pairs per read | ≥ GA | GA−5 to GA | −10 to −5 | −20 to −10 | < −20 | nail core-s | pyhmmer core-s |
+|---|---|---|---|---|---|---|---|---|
+| nail full run, `-S 1e-2`, reported hits | 10.7 | .989 | .908 | .832 | .760 | .681 | 701 | 15 |
+| nail `--only-seed -S 1e-2`, MMseqs2 15 | 64.5 | .989 | .908 | .832 | .760 | .681 | not timed alone | 26 |
+| nail `--only-seed -S 1e-2`, MMseqs2 18 | 65.8 | **.990** | **.909** | **.836** | **.768** | **.685** | 400 | 27 |
+| nail `--only-seed -S 1e-1`, MMseqs2 15 | 334 | .990 | .909 | .833 | .762 | .686 | 548 | 65 |
+
+Nail's times include its fixed cost of about 2 minutes wall. For scale, nail at default settings reached .987 at GA and `hmmsearch` costs 40–70 core-ms per read. Cost at scale is not measured yet (V4).
+
+**`pyhmmer` at gathering thresholds** on the `-S 1e-2` seeds, `Z` = 30,134:
+
+- It reported 8,447 domains on 8,366 (ORF, model) pairs in 11 s wall.
+- Every pair is in the `hmmsearch` table, and all have the same best-domain score within 0.1 bits.
+- Recall in the ≥ GA bin is .988 against .989 without cutoffs, and 37 pairs pass from below GA1. Both effects are expected from HMMER's separate sequence and domain thresholds, and V1 checks this.
+- Parquet takes about 57 bytes per domain. At 0.17 domains per read that is about 19 MB per 2 M reads.
+
+**nail's alignments against `hmmsearch`'s best domain** (preview from existing tables, nail full run at `-S 1e-2`). Coordinates are compared; alignment columns are not yet:
+
+| Bin | Pairs | Same coordinates | Within 3 positions | nail − HMMER score, median (5–95%) |
+|---|---|---|---|---|
+| ≥ GA | 8,342 | 98.6% | 100% | 0.0 (−0.1 to 0.5) |
+| GA−5 to GA | 3,070 | 94.6% | 99.8% | 0.1 (−0.1 to 0.7) |
+| −10 to −5 | 7,304 | 89.7% | 99.8% | 0.2 (−0.2 to 0.8) |
+| −20 to −10 | 21,176 | 86.9% | 99.6% | 0.3 (−0.3 to 1.0) |
+
+Calling GA on best-domain score, the two agree on 8,328 pairs, with 78 passing only on nail's score and 103 only on HMMER's. So they are close but not the same, about 2% of GA calls differ. Nail alone is also not cheaper at this setting: 701 core-s against about 430 for seeds plus `pyhmmer`, though those two runs used different MMseqs2 versions.
+
+What this settles:
+
+- **Checking only the candidate pairs works in `pyhmmer`,** including at gathering thresholds.
+- **Use seeds as candidates.** Recall matches nail's reported hits, at lower cost.
+- **`-S 1e-2` is the permissive default.** `-S 1e-1` gives five times the pairs and no clear gain. The remaining 1% at GA comes from seeding itself.
+- **MMseqs2 version:** the nail biocontainer has both `nail` 0.7.1 and MMseqs2 18.8cc5c, whereas nail is tested against 15-6f452. Version 18 did at least as well here, tested with the same MMseqs2 version in `kfpfam-tools`.
+
+Not settled:
+
+- **Exact match to `hmmsearch --cut_ga`** with the pipeline's flags (V1).
+- **Alignment columns** between nail and HMMER (V2).
+- **The filter and nail together:** their losses may add up (V3).
+- **Filter inputs:** the filter was tested on unmerged reads with the `kfpfam` ORFs, not merged fragments with seqkit ORFs (V3).
+
+## Parameters
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `pfam_orf_filter` | `false` | Run FGS and `SELECTFRAMES` |
+| `pfam_orf_filter_threshold` | `-5` | Coding score for ORFs outside FGS's frame |
+| `pfam_search_engine` | `hmmsearch` | `hmmsearch` or `nail` |
+| `pfam_nail_seed_pvalue` | `1e-2` | nail `-S` |
+
+The hexamer training size is fixed in the script, not a parameter, because −5 is only calibrated for that size.
+
+## Steps
+
+### 1. Pfam 38.2
+
+Its own commit, so it can be reviewed or reverted alone. In `nextflow.config`, under `databases.pfam`:
+
+```
+remote_path    = "https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam38.2/Pfam-A.hmm.gz"
+remote_checksum = "7ab3c4e215d0daaea3004e37c4e24f8a"   // from the release's md5_checksums; replaces remote_checksum_path
+files { hmm = "Pfam-A.hmm" }
+variables { num_models = 30134 }
+```
+
+- `FETCHUNZIP` unpacks this to `pfam/Pfam-A.hmm`. An existing `pfam` cache directory has only the 38.0 file, so runs must use `--force_download_dbs` or clear it.
+- Update the table in `README.md` and add a `CHANGELOG.md` entry stating that default profiles change.
+- `conf/test.config` keeps `pfam_mini`, so its snapshots are unaffected. It sets `remote_checksum = false`, because it would otherwise inherit 38.2's checksum.
+
+### 2. `HMMER_PAIRS`
+
+`modules/local/hmmer_pairs/` with `bin/hmmer_pairs.py`, using `pyhmmer` 0.12.3 and `pyarrow` in a Seqera Community container, as `minimap2_align_samtools_bam2fq` does.
+
+- **Inputs:** ORF FASTA, nail seeds, Pfam HMM, `num_models`.
+- **Search:** read the HMM file once. For each model with candidates, build a sequence block from that model's targets and run `Pipeline(alphabet, Z=num_models, bit_cutoffs="gathering").search_hmm(...)` with default filters, on threads from `task.cpus`.
+- **Output selection:** write only hits and domains marked `reported`, as `hmmsearch` does in its domtbl.
+- **Memory:** hold candidates as one integer array per model and load only ORFs that have candidates. A Python set per model, as in the test, won't fit 2 M reads at about 130 M pairs. One task per sample. `# ponytail:` split by ORF chunk if V4 shows memory is a problem.
+- **Model names:** seeds name the model by NAME even with `--use-accession`, so match on `hmm.name`.
+- **Output:** `*.domtbl.gz` in `hmmsearch` column order and `*_alignments.parquet`.
+- **Empty input:** no candidates gives an empty domtbl and a Parquet file with only the schema.
+
+Parquet, zstd level 9, sorted by `pfam` then `read`, one row per GA-passing domain:
+
+| Columns | Type | Notes |
+|---|---|---|
+| `read`, `frame`, `orf_begin`, `orf_end` | string, int8, int32, int32 | Parsed from the ORF name |
+| `pfam`, `domain` | dictionary string, int16 | Accession without version |
+| `seq_score`, `dom_score` | float32 | Bits |
+| `seq_evalue`, `i_evalue` | float64 | At `Z = num_models` |
+| `hmm_from`, `hmm_to`, `ali_from`, `ali_to`, `env_from`, `env_to` | int32 | |
+| `cigar` | string | M, I, D against the HMM |
+| `residues` | string | Aligned ORF residues, ungapped |
+| `pp` | string | HMMER's posterior characters per aligned column |
+
+Model consensus is left out: it can be rebuilt from `pfam`, `hmm_from` and `cigar` given Pfam 38.2. A check confirms the round trip from `cigar` and `residues` to HMMER's aligned sequence. Alignments below GA are not stored, because `--cut_ga` drops them.
+
+### 3. `NAIL_SEED`
+
+`modules/local/nail_seed/`, stock `nail:0.7.1--hab7d0fd_0`:
+
+```
+nail search --only-seed -S ${params.pfam_nail_seed_pvalue} -t ${task.cpus} --tmp-dir tmp --seeds-out ${prefix}.seeds.tsv ${hmm} ${orfs}
+```
+
+It runs once per sample, because each run has a fixed cost of about 2 minutes. Delete `tmp` in the script. Expect about 5 GB of uncompressed seeds per 2 M reads, written to the work directory only, unless the filter reduces this.
+
+### 4. Alignment comparison and decision
+
+Development tool, not part of the pipeline: `bin/compare_alignments.py`, run as V2.
+
+- Run nail in full with `-S 1e-2 -E 1000 --ali-out`. Its blocks are simple to parse: `query`, `target`, coordinates, `score`, then the HMM line, match line, target line and posterior line.
+- Convert both tools to `hmm_from`, `ali_from` and CIGAR, then compare.
+- **Rule (proposed):** nail alone replaces `HMMER_PAIRS` only if all three hold on V2's reads:
+  1. GA calls differ on fewer than 0.1% of pairs.
+  2. At least 99% of pairs have identical alignments.
+  3. Per-family read counts in the final profile match.
+- **If it passes:** replace `HMMER_PAIRS` with a script turning nail's `.tbl` and `.ali` into the same domtbl and Parquet, and call GA from nail's score. Change `NAIL_SEED` to a full nail run.
+- **If it fails:** keep `HMMER_PAIRS`. Report the differences either way.
+
+The preview above suggests it will fail on the first condition, so build for `HMMER_PAIRS`.
+
+### 5. `SELECTFRAMES`
+
+`modules/local/selectframes/` with `bin/select_frames.py`. Standard library only, using the toolkit container the parser already uses. Logic comes from `measure/orf_filters.py frames` in `kfpfam`.
+
+- **Inputs:** seqkit's ORF FASTA and FGS's `.out`.
+- **Outputs:** the kept ORFs with names and sequences unchanged, and a stats JSON (ORFs and residues in and out, reads called, fallback used).
+- **Frames:** take FGS's frame at both ends of each call, in forward read coordinates. A frameshifted call therefore marks both frames.
+- **Training:** up to 25,000 reads per fold, two folds split by read order, so each ORF is scored by the table it did not train. Pseudocount 1 per 4,096 hexamers.
+- **Fallback:** below a minimum number of calls, keep all ORFs and record it. Set the minimum from V3's subsampling, not by guesswork.
+- **Check:** a `pytest` file covering the seqkit-to-FGS frame mapping on both strands against real translations, plus the keep rule on a small hand-built case.
+
+### 6. `FRAGGENESCANRS`
+
+`modules/local/fraggenescanrs/`, stock `quay.io/biocontainers/frag_gene_scan_rs:1.1.0--h4349ce8_0`, `-t illumina_5 -w 0`. Publish nothing from it. Use only coordinates from `.out`, never its proteins, because 89% of calls in testing had a repeated codon at a read end.
+
+### 7. Wiring
+
+- **New subworkflow:** `subworkflows/local/nail_hmmer/` takes `orfs` and `pfam_db`, and emits `domtbl`, `alignments` and `versions`.
+- **`profile_hmmsearch_pfam/main.nf`:** add the filter branch and engine switch, keeping the current chunking block unchanged under `hmmsearch`. Add an `alignments` emit.
+- **Config:** add `conf/modules.config` entries, including resources with retries, and publish `${meta.id}_pfam_alignments.parquet` beside the profile.
+- **Parameters and docs:** add them to `nextflow.config` and `nextflow_schema.json`, and update `docs/output.md`, `CITATIONS.md` and `CHANGELOG.md`. Replace the placeholder text in the subworkflow's `meta.yml`.
+
+### 8. nf-test
+
+On the existing mini fixtures and `pfam_mini`:
+
+- Default settings match the existing snapshots, unchanged.
+- Filter on: kept ORFs are a named subset of seqkit's.
+- `nail`: profile and Parquet are produced, and the Parquet has the expected columns.
+- `nail` with the `not_matches` fixture: empty outputs and a clean finish.
+- Both options on together.
+
+## Validation
+
+Local runs: one at a time, at most 6 threads. Large runs ship as a Nextflow workflow for the user to run on the HPC; nothing here touches the HPC directly.
+
+| | Test | Pass condition |
+|---|---|---|
+| **V1** | `hmmer_pairs.py` on every (model, ORF) pair for 1,000 reads, against `hmmsearch -Z 30134 --cut_ga --noali` | Same domains, scores and coordinates; profile identical |
+| **V2** | Nail's and HMMER's alignments on 50,000 merged fragments with seqkit ORFs (step 4) | Applies the rule in step 4 |
+| **V3** | The same fragments, four arms: current, filter, nail, both. Includes subsampling to set the filter's minimum calls | Compare final `_pfam_coverage.tsv` and stats per family: read counts, breadth, worst families. Your call on acceptable loss |
+| **V4** | About 1 M reads through nail and pairs, timed, with peak memory | Cost per read and memory known; decide on chunking |
+| **V5** | HPC: other environments and read lengths (soil, marine, eukaryote- or virus-rich, high and low GC; 100, 150, 250 nt), four arms | Does −5 hold across read lengths, since scores sum over ORF length? |
+
+Stop and report if V1 fails, since the design depends on it. V5 decides whether either option could become the default; this branch leaves both off.
+
+## Order of work
+
+Commit after each step:
+
+1. Step 1, Pfam 38.2.
+2. Step 2 and V1, the largest risk.
+3. Steps 3 and 4 and V2. This decides nail alone or nail with HMMER.
+4. Step 7's engine switch.
+5. Steps 5 and 6, then the filter branch of step 7.
+6. Step 8.
+7. V3 and V4, logged in this file.
+8. Ship the V5 workflow, then open one PR against `master` when you ask for it.
+
+## To check while building
+
+- **Biocontainer under Singularity:** `nail` and `mmseqs` run in it under Docker emulation; confirm under Singularity, and record versions in `versions.yml`.
+- **`pyhmmer` version:** record which HMMER it bundles, because the pipeline's `hmmsearch` is 3.4. V1 tests the results either way.
+- **Read names:** confirm seqkit, nail and FGS handle merged-read names the same way, including any with spaces.
+
+## Depends on
+
+Branch `fix-fetchunzip-checksum` makes `FETCHUNZIP`'s checksum test fire. Until it is merged, step 1's checksum is not enforced.
+
+## Progress log
+
+- 2026-11-06: plan written; test figures above come from `kfpfam`'s `ERR10889147` data.
+- 2026-11-06: Pfam set to 38.2, `pyhmmer` set to gathering thresholds, nail-against-HMMER comparison added, at the user's request.
+- 2026-11-06: step 1 done. `FETCHUNZIP`'s checksum fix is in PR #29; not yet on this branch.
