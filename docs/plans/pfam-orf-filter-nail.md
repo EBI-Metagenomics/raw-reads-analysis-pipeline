@@ -186,7 +186,7 @@ Local runs: one at a time, at most 6 threads. Large runs ship as a Nextflow work
 
 | | Test | Pass condition |
 |---|---|---|
-| **V1** | `hmmer_pairs.py` on every (model, ORF) pair for 1,000 reads, against `hmmsearch -Z 30134 --cut_ga --noali` | Same domains, scores and coordinates; profile identical |
+| **V1** | `hmmer_pairs.py` on every (model, ORF) pair for 10,000 reads, against `hmmsearch -Z 30134 --cut_ga --noali` | Same domains, scores and coordinates; profile identical |
 | **V2** | Nail's and HMMER's alignments on 50,000 merged fragments with seqkit ORFs (step 4) | Applies the rule in step 4 |
 | **V3** | The same fragments, four arms: current, filter, nail, both. Includes subsampling to set the filter's minimum calls | Compare final `_pfam_coverage.tsv` and stats per family: read counts, breadth, worst families. Your call on acceptable loss |
 | **V4** | About 1 M reads through nail and pairs, timed, with peak memory | Cost per read and memory known; decide on chunking |
@@ -222,3 +222,6 @@ Branch `fix-fetchunzip-checksum` makes `FETCHUNZIP`'s checksum test fire. Until 
 - 2026-11-06: plan written; test figures above come from `kfpfam`'s `ERR10889147` data.
 - 2026-11-06: Pfam set to 38.2, `pyhmmer` set to gathering thresholds, nail-against-HMMER comparison added, at the user's request.
 - 2026-11-06: step 1 done. `FETCHUNZIP`'s checksum fix is in PR #29; not yet on this branch.
+- 2026-11-06: step 2 done, `HMMER_PAIRS` with nf-test on `pfam_mini`. Run tests as CI does: `NXF_VER=25.10.4 nf-test test ... --profile +docker`.
+- 2026-11-06: **V1 passed.** 10,000 reads sampled from merged-fragment seqkit ORFs (62,308 ORFs) × 30,134 models, against `hmmsearch -Z 30134 --cut_ga` (HMMER 3.4, `kfpfam-tools`): all 1,753 domains match in every domtbl column; profile and stats identical; CIGAR, residues, posterior characters and coordinates match `hmmsearch`'s printed alignments, and the CIGAR round trip holds. 67 bytes per domain in Parquet. 284 s wall against 377 s for `hmmsearch` at 6 threads, after fixing a thread contention bug: blocks built across 6 threads ran about 40× slower than a shared block, so they are built in the main thread.
+- 2026-11-06: pair step's cost on 3.2 M nail-seed pairs, one thread, about 26.5 core-s: search about 16.7 (MSV about 2, Viterbi about 5, Forward about 6.5, domains about 3), HMM parsing 7, blocks 2, reading input 1.5. Nail seeding is about 400 core-s on the same reads, so compiled changes to HMMER are not worth pursuing unless V4 shows otherwise.

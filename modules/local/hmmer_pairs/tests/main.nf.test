@@ -1,0 +1,58 @@
+nextflow_process {
+
+    name "Test Process HMMER_PAIRS"
+    script "../main.nf"
+    process "HMMER_PAIRS"
+
+    tag "modules"
+    tag "modules_"
+    tag "hmmer_pairs"
+
+    test("candidate pairs give GA hits and alignments") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['id': 'test'],
+                    file("${projectDir}/tests/fixtures/hmmer_pairs/orfs.faa.gz", checkIfExists: true),
+                    file("${projectDir}/tests/fixtures/hmmer_pairs/seeds.tsv", checkIfExists: true),
+                ]
+                input[1] = file("${projectDir}/tests/fixtures/dbs/pfam_mini/Pfam-A.hmm", checkIfExists: true)
+                input[2] = 34
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def lines = path(process.out.domtbl[0][1]).linesGzip
+            assert lines.size() > 0
+            assert file(process.out.alignments[0][1]).size() > 0
+            assert snapshot(lines).match()
+        }
+    }
+
+    test("no candidates give empty outputs") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['id': 'test'],
+                    file("${projectDir}/tests/fixtures/hmmer_pairs/orfs.faa.gz", checkIfExists: true),
+                    file("${projectDir}/tests/fixtures/hmmer_pairs/empty.tsv", checkIfExists: true),
+                ]
+                input[1] = file("${projectDir}/tests/fixtures/dbs/pfam_mini/Pfam-A.hmm", checkIfExists: true)
+                input[2] = 34
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert path(process.out.domtbl[0][1]).linesGzip.isEmpty()
+            assert file(process.out.alignments[0][1]).size() > 0
+        }
+    }
+}
