@@ -80,6 +80,17 @@
             "type": "integer",
             "default": 2000000
         },
+        "pfam_search_engine": {
+            "type": "string",
+            "default": "hmmsearch",
+            "enum": ["hmmsearch", "nail"],
+            "description": "`hmmsearch` searches every ORF against every model. `nail` finds candidate pairs with nail, then runs HMMER on those pairs only and stores the alignments."
+        },
+        "pfam_nail_seed_pvalue": {
+            "type": "number",
+            "default": 0.01,
+            "description": "nail's seeding filter (`-S`), used when `pfam_search_engine` is `nail`."
+        },
         "force_download_dbs": {
             "type": "boolean",
             "default": "false"

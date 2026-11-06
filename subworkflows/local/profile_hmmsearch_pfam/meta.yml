@@ -1,51 +1,46 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "profile_hmmsearch_pfam"
-## TODO nf-core: Add a description of the subworkflow and list keywords
-description: Sort SAM/BAM/CRAM file
+description: Translate reads to ORFs, search them against Pfam-A with `hmmsearch` or nail and HMMER, and count reads per model
 keywords:
-  - sort
-  - bam
-  - sam
-  - cram
-## TODO nf-core: Add a list of the modules and/or subworkflows used in the subworkflow
+  - pfam
+  - hmmsearch
+  - nail
 components:
-  - samtools/sort
-  - samtools/index
-## TODO nf-core: List all of the channels used as input with a description and their structure
+  - seqkit/translate
+  - hmmer/hmmsearch
 input:
-  - ch_bam:
+  - reads_fasta:
       type: file
       description: |
-        The input channel containing the BAM/CRAM/SAM files
-        Structure: [ val(meta), path(bam) ]
-      pattern: "*.{bam/cram/sam}"
-## TODO nf-core: List all of the channels used as output with a descriptions and their structure
+        Reads in FASTA format
+        Structure: [ val(meta), path(fasta) ]
+      pattern: "*.{fasta,fa}{,.gz}"
+  - pfam_db:
+      type: file
+      description: Pfam-A HMM file
+      pattern: "*.hmm"
 output:
-  - bam:
+  - profile:
       type: file
       description: |
-        Channel containing BAM files
-        Structure: [ val(meta), path(bam) ]
-      pattern: "*.bam"
-  - bai:
+        Read count, coverage depth and breadth per model
+        Structure: [ val(meta), path(tsv) ]
+      pattern: "*_pfam_coverage.tsv"
+  - stats:
       type: file
       description: |
-        Channel containing indexed BAM (BAI) files
-        Structure: [ val(meta), path(bai) ]
-      pattern: "*.bai"
-  - csi:
+        Mapping statistics
+        Structure: [ val(meta), path(json) ]
+      pattern: "*_stats.json"
+  - alignments:
       type: file
       description: |
-        Channel containing CSI files
-        Structure: [ val(meta), path(csi) ]
-      pattern: "*.csi"
+        Alignments of GA-passing domains, only when `pfam_search_engine` is `nail`
+        Structure: [ val(meta), path(parquet) ]
+      pattern: "*_alignments.parquet"
   - versions:
       type: file
-      description: |
-        File containing software versions
-        Structure: [ path(versions.yml) ]
+      description: File containing software versions
       pattern: "versions.yml"
 authors:
-  - "@timrozday-mgnify"
-maintainers:
   - "@timrozday-mgnify"

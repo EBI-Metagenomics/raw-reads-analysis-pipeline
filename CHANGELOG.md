@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `pfam_search_engine = nail`: nail's seeding finds candidate (model, ORF) pairs, then HMMER checks only those pairs at gathering thresholds, through `pyhmmer`. Alignments are published as `*_pfam_alignments.parquet`. The default stays `hmmsearch`.
+
 ### Changed
 
 - Pfam moves from 38.0 to 38.2 (30,134 models), the release behind MGnify's protein annotations, so Pfam profiles change. Existing `pfam` database caches must be cleared or refreshed with `--force_download_dbs`.

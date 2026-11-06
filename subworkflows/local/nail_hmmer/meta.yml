@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "nail_hmmer"
+description: Find candidate (model, ORF) pairs with nail's seeding, then run HMMER on those pairs only at gathering thresholds
+keywords:
+  - nail
+  - hmmer
+  - pfam
+components: []
+input:
+  - orfs:
+      type: file
+      description: |
+        Translated reads, with names as `seqkit translate` writes them
+        Structure: [ val(meta), path(fasta) ]
+      pattern: "*.{fasta,fastx,faa}{,.gz}"
+  - pfam_db:
+      type: file
+      description: Pfam-A HMM file
+      pattern: "*.hmm"
+output:
+  - domtbl:
+      type: file
+      description: |
+        Hits in the format of `hmmsearch --domtblout`
+        Structure: [ val(meta), path(domtbl.gz) ]
+      pattern: "*.domtbl.gz"
+  - alignments:
+      type: file
+      description: |
+        One row per GA-passing domain, with CIGAR, residues and posterior characters
+        Structure: [ val(meta), path(parquet) ]
+      pattern: "*_alignments.parquet"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@timrozday-mgnify"

@@ -58,6 +58,14 @@ GigaScience, Volume 10, Issue 2, February 2021, giab008, https://doi.org/10.1093
 
 > Ondov, Brian D., Nicholas H. Bergman, and Adam M. Phillippy. "Interactive metagenomic visualization in a Web browser." BMC bioinformatics 12.1 (2011): 385.
 
+[nail](https://github.com/TravisWheelerLab/nail)
+
+> Jack W. Roddy, David H. Rich, and Travis J. Wheeler. 2024. nail: software for high-speed, high-sensitivity protein sequence annotation. bioRxiv. doi:10.1101/2024.01.27.577580.
+
+[pyhmmer](https://github.com/althonos/pyhmmer)
+
+> Martin Larralde and Georg Zeller. 2023. PyHMMER: a Python library binding to HMMER for efficient sequence analysis. Bioinformatics 39(5). doi:10.1093/bioinformatics/btad214.
+
 [HMMer](https://github.com/EddyRivasLab/hmmer)
 
 > Eddy SR. Accelerated profile HMM searches. PLoS Comput Biol. 7:e1002195 (2011)
