@@ -1,0 +1,52 @@
+nextflow_process {
+
+    name "Test Process NAIL_SEED"
+    script "../main.nf"
+    process "NAIL_SEED"
+
+    tag "modules"
+    tag "modules_"
+    tag "nail_seed"
+
+    test("permissive seeds name a model and an ORF") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['id': 'test'],
+                    file("${projectDir}/tests/fixtures/hmmer_pairs/orfs.faa.gz", checkIfExists: true),
+                ]
+                input[1] = file("${projectDir}/tests/fixtures/dbs/pfam_mini/Pfam-A.hmm", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def lines = path(process.out.seeds[0][1]).readLines()
+            assert lines.size() > 0
+            assert lines.every { it.split('\t')[1] ==~ /.+_frame=-?\d+_begin=\d+_end=\d+/ }
+        }
+    }
+
+    test("ORFs with no seeds give an empty file") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['id': 'test'],
+                    file("${projectDir}/tests/fixtures/hmmer_pairs/no_seeds.faa", checkIfExists: true),
+                ]
+                input[1] = file("${projectDir}/tests/fixtures/dbs/pfam_mini/Pfam-A.hmm", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert path(process.out.seeds[0][1]).readLines().isEmpty()
+        }
+    }
+}
