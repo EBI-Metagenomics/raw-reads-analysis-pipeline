@@ -23,7 +23,7 @@ process FETCHUNZIP {
 
         remote_checksum=${checksum}
 
-        if [[\$file_checksum != \$remote_checksum]]; then
+        if [[ \$file_checksum != \$remote_checksum ]]; then
             echo "md5 checksums don't match (file: \$file_checksum, test: \$remote_checksum). Exiting"
             exit 1
         fi
@@ -37,7 +37,7 @@ process FETCHUNZIP {
         remote_checksum=\$(cat ${checksum_path} \\
         | cut -d ' ' -f1)
 
-        if [[\$file_checksum != \$remote_checksum]]; then
+        if [[ \$file_checksum != \$remote_checksum ]]; then
             echo "md5 checksums don't match (file: \$file_checksum, test: \$remote_checksum). Exiting"
             exit 1
         fi
