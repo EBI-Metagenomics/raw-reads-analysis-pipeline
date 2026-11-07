@@ -103,7 +103,7 @@ def main():
     parser.add_argument("--orfs", required=True, help="seqkit translate's output, may be gzipped")
     parser.add_argument("--calls", required=True, help="FragGeneScanRs's .out")
     parser.add_argument("--threshold", type=float, default=-5.0)
-    parser.add_argument("--min-calls", type=int, default=5000, help="Below this many called reads, keep all ORFs")
+    parser.add_argument("--min-calls", type=int, default=1000, help="Below this many called reads, keep all ORFs")
     parser.add_argument("--out", required=True, help="Kept ORFs; gzipped if the name ends in .gz")
     parser.add_argument("--stats", required=True)
     args = parser.parse_args()
