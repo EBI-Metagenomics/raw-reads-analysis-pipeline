@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `pfam_orf_filter`: keep ORFs in FragGeneScanRs's frame, plus other ORFs with a hexamer coding score at or above `pfam_orf_filter_threshold`, before the Pfam search. Off by default.
 - `pfam_search_engine = nail`: nail's seeding finds candidate (model, ORF) pairs, then HMMER checks only those pairs at gathering thresholds, through `pyhmmer`. Alignments are published as `*_pfam_alignments.parquet`. The default stays `hmmsearch`.
+- `pfam_search_engine = nail` rejects a chunked Pfam database with a clear error. nail searches one whole HMM file, so a chunked database would have given it a single chunk and produced a partial profile with no error.
 
 ### Changed
 

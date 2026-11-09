@@ -7,6 +7,9 @@ workflow NAIL_HMMER {
     pfam_db // channel: path(hmm)
 
     main:
+    // One whole Pfam-A.hmm. PROFILE_HMMSEARCH_PFAM rejects a chunked database before reaching
+    // here, so this channel has exactly one element; .first() makes it a value channel that
+    // every sample can consume.
     ch_hmm = pfam_db.first()
 
     // nail stops on an empty target file; hmmsearch's chunking also skips samples with no ORFs

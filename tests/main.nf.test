@@ -193,4 +193,23 @@ nextflow_pipeline {
             assert file("${pfam}/test_sample_pfam_alignments.parquet").size() > 0
         }
     }
+
+    test("nail engine refuses a chunked Pfam database") {
+
+        config "./chunked_pfam.config"
+
+        when {
+            params {
+                samplesheet = "${projectDir}/tests/fixtures/rrap/samplesheet_basic.csv"
+                outdir = "$outputDir"
+                pfam_search_engine = 'nail'
+            }
+        }
+
+        then {
+            assert workflow.failed
+            assert workflow.stdout.any { it.contains("needs an unchunked Pfam database") } ||
+                workflow.errorReport.contains("needs an unchunked Pfam database")
+        }
+    }
 }
