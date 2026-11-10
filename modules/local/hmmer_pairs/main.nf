@@ -8,8 +8,7 @@ process HMMER_PAIRS {
         : 'community.wave.seqera.io/library/python_pyhmmer_pyarrow:15ad25b8fbebe783'}"
 
     input:
-    tuple val(meta), path(orfs), path(seeds)
-    path hmm
+    tuple val(meta), path(orfs), path(hmm), path(seeds)
     val num_models
 
     output:

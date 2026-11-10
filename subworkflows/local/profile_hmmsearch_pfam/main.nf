@@ -29,17 +29,6 @@ workflow PROFILE_HMMSEARCH_PFAM {
     ch_alignments = Channel.empty()
 
     if (params.pfam_search_engine == 'nail') {
-        // nail searches one whole HMM file: a chunked Pfam would give it one chunk and a
-        // partial profile with no error. Fail here rather than emitting a wrong answer.
-        if (params.databases.pfam.containsKey('chunked') && params.databases.pfam.chunked) {
-            error(
-                "pfam_search_engine 'nail' needs an unchunked Pfam database, but " +
-                "params.databases.pfam.chunked is set. Point params.databases.pfam at a single " +
-                "Pfam-A.hmm (remote_path or local_path plus files.hmm, no chunked = true), or " +
-                "use pfam_search_engine 'hmmsearch', which searches each chunk."
-            )
-        }
-
         NAIL_HMMER(ch_orfs, pfam_db)
         ch_versions = ch_versions.mix(NAIL_HMMER.out.versions)
         ch_alignments = NAIL_HMMER.out.alignments

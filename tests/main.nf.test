@@ -194,7 +194,7 @@ nextflow_pipeline {
         }
     }
 
-    test("nail engine refuses a chunked Pfam database") {
+    test("nail engine searches every chunk of a chunked Pfam database") {
 
         config "./chunked_pfam.config"
 
@@ -207,9 +207,13 @@ nextflow_pipeline {
         }
 
         then {
-            assert workflow.failed
-            assert workflow.stdout.any { it.contains("needs an unchunked Pfam database") } ||
-                workflow.errorReport.contains("needs an unchunked Pfam database")
+            def pfam = "${params.outdir}/test_sample/function-summary/pfam"
+            assert workflow.success
+            // One search per chunk, one merged Parquet per sample
+            assert workflow.trace.succeeded().count { it.name.contains('NAIL_SEED') } == 2
+            assert workflow.trace.succeeded().count { it.name.contains('MERGEPARQUET') } == 1
+            assert path("${pfam}/test_sample_pfam.txt.gz").linesGzip.size() > 1
+            assert file("${pfam}/test_sample_pfam_alignments.parquet").size() > 0
         }
     }
 }

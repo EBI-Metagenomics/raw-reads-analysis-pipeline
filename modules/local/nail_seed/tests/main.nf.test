@@ -16,8 +16,8 @@ nextflow_process {
                 input[0] = [
                     ['id': 'test'],
                     file("${projectDir}/tests/fixtures/hmmer_pairs/orfs.faa.gz", checkIfExists: true),
+                    file("${projectDir}/tests/fixtures/dbs/pfam_mini/Pfam-A.hmm", checkIfExists: true),
                 ]
-                input[1] = file("${projectDir}/tests/fixtures/dbs/pfam_mini/Pfam-A.hmm", checkIfExists: true)
                 """
             }
         }
@@ -38,8 +38,8 @@ nextflow_process {
                 input[0] = [
                     ['id': 'test'],
                     file("${projectDir}/tests/fixtures/hmmer_pairs/no_seeds.faa", checkIfExists: true),
+                    file("${projectDir}/tests/fixtures/dbs/pfam_mini/Pfam-A.hmm", checkIfExists: true),
                 ]
-                input[1] = file("${projectDir}/tests/fixtures/dbs/pfam_mini/Pfam-A.hmm", checkIfExists: true)
                 """
             }
         }

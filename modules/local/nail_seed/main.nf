@@ -8,8 +8,7 @@ process NAIL_SEED {
         : 'biocontainers/nail:0.7.1--hab7d0fd_0'}"
 
     input:
-    tuple val(meta), path(orfs)
-    path hmm
+    tuple val(meta), path(orfs), path(hmm)
 
     output:
     tuple val(meta), path("${prefix}.seeds.tsv"), emit: seeds
