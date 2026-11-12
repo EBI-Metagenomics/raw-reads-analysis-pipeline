@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pfam_search_engine = nail`: nail's seeding finds candidate (model, ORF) pairs, then HMMER checks only those pairs at gathering thresholds, through `pyhmmer`. Alignments are published as `*_pfam_alignments.parquet`. The default stays `hmmsearch`.
 - `pfam_search_engine = nail` works with a chunked Pfam database as well as a single `Pfam-A.hmm`. nail searches one whole HMM file, so each chunk is seeded and searched separately, then the domtbls are concatenated and the alignments merged into one Parquet per sample. `-Z` stays the whole database's model count, so E-values match an unchunked search.
 
+### Fixed
+
+- The `hmmsearch_subsampling` draw is now reproducible. `SEQKIT_SHUFFLE_FASTA` picked its reads with unseeded `shuf`, so every run searched a different subsample and two runs of the same data could not be compared. It now uses seeded reservoir sampling (`ext.seed`, 23 by default), which also holds only the kept read names in memory rather than all of them.
+
 ### Changed
 
 - Pfam moves from 38.0 to 38.2 (30,134 models), the release behind MGnify's protein annotations, so Pfam profiles change. Existing `pfam` database caches must be cleared or refreshed with `--force_download_dbs`.
