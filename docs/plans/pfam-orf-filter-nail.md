@@ -225,13 +225,29 @@ So `both` costs only 0.1-1.8 percentage points more than `filter` alone, and the
 is small and one-directional: nail loses a couple of percent of reads and a few dozen small families
 and gains almost none, in line with V2's 1.67% of pair calls.
 
-**Most of the difference from `current` is the parser, not either feature.** On SRR32629731, the one
-sample where all four arms share a subsample, `filter` differs from `current` by 11.0% of reads and
-`nail` by 11.1%, but the two differ from each other by 0.93%. Either prune alone produces the same
-shift and the second adds about 2%. `read_hit_count` is about equal to `reads_mapped` in every arm,
-so `PARSEHMMSEARCHCOVERAGE`'s greedy de-overlap keeps roughly one family per read, and once marginal
-hits stop being reported the winner flips for about a ninth of reads. A better engine will not change
-this; whether that movement is acceptable is a decision about the parser.
+**`current` is the outlier, and what separates it is a hit set, not close calls.** On SRR32629731,
+the one sample where all four arms share a subsample, `filter` differs from `current` by 11.0% of
+reads and `nail` by 11.1%, but the two differ from each other by 0.93%. Either prune alone produces
+the same shift and the second adds about 2%.
+
+Replaying `PARSEHMMSEARCHCOVERAGE`'s greedy de-overlap over the arms' alignment Parquets rules out
+near-ties as the cause. In both nail arms, only 2.4% of reads have an overlapping hit of another
+family at all, and the rival is within 2 bits for 0.4% of reads, within 5 bits for 0.9%, within 10x
+the winner's E-value for 0.6%. Applying the ORF filter with the engine held fixed, `nail` to `both`,
+leaves 99.7% of 324,247 reads on the same family: 20 reads change family, almost all beaten by more
+than 10 bits, and 997 (0.3%) drop out. So pruning does not flip near-equal families; if it did, the
+same prune under nail would have produced the 11% and it produces 0.006%.
+
+What the three pruned arms share is the absence of hits that only `current` has. It searches all six
+frames with nothing removed; the filter drops about 37% of ORFs and nail's seeding never proposes
+those pairs, and the two routes evidently remove nearly the same hits, which is why `filter`, `nail`
+and `both` agree with each other to about 1% while all three sit about 11% from `current`.
+
+Whether those `current`-only winners are solid or marginal is still open, and the published outputs
+cannot answer it: the hmmsearch arms emit the profile only. It needs one sample's combined domtbl
+from `COMBINEHMMSEARCHTBL`'s work directory in the `current` and `filter` arms, replayed through the
+same resolution to get the margin distribution for the real 11%. That is the evidence for deciding
+whether either feature can default on.
 
 **Caveat.** `SEQKIT_SHUFFLE_FASTA` subsampled with unseeded `shuf` for this run, and the `nail` arm
 re-drew on 10 of 11 samples, so its own rows mix engine effect with a different draw. `current`,
