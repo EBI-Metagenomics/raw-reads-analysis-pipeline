@@ -194,6 +194,54 @@ Local runs: one at a time, at most 6 threads. Large runs ship as a Nextflow work
 
 Stop and report if V1 fails, since the design depends on it. V5 decides whether either option could become the default; this branch leaves both off.
 
+## V5 results
+
+Eleven ENA samples through `hpc/pfam-arms` on Codon, Pfam 38.2 in 20 chunks, 2 M merged reads
+subsampled per sample. Cost is over all eleven samples, from the arms' Nextflow traces, with
+core-hours as realtime times %cpu, since Codon's trace has no `cpus` column.
+
+| arm | Pfam steps | core-h | wall-h | peak RSS |
+|---|---|---|---|---|
+| current | `HMMER_HMMSEARCH` | 540.4 | 244.7 | 0.1 GB |
+| filter | FGS + `SELECTFRAMES` + `HMMER_HMMSEARCH` | 347.9 | 162.8 | 1.1 GB |
+| nail | `NAIL_SEED` + `HMMER_PAIRS` + `MERGEPARQUET` | 25.8 | 8.0 | 16.6 GB |
+| both | FGS + `SELECTFRAMES` + `NAIL_SEED` + `HMMER_PAIRS` + `MERGEPARQUET` | 17.7 | 5.9 | 10.1 GB |
+
+`both` is about 31x cheaper than `current` and a third cheaper than `nail` alone: the filter makes
+the seeding cheaper too, 14.1 against 21.3 core-h, and takes its peak memory from 16.6 to 10.1 GB.
+The filter keeps a median 62% of residues and 63% of ORFs, 96% of reads get a gene call, and the
+fallback fired on no sample. `SEQKIT_SHUFFLE_FASTA`, at 43.6 GB, was the largest step in the run.
+
+**The two losses do not add up.** `both` against `filter` is the clean engine swap, same subsample
+and same filtered ORFs, over all eleven samples; the rows against `current` are the totals.
+
+| comparison | reads moving | families lost / gained |
+|---|---|---|
+| both vs filter (engine only) | 0.64-2.9%, median 2.1% | 14-64 / 0-3 |
+| filter vs current | 5.7-11.7% | 422-1045 / 397-1035 |
+| both vs current | 9.0-12.5% | 449-1071 / 382-1015 |
+
+So `both` costs only 0.1-1.8 percentage points more than `filter` alone, and the engine's own effect
+is small and one-directional: nail loses a couple of percent of reads and a few dozen small families
+and gains almost none, in line with V2's 1.67% of pair calls.
+
+**Most of the difference from `current` is the parser, not either feature.** On SRR32629731, the one
+sample where all four arms share a subsample, `filter` differs from `current` by 11.0% of reads and
+`nail` by 11.1%, but the two differ from each other by 0.93%. Either prune alone produces the same
+shift and the second adds about 2%. `read_hit_count` is about equal to `reads_mapped` in every arm,
+so `PARSEHMMSEARCHCOVERAGE`'s greedy de-overlap keeps roughly one family per read, and once marginal
+hits stop being reported the winner flips for about a ninth of reads. A better engine will not change
+this; whether that movement is acceptable is a decision about the parser.
+
+**Caveat.** `SEQKIT_SHUFFLE_FASTA` subsampled with unseeded `shuf` for this run, and the `nail` arm
+re-drew on 10 of 11 samples, so its own rows mix engine effect with a different draw. `current`,
+`filter` and `both` cached the subsample and are mutually clean. Seeding landed afterwards, so the
+next run of all four arms shares one draw and the `nail` row can be read like the others.
+
+Still open: V5's own question, whether the filter's -5 threshold holds across read lengths, needs the
+per-sample read lengths against the filter's loss; and the de-overlap's sensitivity above deserves a
+look at how many of those flips are near-ties in E-value.
+
 ## Order of work
 
 Commit after each step:
@@ -247,3 +295,4 @@ Branch `fix-fetchunzip-checksum` makes `FETCHUNZIP`'s checksum test fire. Until 
 - 2026-11-10: verification of chunked nail on this Mac was partial, because every `nextflow` run here now dies with `Unable to create serializer ... ThreadPoolExecutor` (kryo against `nextflow.Session`) part-way through, on `master` as well as on this branch, under Nextflow 26.04.1 and JDK 23. What was confirmed on the two-chunk test config: `NAIL_SEED` and `HMMER_PAIRS` each run once per chunk, and the concatenated domtbl is 152 lines from two 76-line chunks. `MERGEPARQUET` is killed by that abort mid-run, so its script was run by hand in its container on the two chunk Parquets: 76 + 76 = 152 rows, schema preserved, sorted by `pfam`. The nf-test `workflow.trace.succeeded()` assertions use `it.name`, since `WorkflowTask` has no `process` property. Re-run the suite where Nextflow works before trusting it green.
 - 2026-11-12: B11's results read. Cost over 11 samples: `current` 540 cpu-h in `HMMER_HMMSEARCH`, `filter` 348, `nail` 26 (21 seeding, 4.5 pairs, wall 8 h against 245 h), so nail is about 21x cheaper and the filter alone saves 36%. Peak RSS: `NAIL_SEED` 16.6 GB, `HMMER_PAIRS` 7.7 GB, and `SEQKIT_SHUFFLE_FASTA` 43.6 GB, the largest step in the run. Chunked nail behaved: 220 `NAIL_SEED` and 220 `HMMER_PAIRS` tasks (11 samples x 20 chunks) and one merged Parquet per sample, 331 MB in all. The profile comparison is confounded, though: `SEQKIT_SHUFFLE_FASTA` subsampled with unseeded `shuf`, and 10 of 11 samples re-ran it in the nail arm, so those profiles are a different draw. On SRR32629731, the one sample whose subsample and translation were cached, nail and the filter differ from `current` by 11.1% and 11.0% of reads but from each other by only 0.93%. Totals barely move (326,759 / 325,526 / 324,247 reads mapped) and `read_hit_count` is about equal to `reads_mapped` in every arm, so `PARSEHMMSEARCHCOVERAGE`'s greedy de-overlap keeps roughly one family per read, and pruning the reported hit set at all — by dropping ORFs or by scoring only nail's candidates — changes the winner for about a ninth of reads. That sensitivity is in the parser, not in either arm. The `both` arm failed and is being re-run.
 - 2026-11-12: subsample seeded, so the arms can be compared. Verified by running the module twice through Docker on 1,000 reads: seed 23 gives the same 50 reads both times (md5 500d163b), `ext.seed = 7` a different 50 (fbccea5f). Re-running the arms after this lands will re-execute everything from the subsample down.
+- 2026-11-12: the `both` arm finished and V5's results are written up above. Headline: `both` is about 31x cheaper than `current` for 0.1-1.8 points more read movement than `filter` alone, the engine's own effect is about 2%, and most of the 11% against `current` traces to the de-overlap in `PARSEHMMSEARCHCOVERAGE` rather than to either feature.
