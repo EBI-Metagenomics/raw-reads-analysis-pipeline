@@ -15,10 +15,30 @@
 #   results/cost.tsv      core-hours and peak memory per Pfam step
 #   results/<arm>/<sample>/function-summary/pfam/  each arm's published files, with filter stats
 set -euo pipefail
-[[ -f run.sh && -f site.config ]] || { echo "submit from hpc/pfam-arms" >&2; exit 1; }
+[[ -f run.sh && -f site.config && -f unchunked_pfam.config ]] || { echo "submit from hpc/pfam-arms" >&2; exit 1; }
 command -v nextflow >/dev/null || { echo "nextflow not on PATH" >&2; exit 1; }
 export NXF_OPTS='-Xms1g -Xmx4g' NXF_VER=25.10.4
 PIPELINE=../..
+
+# The nail arms search one whole Pfam-A.hmm, where the hmmsearch arms use the site's chunks.
+# Set PFAM_HMM to a single Pfam-A.hmm if you have one; otherwise set PFAM_CHUNKS to the chunk
+# files the site config serves (a glob is fine) and this builds it once, beside this script.
+# An HMM file is its models one after another, so concatenating the chunks gives the database
+# the hmmsearch arms search, and -Z below is counted from the result rather than assumed.
+PFAM_HMM=${PFAM_HMM:-$PWD/pfam_unchunked/Pfam-A.hmm}
+if [[ ! -s $PFAM_HMM ]]; then
+    [[ -n ${PFAM_CHUNKS:-} ]] || {
+        echo "set PFAM_HMM to one Pfam-A.hmm, or PFAM_CHUNKS to the chunk HMMs to join" >&2
+        exit 1
+    }
+    mkdir -p "$(dirname "$PFAM_HMM")"
+    cat $PFAM_CHUNKS > "$PFAM_HMM.part"
+    mv "$PFAM_HMM.part" "$PFAM_HMM"
+fi
+export PFAM_HMM_DIR=$(dirname "$PFAM_HMM")
+export PFAM_HMM_NAME=$(basename "$PFAM_HMM")
+export PFAM_NUM_MODELS=$(grep -c '^NAME ' "$PFAM_HMM")
+echo "nail arms search $PFAM_HMM, $PFAM_NUM_MODELS models"
 
 arm() {
     local name=$1
@@ -31,8 +51,8 @@ arm() {
 
 arm current
 arm filter --pfam_orf_filter true
-arm nail --pfam_search_engine nail
-arm both --pfam_search_engine nail --pfam_orf_filter true
+arm nail -c unchunked_pfam.config --pfam_search_engine nail
+arm both -c unchunked_pfam.config --pfam_search_engine nail --pfam_orf_filter true
 
 : > results/compare.tsv
 : > results/families.tsv

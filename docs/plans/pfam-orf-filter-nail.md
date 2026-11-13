@@ -197,66 +197,54 @@ Stop and report if V1 fails, since the design depends on it. V5 decides whether 
 ## V5 results
 
 Eleven ENA samples through `hpc/pfam-arms` on Codon, Pfam 38.2 in 20 chunks, 2 M merged reads
-subsampled per sample. Cost is over all eleven samples, from the arms' Nextflow traces, with
-core-hours as realtime times %cpu, since Codon's trace has no `cpus` column.
+subsampled per sample. Two runs were needed: in the first, `current` re-drew its subsample while the
+other three arms reused a cached draw, so the arms were not comparable. The figures below are from
+the second run, where all four arms share one draw, `SEQKIT_SHUFFLE_FASTA` and `SEQKIT_TRANSLATE`
+being cached in `filter`, `nail` and `both`. Cost comes from the arms' Nextflow traces, core-hours as
+realtime times %cpu, since Codon's trace has no `cpus` column.
 
 | arm | Pfam steps | core-h | wall-h | peak RSS |
 |---|---|---|---|---|
-| current | `HMMER_HMMSEARCH` | 540.4 | 244.7 | 0.1 GB |
-| filter | FGS + `SELECTFRAMES` + `HMMER_HMMSEARCH` | 347.9 | 162.8 | 1.1 GB |
-| nail | `NAIL_SEED` + `HMMER_PAIRS` + `MERGEPARQUET` | 25.8 | 8.0 | 16.6 GB |
-| both | FGS + `SELECTFRAMES` + `NAIL_SEED` + `HMMER_PAIRS` + `MERGEPARQUET` | 17.7 | 5.9 | 10.1 GB |
+| current | `HMMER_HMMSEARCH` | 549.9 | 251.6 | 0.1 GB |
+| filter | FGS + `SELECTFRAMES` + `HMMER_HMMSEARCH` | 357.8 | 164.3 | 1.1 GB |
+| nail | `NAIL_SEED` + `HMMER_PAIRS` + `MERGEPARQUET` | 26.9 | 8.9 | 16.6 GB |
+| both | FGS + `SELECTFRAMES` + `NAIL_SEED` + `HMMER_PAIRS` + `MERGEPARQUET` | 16.7 | 5.3 | 10.0 GB |
 
-`both` is about 31x cheaper than `current` and a third cheaper than `nail` alone: the filter makes
-the seeding cheaper too, 14.1 against 21.3 core-h, and takes its peak memory from 16.6 to 10.1 GB.
-The filter keeps a median 62% of residues and 63% of ORFs, 96% of reads get a gene call, and the
-fallback fired on no sample. `SEQKIT_SHUFFLE_FASTA`, at 43.6 GB, was the largest step in the run.
+`both` is about 33x cheaper than `current` and a third cheaper than `nail` alone: the filter makes the
+seeding cheaper too, 13.6 against 22.4 core-h, and takes its peak memory from 16.6 to 10.0 GB. The
+filter keeps a median 62% of residues and 63% of ORFs, 96% of reads get a gene call, and the fallback
+fired on no sample.
 
-**The two losses do not add up.** `both` against `filter` is the clean engine swap, same subsample
-and same filtered ORFs, over all eleven samples; the rows against `current` are the totals.
+Against `current`, with the draw held fixed, over all eleven samples:
 
-| comparison | reads moving | families lost / gained |
-|---|---|---|
-| both vs filter (engine only) | 0.64-2.9%, median 2.1% | 14-64 / 0-3 |
-| filter vs current | 5.7-11.7% | 422-1045 / 397-1035 |
-| both vs current | 9.0-12.5% | 449-1071 / 382-1015 |
+| arm | reads moving, median (range) | families lost | gained | families with 10+ reads below 0.8 |
+|---|---|---|---|---|
+| filter | 0.18% (0.06-0.33) | 14-54 | 0-2 | 5-24 |
+| nail | 2.12% (0.58-2.87) | 19-70 | 0-3 | 12-112 |
+| both | 2.26% (0.81-2.91) | 54-105 | 0-3 | 23-118 |
 
-So `both` costs only 0.1-1.8 percentage points more than `filter` alone, and the engine's own effect
-is small and one-directional: nail loses a couple of percent of reads and a few dozen small families
-and gains almost none, in line with V2's 1.67% of pair calls.
+Those are out of 4,600-8,300 families and 2,500-5,400 families with at least 10 reads. So the ORF
+filter is close to free, 0.18% of reads for a third off the search; the engine costs about 2% of
+reads, one-directional, in line with V2's 1.67% of pair calls; and the two losses are nearly
+additive, `both` landing about 0.14 points above `nail`. Both options are cheap enough in accuracy
+that cost, not loss, decides them.
 
-**`current` is the outlier, and what separates it is a hit set, not close calls.** On SRR32629731,
-the one sample where all four arms share a subsample, `filter` differs from `current` by 11.0% of
-reads and `nail` by 11.1%, but the two differ from each other by 0.93%. Either prune alone produces
-the same shift and the second adds about 2%.
+**Retraction.** Two earlier readings of this comparison were wrong, and both came from the first
+run's mismatched subsamples, which made every arm differ from `current` by 8-12% of reads. That was
+neither `PARSEHMMSEARCHCOVERAGE`'s greedy de-overlap flipping near-equal families, as first written,
+nor a set of hits that only `current` reported, as written after that. It was a different 2 M reads.
+The de-overlap work still stands on its own and says the resolution is rarely contested: in the nail
+arms only 2.4% of reads have an overlapping hit of another family at all, the rival is within 2 bits
+for 0.4% of reads and within 5 bits for 0.9%, and applying the ORF filter with the engine fixed left
+99.7% of 324,247 reads on the same family, 20 of them changing and 997 dropping out. The lesson is
+the methodological one: an unseeded subsample produced differences the size of the effects being
+measured, in both directions, and looked like signal. Seeded since `8d81c2b`.
 
-Replaying `PARSEHMMSEARCHCOVERAGE`'s greedy de-overlap over the arms' alignment Parquets rules out
-near-ties as the cause. In both nail arms, only 2.4% of reads have an overlapping hit of another
-family at all, and the rival is within 2 bits for 0.4% of reads, within 5 bits for 0.9%, within 10x
-the winner's E-value for 0.6%. Applying the ORF filter with the engine held fixed, `nail` to `both`,
-leaves 99.7% of 324,247 reads on the same family: 20 reads change family, almost all beaten by more
-than 10 bits, and 997 (0.3%) drop out. So pruning does not flip near-equal families; if it did, the
-same prune under nail would have produced the 11% and it produces 0.006%.
-
-What the three pruned arms share is the absence of hits that only `current` has. It searches all six
-frames with nothing removed; the filter drops about 37% of ORFs and nail's seeding never proposes
-those pairs, and the two routes evidently remove nearly the same hits, which is why `filter`, `nail`
-and `both` agree with each other to about 1% while all three sit about 11% from `current`.
-
-Whether those `current`-only winners are solid or marginal is still open, and the published outputs
-cannot answer it: the hmmsearch arms emit the profile only. It needs one sample's combined domtbl
-from `COMBINEHMMSEARCHTBL`'s work directory in the `current` and `filter` arms, replayed through the
-same resolution to get the margin distribution for the real 11%. That is the evidence for deciding
-whether either feature can default on.
-
-**Caveat.** `SEQKIT_SHUFFLE_FASTA` subsampled with unseeded `shuf` for this run, and the `nail` arm
-re-drew on 10 of 11 samples, so its own rows mix engine effect with a different draw. `current`,
-`filter` and `both` cached the subsample and are mutually clean. Seeding landed afterwards, so the
-next run of all four arms shares one draw and the `nail` row can be read like the others.
-
-Still open: V5's own question, whether the filter's -5 threshold holds across read lengths, needs the
-per-sample read lengths against the filter's loss; and the de-overlap's sensitivity above deserves a
-look at how many of those flips are near-ties in E-value.
+**Still open.** V5's own question, whether the filter's -5 threshold holds across read lengths, needs
+the per-sample read lengths set against the filter's loss; the spread above, 0.06% to 0.33%, is the
+place to look. Separately, `SEQKIT_SHUFFLE_FASTA` peaks at 39 GB, which is `seqkit faidx` indexing
+every read in the full FASTA rather than anything to do with the subsample, so it grows with library
+size and not with the 2 M cap; `seqkit grep -f` or a one-pass selection would stream instead.
 
 ## Order of work
 
@@ -312,3 +300,4 @@ Branch `fix-fetchunzip-checksum` makes `FETCHUNZIP`'s checksum test fire. Until 
 - 2026-11-12: B11's results read. Cost over 11 samples: `current` 540 cpu-h in `HMMER_HMMSEARCH`, `filter` 348, `nail` 26 (21 seeding, 4.5 pairs, wall 8 h against 245 h), so nail is about 21x cheaper and the filter alone saves 36%. Peak RSS: `NAIL_SEED` 16.6 GB, `HMMER_PAIRS` 7.7 GB, and `SEQKIT_SHUFFLE_FASTA` 43.6 GB, the largest step in the run. Chunked nail behaved: 220 `NAIL_SEED` and 220 `HMMER_PAIRS` tasks (11 samples x 20 chunks) and one merged Parquet per sample, 331 MB in all. The profile comparison is confounded, though: `SEQKIT_SHUFFLE_FASTA` subsampled with unseeded `shuf`, and 10 of 11 samples re-ran it in the nail arm, so those profiles are a different draw. On SRR32629731, the one sample whose subsample and translation were cached, nail and the filter differ from `current` by 11.1% and 11.0% of reads but from each other by only 0.93%. Totals barely move (326,759 / 325,526 / 324,247 reads mapped) and `read_hit_count` is about equal to `reads_mapped` in every arm, so `PARSEHMMSEARCHCOVERAGE`'s greedy de-overlap keeps roughly one family per read, and pruning the reported hit set at all — by dropping ORFs or by scoring only nail's candidates — changes the winner for about a ninth of reads. That sensitivity is in the parser, not in either arm. The `both` arm failed and is being re-run.
 - 2026-11-12: subsample seeded, so the arms can be compared. Verified by running the module twice through Docker on 1,000 reads: seed 23 gives the same 50 reads both times (md5 500d163b), `ext.seed = 7` a different 50 (fbccea5f). Re-running the arms after this lands will re-execute everything from the subsample down.
 - 2026-11-12: the `both` arm finished and V5's results are written up above. Headline: `both` is about 31x cheaper than `current` for 0.1-1.8 points more read movement than `filter` alone, the engine's own effect is about 2%, and most of the 11% against `current` traces to the de-overlap in `PARSEHMMSEARCHCOVERAGE` rather than to either feature.
+- 2026-11-13: the arms re-run on one shared subsample, and V5's section rewritten around it. The filter costs 0.18% of reads at the median, the engine 2.12%, both together 2.26%, against `current` over eleven samples; cost is 550, 358, 27 and 17 core-hours. The 8-12% seen in the first run was the mismatched draws, not the parser and not a `current`-only hit set; both earlier readings are retracted in place. Chunking adjusted in `hpc/pfam-arms` from the per-task figures at the same time: `hmmsearch` tasks ran 67 minutes at the median on 2.25 of 4 cores with the reads never split, so `hmmsearch_chunksize` drops to 256 MB and `cpus` to 2, while nail's 20 tasks of 1.6 minutes per sample each rebuilt their MMseqs2 query database, so the nail arms now search an unchunked Pfam built by `run.sh` from the site's chunks, one `NAIL_SEED` and one `HMMER_PAIRS` per sample.
