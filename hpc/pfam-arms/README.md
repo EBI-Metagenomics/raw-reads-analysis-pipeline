@@ -1,6 +1,6 @@
 # Pfam arms: V5 of the ORF filter and nail plan
 
-Runs the pipeline four times on `samplesheet.csv`: `current` (`hmmsearch` on all ORFs), `filter`, `nail` and `both`. Parameters other than these two options stay at the pipeline's defaults, including the cap of 2 M reads for Pfam, except that taxonomic profiling is skipped.
+Runs the pipeline four times on `samplesheet.csv`: `current` (`hmmsearch` on all ORFs), `filter`, `nail` and `both`. Parameters other than these options stay at the pipeline's defaults, except that taxonomic profiling is skipped and Pfam subsampling is off (`--hmmsearch_subsampling -1`), so every merged read is searched.
 
 ```bash
 cd hpc/pfam-arms && PFAM_CHUNKS='/path/to/pfam/chunks/*/Pfam-A.hmm' sbatch run.sh
@@ -13,12 +13,13 @@ its models one after another, so that is the same database the hmmsearch arms se
 counted from the result rather than assumed, so the arms stay comparable. Neither variable is needed
 on a re-submission once the file exists.
 
-The first run downloads the host and phiX databases, and the FASTQ files from ENA. On one local test, `hmmsearch` used about 60 core-ms per read, so `current` could be about 32 core-hours per sample at the 2 M cap. Local timings have run well below the HPC's, so allow several times that.
+The first run downloads the host and phiX databases, and the FASTQ files from ENA. B11 measured, at the 2 M cap over eleven samples, 550 core-hours for `current`, 358 for `filter`, 27 for `nail` and 17 for `both`. Subsampling is off now and the eleven libraries hold about twenty times those reads, so scale accordingly: `current` alone is of the order of 10,000 core-hours. The arms run seeded-first for that reason — read the cheap arms' real numbers before committing to the hmmsearch pair at full depth.
 
 ## Chunking and resources
 
-`site.config` sizes the search steps from B11's traces, where a task searched one sample's whole ORF
-set against one Pfam chunk:
+`site.config` sizes the search steps from B11's traces, where a task searched a 2 M-read sample's
+whole ORF set against one Pfam chunk. Those numbers are a floor now: subsampling is off, so a task
+sees about twenty times the reads, and the seeded arms do it in one task per sample.
 
 | step | tasks per sample | median | worst | cores used |
 |---|---|---|---|---|
