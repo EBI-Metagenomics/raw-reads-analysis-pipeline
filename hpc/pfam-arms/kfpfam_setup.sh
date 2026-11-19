@@ -24,7 +24,9 @@ mkdir -p "$OUT"
 
 # kfpfam is published nowhere, so there is nothing to pull: the image is built where Docker is,
 # then copied here. Codon's nodes have no Docker and `singularity build` needs root or fakeroot.
-if [[ ! -s $SIF ]]; then
+# Rebuilt when the tar is newer, so a re-exported image doesn't leave a stale .sif behind.
+if [[ ! -s $SIF || ( -s $OUT/kfpfam-filter.tar && $OUT/kfpfam-filter.tar -nt $SIF ) ]]; then
+    rm -f "$SIF"
     version=$(git -C "$KFPFAM" rev-parse --short HEAD 2>/dev/null || echo unknown)
     if [[ -s $OUT/kfpfam-filter.tar ]]; then
         # Exported with `docker save` elsewhere: convert it here, no Docker needed.
