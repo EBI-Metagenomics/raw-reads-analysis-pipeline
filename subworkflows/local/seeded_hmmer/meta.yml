@@ -1,8 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: "nail_hmmer"
-description: Find candidate (model, ORF) pairs with nail's seeding, then run HMMER on those pairs only at gathering thresholds
+name: "seeded_hmmer"
+description: Find candidate (model, ORF) pairs with nail's seeding or kfpfam's k-mer filter, then run HMMER on those pairs only at gathering thresholds
 keywords:
   - nail
+  - kfpfam
   - hmmer
   - pfam
 components: []

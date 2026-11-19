@@ -2,7 +2,7 @@ include { SEQKIT_TRANSLATE } from '../../../modules/nf-core/seqkit/translate/mai
 include { HMMER_HMMSEARCH } from '../../../modules/nf-core/hmmer/hmmsearch/main'
 include { PARSEHMMSEARCHCOVERAGE } from '../../../modules/local/parsehmmsearchcoverage/main'
 include { COMBINEHMMSEARCHTBL } from '../../../modules/local/combinehmmsearchtbl/main'
-include { NAIL_HMMER } from '../nail_hmmer/main'
+include { SEEDED_HMMER } from '../seeded_hmmer/main'
 include { FRAGGENESCANRS } from '../../../modules/local/fraggenescanrs/main'
 include { SELECTFRAMES } from '../../../modules/local/selectframes/main'
 
@@ -28,11 +28,19 @@ workflow PROFILE_HMMSEARCH_PFAM {
 
     ch_alignments = Channel.empty()
 
-    if (params.pfam_search_engine == 'nail') {
-        NAIL_HMMER(ch_orfs, pfam_db)
-        ch_versions = ch_versions.mix(NAIL_HMMER.out.versions)
-        ch_alignments = NAIL_HMMER.out.alignments
-        ch_domtbl = NAIL_HMMER.out.domtbl
+    if (params.pfam_search_engine in ['nail', 'kfpfam']) {
+        if (params.pfam_search_engine == 'kfpfam' && !(params.kfpfam_prep && params.kfpfam_index)) {
+            error(
+                "pfam_search_engine 'kfpfam' needs kfpfam_prep and kfpfam_index, the prep directory " +
+                "and the tiled k-mer index built from the same Pfam-A.hmm this run searches. " +
+                "hpc/pfam-arms/kfpfam_setup.sh builds both, and kfpfam_sif the image that runs them."
+            )
+        }
+
+        SEEDED_HMMER(ch_orfs, pfam_db)
+        ch_versions = ch_versions.mix(SEEDED_HMMER.out.versions)
+        ch_alignments = SEEDED_HMMER.out.alignments
+        ch_domtbl = SEEDED_HMMER.out.domtbl
     }
     else {
         // chunk seqs

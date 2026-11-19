@@ -53,18 +53,41 @@ arm current
 arm filter --pfam_orf_filter true
 arm nail -c unchunked_pfam.config --pfam_search_engine nail
 arm both -c unchunked_pfam.config --pfam_search_engine nail --pfam_orf_filter true
+# nail at its loose seeding filter, so nail and kfpfam A are compared at matched recall rather
+# than at matched defaults. V2 measured about 334 candidate pairs per read here against 65.
+arm nail_loose -c unchunked_pfam.config --pfam_search_engine nail --pfam_nail_seed_pvalue 0.1
+# kfpfam's two modes. The index carries its own k-mer bit threshold, so each mode has its own and
+# the numbers must match it: A is nail's cost at higher recall, B is nail's recall at less cost.
+if [[ -s kfpfam/index/k4T6.5.tidx ]]; then
+    kf="--kfpfam_sif $PWD/kfpfam/kfpfam-filter.sif --kfpfam_prep $PWD/kfpfam/prep"
+    arm kfpfam_a $kf --pfam_search_engine kfpfam \
+        --kfpfam_index "$PWD/kfpfam/index/k4T6.5.tidx" \
+        --kfpfam_bar 17 --kfpfam_gate 16.5 --kfpfam_min_gapped 21.25
+    arm kfpfam_b $kf --pfam_search_engine kfpfam \
+        --kfpfam_index "$PWD/kfpfam/index/k4T7.5.tidx" \
+        --kfpfam_bar 20 --kfpfam_gate 16.5 --kfpfam_min_gapped 26.25
+else
+    echo "no kfpfam index: run kfpfam_setup.sh to add the kfpfam arms" >&2
+fi
+
+# `current` first, so compare_profiles.py measures every other arm against it
+ARMS="current filter nail both nail_loose"
+if [[ -s kfpfam/index/k4T6.5.tidx ]]; then
+    ARMS="$ARMS kfpfam_a kfpfam_b"
+fi
 
 : > results/compare.tsv
 : > results/families.tsv
 for sample in $(tail -n +2 samplesheet.csv | cut -d, -f1); do
     args=()
-    for a in current filter nail both; do
+    for a in $ARMS; do
         args+=("$a=results/$a/$sample/function-summary/pfam/${sample}_pfam.txt.gz")
     done
     python3 "$PIPELINE/bin/compare_profiles.py" "$sample" "${args[@]}" --families "results/$sample.families.tsv" >> results/compare.tsv
     cat "results/$sample.families.tsv" >> results/families.tsv
     rm "results/$sample.families.tsv"
 done
-python3 cost.py current=results/current/pipeline_info/execution_trace_arm.txt filter=results/filter/pipeline_info/execution_trace_arm.txt \
-    nail=results/nail/pipeline_info/execution_trace_arm.txt both=results/both/pipeline_info/execution_trace_arm.txt > results/cost.tsv
+cost=()
+for a in $ARMS; do cost+=("$a=results/$a/pipeline_info/execution_trace_arm.txt"); done
+python3 cost.py "${cost[@]}" > results/cost.tsv
 echo finished

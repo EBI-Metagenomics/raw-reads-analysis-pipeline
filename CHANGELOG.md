@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `pfam_orf_filter`: keep ORFs in FragGeneScanRs's frame, plus other ORFs with a hexamer coding score at or above `pfam_orf_filter_threshold`, before the Pfam search. Off by default.
 - `pfam_search_engine = nail`: nail's seeding finds candidate (model, ORF) pairs, then HMMER checks only those pairs at gathering thresholds, through `pyhmmer`. Alignments are published as `*_pfam_alignments.parquet`. The default stays `hmmsearch`.
+- `pfam_search_engine = kfpfam`: kfpfam's k-mer prefilter in place of nail's seeding, with HMMER checking its candidate pairs exactly as the nail path does. Its prep directory, tiled index and image are built once by `hpc/pfam-arms/kfpfam_setup.sh` and passed as `kfpfam_prep`, `kfpfam_index` and `kfpfam_sif`; `kfpfam_bar`, `kfpfam_gate`, `kfpfam_min_gapped` and `kfpfam_block` set the mode, defaulting to kfpfam's Mode A. The default engine stays `hmmsearch`.
 - `pfam_search_engine = nail` works with a chunked Pfam database as well as a single `Pfam-A.hmm`. nail searches one whole HMM file, so each chunk is seeded and searched separately, then the domtbls are concatenated and the alignments merged into one Parquet per sample. `-Z` stays the whole database's model count, so E-values match an unchunked search.
 
 ### Fixed
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `subworkflows/local/nail_hmmer` is now `seeded_hmmer`, since nail and kfpfam share it: a seeding step, then HMMER on the candidate pairs. Config selectors naming `NAIL_HMMER` must become `SEEDED_HMMER`.
 - Pfam moves from 38.0 to 38.2 (30,134 models), the release behind MGnify's protein annotations, so Pfam profiles change. Existing `pfam` database caches must be cleared or refreshed with `--force_download_dbs`.
 - `bbmap/reformat` and `bbmap/reformat_standardise` replaced with the shared modules from [ebi-metagenomics/nf-modules](https://github.com/EBI-Metagenomics/nf-modules), with the channel and `modules.config` changes that required ([#26](https://github.com/EBI-Metagenomics/raw-reads-analysis-pipeline/pull/26)).
 - GitHub Actions now runs the nf-test suite on `master` under the Docker profile.

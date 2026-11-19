@@ -41,21 +41,30 @@ Slurm for node-local space only stops the job being scheduled.
 
 ## Samples
 
-Chosen from ENA's metadata only: paired Illumina, labelled metagenomic WGS, 5–25 M read pairs. Contents haven't been checked.
+`samplesheet.csv` and `runs.tsv` are the response's own reads, copied from
+`nar-review-response/hpc/B11_pfam_arms`, so the Zymo runs have ground truth and the biome runs are
+comparable with B2. Six Zymo standards cover the mock communities, five natural metagenomes the
+biomes, and two further runs sit at 250 nt for the read-length question; the `long` pair is run
+separately, through `samplesheet_long.csv` there.
 
-| Sample | Environment | Read length | Note |
-|---|---|---|---|
-| DRR012573 | Soil | 100 |  |
-| DRR1002327 | Soil | 150 |  |
-| DRR160704 | Soil | 250 |  |
-| DRR083064 | Marine plankton | 100 | 20–100 µm filter fraction, so likely eukaryote-rich |
-| SRR23559199 | Marine coastal | 150 |  |
-| DRR092732 | Deep sea | 250 | 4,500 m |
-| SRR30690279 | Freshwater | 150 |  |
-| SRR28214405 | Viral metagenome | 150 | ENA's library source says GENOMIC |
-| DRR1003640 | Human gut | 150 | Host reads removed by the pipeline |
+| Run | Set | Label | Reads | Read length |
+|---|---|---|---|---|
+| ERR2984773 | zymo | D6300 even (cells) | 8.8 M | 151 |
+| SRR12324253 | zymo | D6300 even (cells) | 51.5 M | 150 |
+| SRR12829160 | zymo | D6305/D6306 even (DNA) | 40.7 M | 151 |
+| ERR2935805 | zymo | D6310 log (cells) | 47.8 M | 101 |
+| SRR23926920 | zymo | D6331 gut | 37.7 M | 150 |
+| SRR32629731 | zymo | D6331 gut | 10.7 M | 99 |
+| ERR6785304 | biome | bird gut | 73.5 M | 72 |
+| ERR4334731 | biome | freshwater | 62.9 M | 145 |
+| ERR5006025 | biome | human gut | 42.6 M | 112 |
+| SRR12479991 | biome | marine | 23.5 M | 151 |
+| ERR5866877 | biome | soil | 40.2 M | 75 |
+| DRR160704 | long | soil | 9.9 M | 250 |
+| DRR092732 | long | deep sea | 6.6 M | 251 |
 
-The set doesn't deliberately cover high and low GC, because ENA has no GC field. `compare.tsv` shows where each sample lands; check the extremes among these before relying on the threshold.
+Read length matters here because the ORF filter's coding score sums over an ORF, so a threshold set
+on 150 nt reads need not hold at 72 or 250. `compare.tsv` is where to look for that.
 
 ## What to look at
 
