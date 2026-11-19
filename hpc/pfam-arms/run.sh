@@ -56,14 +56,16 @@ arm both -c unchunked_pfam.config --pfam_search_engine nail --pfam_orf_filter tr
 # nail at its loose seeding filter, so nail and kfpfam A are compared at matched recall rather
 # than at matched defaults. V2 measured about 334 candidate pairs per read here against 65.
 arm nail_loose -c unchunked_pfam.config --pfam_search_engine nail --pfam_nail_seed_pvalue 0.1
-# kfpfam's two modes. The index carries its own k-mer bit threshold, so each mode has its own and
-# the numbers must match it: A is nail's cost at higher recall, B is nail's recall at less cost.
+# kfpfam's two modes, on one whole Pfam like the nail arms: the index covers the whole database,
+# and chunks would only split HMMER_PAIRS. The index carries its own k-mer bit threshold, so each
+# mode has its own and the numbers must match it: A is nail's cost at higher recall, B is nail's
+# recall at less cost.
 if [[ -s kfpfam/index/k4T6.5.tidx ]]; then
     kf="--kfpfam_sif $PWD/kfpfam/kfpfam-filter.sif --kfpfam_prep $PWD/kfpfam/prep"
-    arm kfpfam_a $kf --pfam_search_engine kfpfam \
+    arm kfpfam_a -c unchunked_pfam.config $kf --pfam_search_engine kfpfam \
         --kfpfam_index "$PWD/kfpfam/index/k4T6.5.tidx" \
         --kfpfam_bar 17 --kfpfam_gate 16.5 --kfpfam_min_gapped 21.25
-    arm kfpfam_b $kf --pfam_search_engine kfpfam \
+    arm kfpfam_b -c unchunked_pfam.config $kf --pfam_search_engine kfpfam \
         --kfpfam_index "$PWD/kfpfam/index/k4T7.5.tidx" \
         --kfpfam_bar 20 --kfpfam_gate 16.5 --kfpfam_min_gapped 26.25
 else
