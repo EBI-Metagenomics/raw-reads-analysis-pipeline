@@ -25,6 +25,8 @@ SCHEMA = pa.schema(
         ("frame", pa.int8()),
         ("orf_begin", pa.int32()),
         ("orf_end", pa.int32()),
+        ("read_from", pa.int32()),
+        ("read_to", pa.int32()),
         ("pfam", pa.string()),
         ("domain", pa.int16()),
         ("seq_score", pa.float32()),
@@ -46,6 +48,23 @@ SCHEMA = pa.schema(
 
 def text(value):
     return value.decode() if isinstance(value, bytes) else value
+
+
+def read_span(frame, begin, end, ali_from, ali_to):
+    """The aligned residues' nucleotides on the read: 1-based, inclusive, forward numbering.
+
+    Carried in the output so that anchoring a read to anything else, a protein database say, needs
+    no frame arithmetic. `begin` and `end` are the translated stretch as seqkit names it, already
+    offset for the frame, and its length is a whole number of codons. A forward frame reads up
+    from `begin`, a reverse frame down from `end`, three nucleotides per residue either way.
+
+    Not the mapping in hmmer_domtbl_parse_coverage.py: that one adds the frame offset a second
+    time on top of `begin`, and places a reverse frame one nucleotide low. Those shifts cancel
+    when it compares hits on one read, which is all it does with them.
+    """
+    if frame > 0:
+        return begin + 3 * (ali_from - 1), begin + 3 * (ali_to - 1) + 2
+    return end - 3 * (ali_to - 1) - 2, end - 3 * (ali_from - 1)
 
 
 def read_seeds(path):
@@ -96,9 +115,11 @@ def search(hmm, block, num_models):
         read, frame, begin, end = ORF_NAME.match(name).groups()
         for n, domain in enumerate((d for d in hit.domains if d.reported), 1):
             ali = domain.alignment
+            frame_i, begin_i, end_i = int(frame), int(begin), int(end)
+            read_from, read_to = read_span(frame_i, begin_i, end_i, ali.target_from, ali.target_to)
             rows.append(
                 (
-                    read, int(frame), int(begin), int(end), pfam, n,
+                    read, frame_i, begin_i, end_i, read_from, read_to, pfam, n,
                     hit.score, domain.score, hit.evalue, domain.i_evalue,
                     ali.hmm_from, ali.hmm_to, ali.target_from, ali.target_to,
                     domain.env_from, domain.env_to,

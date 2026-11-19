@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `*_pfam_alignments.parquet` gains `read_from` and `read_to`, the aligned residues' nucleotides on the read, so a domain can be placed on its read without redoing the frame arithmetic. `hmmer_domtbl_parse_coverage.py`'s own mapping is not usable for this: it adds the frame offset a second time on top of the ORF's `begin` and places a reverse frame one nucleotide low, which cancels out when it compares hits on one read but is wrong as a read coordinate.
+
 - The `hmmsearch_subsampling` draw is now reproducible. `SEQKIT_SHUFFLE_FASTA` picked its reads with unseeded `shuf`, so every run searched a different subsample and two runs of the same data could not be compared. It now uses seeded reservoir sampling (`ext.seed`, 23 by default), which also holds only the kept read names in memory rather than all of them.
 
 ### Changed

@@ -25,14 +25,20 @@ mkdir -p "$OUT"
 # then copied here. Codon's nodes have no Docker and `singularity build` needs root or fakeroot.
 if [[ ! -s $SIF ]]; then
     version=$(git -C "$KFPFAM" rev-parse --short HEAD 2>/dev/null || echo unknown)
-    cat >&2 <<MSG
-build the image on a machine with Docker, then copy it to $SIF:
+    if [[ -s $OUT/kfpfam-filter.tar ]]; then
+        # Exported with `docker save` elsewhere: convert it here, no Docker needed.
+        singularity build "$SIF" "docker-archive://$OUT/kfpfam-filter.tar"
+    else
+        cat >&2 <<MSG
+no image. Build it where Docker is, export it, and copy the tar to $OUT:
   docker build -f docker/filter.Dockerfile --build-arg KFPFAM_VERSION=$version \\
       --platform linux/amd64 -t kfpfam-filter $KFPFAM
-  singularity build kfpfam-filter.sif docker-daemon://kfpfam-filter:latest
+  docker save kfpfam-filter:latest -o kfpfam-filter.tar
+Then re-run this script, which converts it to $SIF.
 The image must be amd64: Codon is x86_64, and the filter's SIMD path there is SSE4.1.
 MSG
-    exit 1
+        exit 1
+    fi
 fi
 
 run () { singularity exec --bind "$PWD:$PWD" --pwd "$PWD" "$SIF" "$@"; }

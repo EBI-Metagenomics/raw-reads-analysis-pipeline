@@ -25,22 +25,26 @@ process KFPFAM_FILTER {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def target = orfs.name.endsWith('.gz') ? orfs.name[0..-4] : orfs.name
-    def unzip = orfs.name.endsWith('.gz') ? "gunzip -c ${orfs} > ${target}" : ''
+    def reader = orfs.name.endsWith('.gz') ? "gunzip -c ${orfs}" : "cat ${orfs}"
+    // The filter's reader takes one line per sequence and asserts it, while `seqkit translate`
+    // wraps at 60 columns, so the ORFs are flattened first. HMMER_PAIRS reads the wrapped file.
+    //
     // The filter writes (ORF, model index, diagonal, gapped), indices into prep's models.tsv, and
     // only pairs scoring at least FILTER_MIN_GAPPED, which is the bar HMMER then re-scores at.
     // HMMER_PAIRS wants nail's seed format, model name first, so the index becomes models.tsv's
     // NAME column: the same name pyhmmer reads from the HMM file.
     """
-    ${unzip}
+    ${reader} \\
+        | awk '/^>/ { if (NR > 1) printf "\\n"; print; next } { printf "%s", \$0 } END { printf "\\n" }' \\
+        > orfs.flat.faa
 
     RAYON_NUM_THREADS=${task.cpus} FILTER_MIN_GAPPED=${min_gapped} ${args} \\
-        filter join ${prep} ${index} ${bar} ${gate} ${block} ${target} pairs.tsv
+        filter join ${prep} ${index} ${bar} ${gate} ${block} orfs.flat.faa pairs.tsv
 
     awk -F'\\t' 'NR == FNR { if (FNR > 1) name[FNR - 2] = \$2; next } { print name[\$2] "\\t" \$1 }' \\
         ${prep}/models.tsv pairs.tsv > ${prefix}.seeds.tsv
 
-    rm -f pairs.tsv ${orfs.name.endsWith('.gz') ? target : ''}
+    rm -f pairs.tsv orfs.flat.faa
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

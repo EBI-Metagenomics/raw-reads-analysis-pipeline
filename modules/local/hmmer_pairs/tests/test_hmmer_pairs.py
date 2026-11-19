@@ -30,7 +30,25 @@ def test_schema_and_alignment_lengths():
         assert sum(n for n, op in ops if op != "D") == len(r["residues"]) == r["ali_to"] - r["ali_from"] + 1
         assert sum(n for n, op in ops if op != "I") == r["hmm_to"] - r["hmm_from"] + 1
         assert sum(n for n, _ in ops) == len(r["pp"])
+        # The read span is the aligned residues' nucleotides, so three per residue, inside the ORF
+        assert r["read_to"] - r["read_from"] + 1 == 3 * (r["ali_to"] - r["ali_from"] + 1)
+        assert min(r["orf_begin"], r["orf_end"]) <= r["read_from"] <= r["read_to"] <= max(r["orf_begin"], r["orf_end"])
     assert table.column("pfam").to_pylist() == sorted(table.column("pfam").to_pylist())
+
+
+def test_read_span_covers_the_right_codons():
+    """Every residue is three nucleotides, counted up from `begin` or down from `end`."""
+    for frame, begin, end in ((1, 1, 123), (2, 2, 124), (3, 3, 125), (-1, 3, 125), (-2, 2, 124), (-3, 1, 123)):
+        residues = (end - begin + 1) // 3
+        for ali_from, ali_to in ((1, 1), (1, 5), (4, 20), (residues, residues), (1, residues)):
+            got = hp.read_span(frame, begin, end, ali_from, ali_to)
+            assert got[1] - got[0] + 1 == 3 * (ali_to - ali_from + 1), (frame, ali_from, ali_to, got)
+            assert begin <= got[0] <= got[1] <= end, (frame, ali_from, ali_to, got)
+        # the whole ORF, and each end of it
+        assert hp.read_span(frame, begin, end, 1, residues) == (begin, end)
+        first, last = hp.read_span(frame, begin, end, 1, 1), hp.read_span(frame, begin, end, residues, residues)
+        assert (first, last) == (((begin, begin + 2), (end - 2, end)) if frame > 0
+                                 else ((end - 2, end), (begin, begin + 2)))
 
 
 def test_output_does_not_depend_on_threads():
@@ -40,5 +58,6 @@ def test_output_does_not_depend_on_threads():
 
 if __name__ == "__main__":
     test_schema_and_alignment_lengths()
+    test_read_span_covers_the_right_codons()
     test_output_does_not_depend_on_threads()
     print("ok")
