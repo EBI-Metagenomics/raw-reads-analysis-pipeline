@@ -14,14 +14,33 @@ workflow PROFILE_HMMSEARCH_PFAM {
     main:
     ch_versions = Channel.empty()
 
-    SEQKIT_TRANSLATE(reads_fasta)
+    // The seeded engines search a whole HMM file, so they have no Pfam chunking to spread a
+    // sample over: without this, translation, seeding and HMMER are each one task per sample over
+    // the whole library. Chunk the reads instead, before translation, so ORF counts per task stay
+    // bounded whatever the library's depth. hmmsearch keeps chunking its ORFs by size below, since
+    // it is already spread over the database's chunks.
+    ch_reads = reads_fasta
+    if (params.pfam_search_engine in ['nail', 'kfpfam'] && params.pfam_seeded_chunk_reads > 0) {
+        ch_reads = reads_fasta
+            .splitFasta(by: params.pfam_seeded_chunk_reads, elem: 1, file: true)
+            .groupTuple()
+            .flatMap { meta, fastas ->
+                def chunks = fastas instanceof Collection ? fastas : [fastas]
+                // read_chunk makes each task's key unique; read_chunks is how many to group back
+                chunks.withIndex().collect { fasta, i ->
+                    tuple(meta + [read_chunk: i + 1, read_chunks: chunks.size()], fasta)
+                }
+            }
+    }
+
+    SEQKIT_TRANSLATE(ch_reads)
 
     ch_orfs = SEQKIT_TRANSLATE.out.fastx
 
     if (params.pfam_orf_filter) {
         // Reads with no sequence have no ORFs either, and FragGeneScanRs needs input
-        FRAGGENESCANRS(reads_fasta.filter { _meta, fasta -> fasta.countFasta(limit: 1) > 0 })
-        SELECTFRAMES(reads_fasta.join(SEQKIT_TRANSLATE.out.fastx).join(FRAGGENESCANRS.out.calls))
+        FRAGGENESCANRS(ch_reads.filter { _meta, fasta -> fasta.countFasta(limit: 1) > 0 })
+        SELECTFRAMES(ch_reads.join(SEQKIT_TRANSLATE.out.fastx).join(FRAGGENESCANRS.out.calls))
         ch_versions = ch_versions.mix(FRAGGENESCANRS.out.versions, SELECTFRAMES.out.versions)
         ch_orfs = SELECTFRAMES.out.orfs
     }

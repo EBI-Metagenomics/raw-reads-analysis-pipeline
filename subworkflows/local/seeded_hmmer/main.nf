@@ -43,11 +43,15 @@ workflow SEEDED_HMMER {
             params.kfpfam_block,
         )
         ch_versions = ch_versions.mix(KFPFAM_FILTER.out.versions)
-        // one seeds file per sample, copied onto that sample's chunk keys
+        // One seeds file per read chunk, copied onto that chunk's Pfam-chunk keys. The key is
+        // (sample, read chunk), since PROFILE_HMMSEARCH_PFAM may have split the reads.
         ch_seeds = ch_chunks
-            .map { meta, _fasta, _hmm -> tuple(meta.id, meta) }
-            .combine(KFPFAM_FILTER.out.seeds.map { meta, seeds -> tuple(meta.id, seeds) }, by: 0)
-            .map { _id, meta, seeds -> tuple(meta, seeds) }
+            .map { meta, _fasta, _hmm -> tuple([meta.id, meta.read_chunk], meta) }
+            .combine(
+                KFPFAM_FILTER.out.seeds.map { meta, seeds -> tuple([meta.id, meta.read_chunk], seeds) },
+                by: 0,
+            )
+            .map { _key, meta, seeds -> tuple(meta, seeds) }
     }
     else {
         // nail's seeding reads one HMM file, so it runs per (sample, chunk)
@@ -63,15 +67,21 @@ workflow SEEDED_HMMER {
     )
     ch_versions = ch_versions.mix(HMMER_PAIRS.out.versions)
 
-    // Back to one domtbl and one Parquet per sample. Both steps also run for a single chunk,
-    // so the chunked and unchunked paths stay the same shape.
+    // Back to one domtbl and one Parquet per sample: a task per (read chunk, Pfam chunk), so the
+    // group is as big as their product. Both steps also run for a single chunk of each, so the
+    // chunked and unchunked paths stay the same shape. Sorted so the concatenated domtbl does not
+    // depend on the order the chunks finish in.
+    ch_chunk_keys = ['hmm_chunk', 'hmm_chunks', 'read_chunk', 'read_chunks']
     ch_grouped = HMMER_PAIRS.out.domtbl
         .join(HMMER_PAIRS.out.alignments)
         .map { meta, domtbl, parquet ->
-            def key = meta.findAll { k, _v -> !(k in ['hmm_chunk', 'hmm_chunks']) }
-            tuple(groupKey(key, meta.hmm_chunks), domtbl, parquet)
+            def key = meta.findAll { k, _v -> !(k in ch_chunk_keys) }
+            tuple(groupKey(key, meta.hmm_chunks * (meta.read_chunks ?: 1)), domtbl, parquet)
         }
         .groupTuple()
+        .map { meta, domtbls, parquets ->
+            tuple(meta, domtbls.sort { it.name }, parquets.sort { it.name })
+        }
 
     COMBINEHMMSEARCHTBL(ch_grouped.map { meta, domtbls, _parquets -> tuple(meta, domtbls) })
     MERGEPARQUET(ch_grouped.map { meta, _domtbls, parquets -> tuple(meta, parquets) })

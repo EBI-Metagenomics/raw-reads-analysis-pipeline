@@ -90,6 +90,11 @@
             "default": -5,
             "description": "Coding score for ORFs outside FragGeneScanRs's frame, used when `pfam_orf_filter` is on."
         },
+        "pfam_seeded_chunk_reads": {
+            "type": "integer",
+            "default": 4000000,
+            "description": "Reads per chunk for the `nail` and `kfpfam` engines, which search one whole HMM file and so have no database chunking to spread a sample over. The reads are split before translation, so translation, seeding and HMMER are all bounded by this. 0 or less searches each sample in one task."
+        },
         "pfam_search_engine": {
             "type": "string",
             "default": "hmmsearch",

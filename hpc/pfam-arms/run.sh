@@ -46,7 +46,7 @@ arm() {
     nextflow run "$PIPELINE" -profile singularity -c site.config -resume \
         --samplesheet samplesheet.csv --outdir "results/$name" \
         --skip_functional false --skip_taxonomic true \
-        --hmmsearch_subsampling -1 \
+        --hmmsearch_subsampling=-1 \
         --trace_report_suffix arm --singularity_cachedir singularity_cache "$@"
 }
 

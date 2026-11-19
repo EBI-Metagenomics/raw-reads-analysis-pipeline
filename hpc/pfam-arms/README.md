@@ -18,8 +18,14 @@ The first run downloads the host and phiX databases, and the FASTQ files from EN
 ## Chunking and resources
 
 `site.config` sizes the search steps from B11's traces, where a task searched a 2 M-read sample's
-whole ORF set against one Pfam chunk. Those numbers are a floor now: subsampling is off, so a task
-sees about twenty times the reads, and the seeded arms do it in one task per sample.
+whole ORF set against one Pfam chunk. Those numbers are a floor now: subsampling is off, so a
+library holds about twenty times the reads.
+
+The seeded engines search one whole HMM file, so they have no database chunking to spread a sample
+over. `pfam_seeded_chunk_reads` (4 M) splits the reads instead, before translation, so translation,
+seeding and HMMER are each one task per 4 M reads rather than one per sample: about ten tasks per
+library here. Set it to 0 to go back to one task per sample. The hmmsearch arms are untouched —
+they keep chunking ORFs by size, since they already spread over the database's chunks.
 
 | step | tasks per sample | median | worst | cores used |
 |---|---|---|---|---|
