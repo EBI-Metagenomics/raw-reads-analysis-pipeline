@@ -3,12 +3,13 @@
 # mode. Run it on the HPC before run.sh, from this directory. Everything lands in kfpfam/ beside
 # this script, and nothing here is part of the benchmark's measured cost.
 #
-#   KFPFAM=~/src/kfpfam PFAM_HMM=pfam_unchunked/Pfam-A.hmm CLANS=Pfam-A.clans.tsv.gz ./kfpfam_setup.sh
+#   KFPFAM=~/src/kfpfam PFAM_HMM=pfam_unchunked/Pfam-A.hmm ./kfpfam_setup.sh
 #
 #   KFPFAM   a kfpfam checkout (its docker/filter.Dockerfile and measure/prep.py are used)
 #   PFAM_HMM the same Pfam-A.hmm the arms search, so model names and indices line up with the
 #            pipeline's -Z and with HMMER_PAIRS; run.sh builds one from the site's chunks
-#   CLANS    Pfam-A.clans.tsv.gz from the Pfam release, which prep.py reads
+#   CLANS    optional: Pfam-A.clans.tsv.gz. prep.py uses it for one column of models.tsv, and
+#            neither the filter nor this pipeline reads that column, so it defaults to empty.
 #
 # The index encodes its own k-mer bit threshold, so each mode needs its own: Mode A (nail's cost,
 # higher recall) uses 6.5 with bar 17 and HMMER at 21.25, Mode B (nail's recall, less cost) uses
@@ -16,7 +17,7 @@
 set -euo pipefail
 : "${KFPFAM:?set KFPFAM to a kfpfam checkout}"
 : "${PFAM_HMM:?set PFAM_HMM to the Pfam-A.hmm the arms search}"
-: "${CLANS:?set CLANS to Pfam-A.clans.tsv.gz}"
+CLANS=${CLANS:-}
 OUT=$PWD/kfpfam
 SIF=$OUT/kfpfam-filter.sif
 mkdir -p "$OUT"
@@ -47,6 +48,12 @@ if [[ ! -s $OUT/prep/models.tsv ]]; then
     hmm=$(realpath "$PFAM_HMM")
     gz=$hmm
     [[ $hmm == *.gz ]] || { gzip -c "$hmm" > "$OUT/Pfam-A.hmm.gz"; gz=$OUT/Pfam-A.hmm.gz; }
+    if [[ -z $CLANS ]]; then
+        # prep.py wants the file, but only to fill models.tsv's `clan` column: the filter loads
+        # profile.f32 and offs.u32 alone, and the pipeline reads the `name` column.
+        : | gzip -c > "$OUT/clans.tsv.gz"
+        CLANS=$OUT/clans.tsv.gz
+    fi
     run python3 /opt/kfpfam/prep.py "$gz" "$(realpath "$CLANS")" "$OUT/prep"
 fi
 
