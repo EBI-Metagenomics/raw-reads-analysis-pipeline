@@ -53,12 +53,9 @@ arm() {
 # Seeded arms first: they are the cheap ones, and whichever runs first pays for the shared QC,
 # decontamination and merge, so the hmmsearch arms start from a warm cache rather than the other
 # way round. With subsampling off, decide from the seeded arms' real cost whether the hmmsearch
-# arms are worth running at full depth at all.
-arm nail -c unchunked_pfam.config --pfam_search_engine nail
-# nail at its loose seeding filter, so nail and kfpfam A are compared at matched recall rather
-# than at matched defaults. V2 measured about 334 candidate pairs per read here against 65.
-arm nail_loose -c unchunked_pfam.config --pfam_search_engine nail --pfam_nail_seed_pvalue 0.1
-arm both -c unchunked_pfam.config --pfam_search_engine nail --pfam_orf_filter true
+# arms are worth running at full depth at all. kfpfam goes first of all: its prefilter is the
+# cheapest, so a failure there surfaces before anything expensive is queued.
+
 # kfpfam's two modes, on one whole Pfam like the nail arms: the index covers the whole database,
 # and chunks would only split HMMER_PAIRS. The index carries its own k-mer bit threshold, so each
 # mode has its own and the numbers must match it: A is nail's cost at higher recall, B is nail's
@@ -74,6 +71,12 @@ if [[ -s kfpfam/index/k4T6.5.tidx ]]; then
 else
     echo "no kfpfam index: run kfpfam_setup.sh to add the kfpfam arms" >&2
 fi
+
+arm nail -c unchunked_pfam.config --pfam_search_engine nail
+# nail at its loose seeding filter, so nail and kfpfam A are compared at matched recall rather
+# than at matched defaults. V2 measured about 334 candidate pairs per read here against 65.
+arm nail_loose -c unchunked_pfam.config --pfam_search_engine nail --pfam_nail_seed_pvalue 0.1
+arm both -c unchunked_pfam.config --pfam_search_engine nail --pfam_orf_filter true
 
 # The expensive pair, last: about 20x B11's measured 550 and 358 core-hours now that every merged
 # read is searched rather than a 2 M subsample.
