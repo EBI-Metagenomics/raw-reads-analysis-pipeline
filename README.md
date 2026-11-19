@@ -85,6 +85,17 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | cmsearch_chunksize            | Size of reads chunks for `cmsearch` (Default: `3.GB`)                                      |
 | hmmsearch_chunksize           | Size of reads chunks for `hmmsearch` (Default: `1.GB`)                                     |
 | hmmsearch_subsampling         | Number of reads to subsample for `hmmsearch`, `-1` for no subsampling (Default: `2000000`) |
+| pfam_orf_filter               | Search only ORFs in FragGeneScanRs's frame and others scoring highly (Default: `false`)    |
+| pfam_orf_filter_threshold     | Coding score for ORFs outside FragGeneScanRs's frame (Default: `-5`)                       |
+| pfam_search_engine            | `hmmsearch`, or `nail` / `kfpfam` for prefiltered candidates checked by HMMER (Default: `hmmsearch`) |
+| pfam_nail_seed_pvalue         | nail's seeding filter `-S`, used with `pfam_search_engine = nail` (Default: `0.01`)        |
+| kfpfam_sif                    | Singularity image holding kfpfam's `filter` (Default: none)                                |
+| kfpfam_prep                   | kfpfam prep directory, built from the Pfam-A.hmm this run searches (Default: none)         |
+| kfpfam_index                  | kfpfam tiled k-mer index; must match the bar and gapped bar below (Default: none)          |
+| kfpfam_bar                    | kfpfam's diagonal bar in bits; Mode A 17, Mode B 20 (Default: `17`)                        |
+| kfpfam_gate                   | kfpfam's window gate in bits (Default: `16.5`)                                             |
+| kfpfam_min_gapped             | gapped score at which a pair goes to HMMER; Mode A 21.25, Mode B 26.25 (Default: `21.25`)  |
+| kfpfam_block                  | ORFs per kfpfam block (Default: `400000`)                                                  |
 | decontam_short_chunksize      | Size of reads chunks for short-read decontamination (Default: `1280000000`)                |
 | decontam_long_chunksize       | Size of reads chunks for long-read host decontamination (Default: `12800000`)              |
 | save_trimmed_fail             | Save reads that fail QC trimming (Default: `false`)                                        |
@@ -238,7 +249,7 @@ Numerous `nf-core` modules are used throughout the pipeline, and the `nf-core` t
 | ---------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------ |
 | [mOTUs](https://motu-tool.org/)                                        | 3.0.3      | Database for mOTUs tools                                                                   |
 | [Rfam](https://rfam.org/)                                              | 15.0       | Ribosomal covariance models                                                                |
-| [Pfam](https://www.ebi.ac.uk/interpro/entry/pfam)                      | 38.0       | Protein hidden markov models (HMMs)                                                        |
+| [Pfam](https://www.ebi.ac.uk/interpro/entry/pfam)                      | 38.2       | Protein hidden markov models (HMMs)                                                        |
 | [SILVA](https://www.arb-silva.de/)                                     | 138.1      | LSU and SSU 16S database with taxonomy                                                     |
 | [hg38](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000001405.40/) | GRCh38.p14 | Human host reference genome for decontaminations                                           |
 | [phiX](https://www.ncbi.nlm.nih.gov/nuccore/9626372)                   | phiX174    | DNA sometimes introduced by Illumina sequencing platforms to be removed in decontamination |

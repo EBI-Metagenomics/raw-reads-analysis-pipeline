@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test Process FRAGGENESCANRS"
+    script "../main.nf"
+    process "FRAGGENESCANRS"
+
+    tag "modules"
+    tag "modules_"
+    tag "fraggenescanrs"
+
+    test("calls have a read header and coordinates") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['id': 'test'],
+                    file("${projectDir}/tests/fixtures/profile_hmmsearch_pfam/ERR10889147.mini.fasta.gz", checkIfExists: true),
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def lines = path(process.out.calls[0][1]).readLines()
+            assert lines[0].startsWith('>')
+            assert lines.any { it ==~ /\d+\t\d+\t[+-]\t.*/ }
+        }
+    }
+}

@@ -68,12 +68,31 @@ The `function-summary` directory contains files related to functional profiling 
 Output files:
 *	**`ERZ12345_pfam.txt.gz`**: This text file contains a tab-separated table of read counts for each detected Pfam-A profile (or “function”).
 *	**`ERZ12345_pfam.stats.json`**: This `json` file contains a summary of the numebr of reads mapped to Pfam, the number of Pfam models with hits and a sum of the number of hits across all Pfam models.
+*	**`ERZ12345_pfam_orf_filter.stats.json`**: Only with `pfam_orf_filter`. ORFs and residues before and after the filter, reads with and without a gene call, and whether the filter kept all ORFs because too few reads had a call.
+*	**`ERZ12345_pfam_alignments.parquet`**: Only with `pfam_search_engine = nail` or `kfpfam`. One row per domain that passes Pfam's gathering thresholds, written with zstd and sorted by family then read, which costs about 60 bytes a domain, so tens of MB for a run at the 2 M-read cap. Columns:
+
+| Column | What |
+|---|---|
+| `read` | read name, as the merged FASTA has it |
+| `frame`, `orf_begin`, `orf_end` | the translated stretch this domain sits on |
+| `read_from`, `read_to` | the aligned residues' nucleotides on the read, 1-based inclusive, forward numbering, so no frame arithmetic is needed to place a domain on its read |
+| `pfam`, `domain` | Pfam accession without its version, and which reported domain this is for that (read, family) |
+| `seq_score`, `dom_score`, `seq_evalue`, `i_evalue` | HMMER's sequence and domain scores, with `-Z` set to the whole database |
+| `hmm_from`, `hmm_to` | the stretch of the model that is aligned |
+| `ali_from`, `ali_to`, `env_from`, `env_to` | the alignment and envelope on the ORF, in residues |
+| `cigar` | the alignment against the model: `M` match, `I` residues the model lacks, `D` model positions the ORF lacks |
+| `residues` | the aligned residues, gaps removed |
+| `pp` | HMMER's posterior probability characters, one per CIGAR operation |
+
+With `pfam_search_engine = hmmsearch`, the default, no alignments are published: `hmmsearch` runs with `--noali` and only its domain table is kept, which has the coordinates but no alignment.
 
 ```
 function-summary
 └── pfam
     ├── ERZ12345_pfam.txt.gz
-    └── ERZ12345_pfam.stats.json
+    ├── ERZ12345_pfam.stats.json
+    ├── ERZ12345_pfam_orf_filter.stats.json
+    └── ERZ12345_pfam_alignments.parquet
 ```
 
 ## Top-level summary output files

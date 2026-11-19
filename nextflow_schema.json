@@ -80,6 +80,71 @@
             "type": "integer",
             "default": 2000000
         },
+        "pfam_orf_filter": {
+            "type": "boolean",
+            "default": false,
+            "description": "Search only ORFs in FragGeneScanRs's frame, plus other ORFs with a hexamer coding score at or above `pfam_orf_filter_threshold`."
+        },
+        "pfam_orf_filter_threshold": {
+            "type": "number",
+            "default": -5,
+            "description": "Coding score for ORFs outside FragGeneScanRs's frame, used when `pfam_orf_filter` is on."
+        },
+        "pfam_seeded_chunk_reads": {
+            "type": "integer",
+            "default": 4000000,
+            "description": "Reads per chunk for the `nail` and `kfpfam` engines, which search one whole HMM file and so have no database chunking to spread a sample over. The reads are split before translation, so translation, seeding and HMMER are all bounded by this. 0 or less searches each sample in one task."
+        },
+        "pfam_search_engine": {
+            "type": "string",
+            "default": "hmmsearch",
+            "enum": [
+                "hmmsearch",
+                "nail",
+                "kfpfam"
+            ],
+            "description": "`hmmsearch` searches every ORF against every model. `nail` finds candidate pairs with nail, `kfpfam` with kfpfam's k-mer prefilter; both then run HMMER on those pairs only and store the alignments."
+        },
+        "pfam_nail_seed_pvalue": {
+            "type": "number",
+            "default": 0.01,
+            "description": "nail's seeding filter (`-S`), used when `pfam_search_engine` is `nail`."
+        },
+        "kfpfam_sif": {
+            "type": "string",
+            "default": "",
+            "description": "Singularity image holding kfpfam's `filter`, used when `pfam_search_engine` is `kfpfam`. Built by `hpc/pfam-arms/kfpfam_setup.sh`."
+        },
+        "kfpfam_prep": {
+            "type": "string",
+            "default": "",
+            "description": "kfpfam prep directory (`models.tsv`, `profile.f32`, `offs.u32`), built from the same Pfam-A.hmm this run searches."
+        },
+        "kfpfam_index": {
+            "type": "string",
+            "default": "",
+            "description": "kfpfam tiled k-mer index (`*.tidx`). Must match the bar, gate and gapped bar below: `k4T6.5` for Mode A, `k4T7.5` for Mode B."
+        },
+        "kfpfam_bar": {
+            "type": "number",
+            "default": 17,
+            "description": "kfpfam's diagonal bar in bits (Mode A 17, Mode B 20)."
+        },
+        "kfpfam_gate": {
+            "type": "number",
+            "default": 16.5,
+            "description": "kfpfam's window gate in bits (16.5 in both modes)."
+        },
+        "kfpfam_min_gapped": {
+            "type": "number",
+            "default": 21.25,
+            "description": "Gapped score at which a pair is handed to HMMER (Mode A 21.25, Mode B 26.25)."
+        },
+        "kfpfam_block": {
+            "type": "integer",
+            "default": 400000,
+            "description": "ORFs per kfpfam block; larger blocks use more memory."
+        },
         "force_download_dbs": {
             "type": "boolean",
             "default": "false"
@@ -275,12 +340,33 @@
         },
         "results_file_headers.silva_taxonomy": {
             "type": "array",
-            "default": ["Count", "Superkingdom", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"]
+            "default": [
+                "Count",
+                "Superkingdom",
+                "Kingdom",
+                "Phylum",
+                "Class",
+                "Order",
+                "Family",
+                "Genus",
+                "Species"
+            ]
         },
         "results_file_headers.motus_taxonomy": {
             "type": "array",
-            "default": ["Count", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"]
+            "default": [
+                "Count",
+                "Kingdom",
+                "Phylum",
+                "Class",
+                "Order",
+                "Family",
+                "Genus",
+                "Species"
+            ]
         }
     },
-    "required": ["samplesheet"]
+    "required": [
+        "samplesheet"
+    ]
 }

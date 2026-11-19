@@ -7,8 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `pfam_orf_filter`: keep ORFs in FragGeneScanRs's frame, plus other ORFs with a hexamer coding score at or above `pfam_orf_filter_threshold`, before the Pfam search. Off by default.
+- `pfam_search_engine = nail`: nail's seeding finds candidate (model, ORF) pairs, then HMMER checks only those pairs at gathering thresholds, through `pyhmmer`. Alignments are published as `*_pfam_alignments.parquet`. The default stays `hmmsearch`.
+- `pfam_search_engine = kfpfam`: kfpfam's k-mer prefilter in place of nail's seeding, with HMMER checking its candidate pairs exactly as the nail path does. Its prep directory, tiled index and image are built once by `hpc/pfam-arms/kfpfam_setup.sh` and passed as `kfpfam_prep`, `kfpfam_index` and `kfpfam_sif`; `kfpfam_bar`, `kfpfam_gate`, `kfpfam_min_gapped` and `kfpfam_block` set the mode, defaulting to kfpfam's Mode A. The default engine stays `hmmsearch`.
+- `pfam_seeded_chunk_reads` (4 M): splits the reads before translation for the `nail` and `kfpfam` engines, which search one whole HMM file and so have no database chunking to spread a sample over. Translation, seeding and HMMER are then one task per chunk rather than one per sample. Set it to 0 for one task per sample. The `hmmsearch` path is unchanged.
+- `pfam_search_engine = nail` works with a chunked Pfam database as well as a single `Pfam-A.hmm`. nail searches one whole HMM file, so each chunk is seeded and searched separately, then the domtbls are concatenated and the alignments merged into one Parquet per sample. `-Z` stays the whole database's model count, so E-values match an unchunked search.
+
+### Fixed
+
+- `*_pfam_alignments.parquet` gains `read_from` and `read_to`, the aligned residues' nucleotides on the read, so a domain can be placed on its read without redoing the frame arithmetic. `hmmer_domtbl_parse_coverage.py`'s own mapping is not usable for this: it adds the frame offset a second time on top of the ORF's `begin` and places a reverse frame one nucleotide low, which cancels out when it compares hits on one read but is wrong as a read coordinate.
+
+- The `hmmsearch_subsampling` draw is now reproducible. `SEQKIT_SHUFFLE_FASTA` picked its reads with unseeded `shuf`, so every run searched a different subsample and two runs of the same data could not be compared. It now uses seeded reservoir sampling (`ext.seed`, 23 by default), which also holds only the kept read names in memory rather than all of them.
+
 ### Changed
 
+- `subworkflows/local/nail_hmmer` is now `seeded_hmmer`, since nail and kfpfam share it: a seeding step, then HMMER on the candidate pairs. Config selectors naming `NAIL_HMMER` must become `SEEDED_HMMER`.
+- Pfam moves from 38.0 to 38.2 (30,134 models), the release behind MGnify's protein annotations, so Pfam profiles change. Existing `pfam` database caches must be cleared or refreshed with `--force_download_dbs`.
 - `bbmap/reformat` and `bbmap/reformat_standardise` replaced with the shared modules from [ebi-metagenomics/nf-modules](https://github.com/EBI-Metagenomics/nf-modules), with the channel and `modules.config` changes that required ([#26](https://github.com/EBI-Metagenomics/raw-reads-analysis-pipeline/pull/26)).
 - GitHub Actions now runs the nf-test suite on `master` under the Docker profile.
 - End-to-end tests assert on `.fastp.json` content and line counts instead of md5 checksums, which were not stable across runs.

@@ -25,7 +25,15 @@ process SEQKIT_SHUFFLE_FASTA {
     prefix = task.ext.prefix ? "${task.ext.prefix}.${meta.id}" : "${meta.id}"
     def call_gzip = fasta.toString().endsWith('.gz') ? "| gzip -c ${args2}" : ''
     extension = fasta.toString().endsWith('.gz') ? '.gz' : ''
-    def head_cmd = shuffle ? "shuf -n ${subsample_n}" : "head -n ${subsample_n}"
+    // Seeded reservoir sampling: the same reads always give the same subsample, so runs and
+    // arms of a comparison search the same draw. `shuf` can't do this here, since busybox's
+    // has no --random-source. It also holds only the kept names, not every name.
+    def seed = task.ext.seed ?: 23
+    def sample_cmd = "awk -v n=${subsample_n} -v seed=${seed} '" +
+        'BEGIN { srand(seed) } ' +
+        '{ if (NR <= n) r[NR] = $0; else { i = int(rand() * NR) + 1; if (i <= n) r[i] = $0 } } ' +
+        "END { for (j = 1; j <= n && j <= NR; j++) print r[j] }'"
+    def head_cmd = shuffle ? sample_cmd : "head -n ${subsample_n}"
 
     """
     seqkit seq --name --only-id ${fasta} \\

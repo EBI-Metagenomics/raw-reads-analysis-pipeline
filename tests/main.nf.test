@@ -137,4 +137,83 @@ nextflow_pipeline {
             ) 
         }
     }
+
+    test("nail engine gives a Pfam profile and alignments") {
+
+        when {
+            params {
+                samplesheet = "${projectDir}/tests/fixtures/rrap/samplesheet_basic.csv"
+                outdir = "$outputDir"
+                pfam_search_engine = 'nail'
+            }
+        }
+
+        then {
+            def pfam = "${params.outdir}/test_sample/function-summary/pfam"
+            assert workflow.success
+            assert path("${pfam}/test_sample_pfam.txt.gz").linesGzip.size() > 1
+            assert file("${pfam}/test_sample_pfam_alignments.parquet").size() > 0
+        }
+    }
+
+    test("ORF filter gives a Pfam profile and filter stats") {
+
+        when {
+            params {
+                samplesheet = "${projectDir}/tests/fixtures/rrap/samplesheet_basic.csv"
+                outdir = "$outputDir"
+                pfam_orf_filter = true
+            }
+        }
+
+        then {
+            def pfam = "${params.outdir}/test_sample/function-summary/pfam"
+            assert workflow.success
+            assert path("${pfam}/test_sample_pfam.txt.gz").linesGzip.size() > 1
+            assert path("${pfam}/test_sample_pfam_orf_filter.stats.json").exists()
+        }
+    }
+
+    test("ORF filter and nail together") {
+
+        when {
+            params {
+                samplesheet = "${projectDir}/tests/fixtures/rrap/samplesheet_basic.csv"
+                outdir = "$outputDir"
+                pfam_orf_filter = true
+                pfam_search_engine = 'nail'
+            }
+        }
+
+        then {
+            def pfam = "${params.outdir}/test_sample/function-summary/pfam"
+            assert workflow.success
+            assert path("${pfam}/test_sample_pfam.txt.gz").linesGzip.size() > 1
+            assert path("${pfam}/test_sample_pfam_orf_filter.stats.json").text.contains('"fallback_kept_all_orfs": false')
+            assert file("${pfam}/test_sample_pfam_alignments.parquet").size() > 0
+        }
+    }
+
+    test("nail engine searches every chunk of a chunked Pfam database") {
+
+        config "./chunked_pfam.config"
+
+        when {
+            params {
+                samplesheet = "${projectDir}/tests/fixtures/rrap/samplesheet_basic.csv"
+                outdir = "$outputDir"
+                pfam_search_engine = 'nail'
+            }
+        }
+
+        then {
+            def pfam = "${params.outdir}/test_sample/function-summary/pfam"
+            assert workflow.success
+            // One search per chunk, one merged Parquet per sample
+            assert workflow.trace.succeeded().count { it.name.contains('NAIL_SEED') } == 2
+            assert workflow.trace.succeeded().count { it.name.contains('MERGEPARQUET') } == 1
+            assert path("${pfam}/test_sample_pfam.txt.gz").linesGzip.size() > 1
+            assert file("${pfam}/test_sample_pfam_alignments.parquet").size() > 0
+        }
+    }
 }
