@@ -22,12 +22,14 @@ process HMMER_PAIRS {
     script:
     prefix = task.ext.prefix ?: "${meta.id}"
     def script = file("${moduleDir}/bin/hmmer_pairs.py")
+    // an unchunked Pfam must hold every model the seeds name
+    def whole = meta.hmm_chunks == 1 ? '--whole' : ''
     """
     python ${script} \\
         --orfs ${orfs} \\
         --seeds ${seeds} \\
         --hmm ${hmm} \\
-        --num-models ${num_models} \\
+        --num-models ${num_models} ${whole} \\
         --threads ${task.cpus} \\
         --domtbl ${prefix}.domtbl.gz \\
         --parquet ${prefix}_alignments.parquet

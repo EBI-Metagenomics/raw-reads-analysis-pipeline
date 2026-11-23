@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `pfam_search_engine = kfpfam` with a prep directory built from another Pfam release is now an error. Seeds join to models by name, and names the HMM file lacks were skipped, so renamed families got no reads without a warning. `KFPFAM_FILTER` compares the number of models with `num_models`, `hmmer_pairs.py --whole` refuses seeded names that an unchunked HMM file lacks, and `hpc/pfam-arms/kfpfam_setup.sh` rebuilds a prep made from a different file.
 - `*_pfam_alignments.parquet` gains `read_from` and `read_to`, the aligned residues' nucleotides on the read, so a domain can be placed on its read without redoing the frame arithmetic. `hmmer_domtbl_parse_coverage.py`'s own mapping is not usable for this: it adds the frame offset a second time on top of the ORF's `begin` and places a reverse frame one nucleotide low, which cancels out when it compares hits on one read but is wrong as a read coordinate.
 
 - The `hmmsearch_subsampling` draw is now reproducible. `SEQKIT_SHUFFLE_FASTA` picked its reads with unseeded `shuf`, so every run searched a different subsample and two runs of the same data could not be compared. It now uses seeded reservoir sampling (`ext.seed`, 23 by default), which also holds only the kept read names in memory rather than all of them.
@@ -24,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `subworkflows/local/nail_hmmer` is now `seeded_hmmer`, since nail and kfpfam share it: a seeding step, then HMMER on the candidate pairs. Config selectors naming `NAIL_HMMER` must become `SEEDED_HMMER`.
-- Pfam moves from 38.0 to 38.2 (30,134 models), the release behind MGnify's protein annotations, so Pfam profiles change. Existing `pfam` database caches must be cleared or refreshed with `--force_download_dbs`.
+- Pfam moves from 38.0 (25,545 models) to 39.0 (53,275 models), so Pfam profiles change. Existing `pfam` database caches must be cleared or refreshed with `--force_download_dbs`: the cache is found by name, not by release, so a 38.0 or 38.2 one is otherwise searched with 39.0's `-Z`. A site config with its own copy or chunks of Pfam has to move with it.
 - `bbmap/reformat` and `bbmap/reformat_standardise` replaced with the shared modules from [ebi-metagenomics/nf-modules](https://github.com/EBI-Metagenomics/nf-modules), with the channel and `modules.config` changes that required ([#26](https://github.com/EBI-Metagenomics/raw-reads-analysis-pipeline/pull/26)).
 - GitHub Actions now runs the nf-test suite on `master` under the Docker profile.
 - End-to-end tests assert on `.fastp.json` content and line counts instead of md5 checksums, which were not stable across runs.

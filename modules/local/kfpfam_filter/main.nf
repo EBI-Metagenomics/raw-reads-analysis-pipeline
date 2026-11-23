@@ -14,6 +14,7 @@ process KFPFAM_FILTER {
     val gate
     val min_gapped
     val block
+    val num_models
 
     output:
     tuple val(meta), path("${prefix}.seeds.tsv"), emit: seeds
@@ -32,8 +33,16 @@ process KFPFAM_FILTER {
     // The filter writes (ORF, model index, diagonal, gapped), indices into prep's models.tsv, and
     // only pairs scoring at least FILTER_MIN_GAPPED, which is the bar HMMER then re-scores at.
     // HMMER_PAIRS wants nail's seed format, model name first, so the index becomes models.tsv's
-    // NAME column: the same name pyhmmer reads from the HMM file.
+    // NAME column: the same name pyhmmer reads from the HMM file. So prep must be built from the HMM
+    // file HMMER_PAIRS reads; a different number of models means it wasn't, and is caught here,
+    // before the search. HMMER_PAIRS catches a release that has as many models but other names.
     """
+    models=\$((\$(wc -l < ${prep}/models.tsv) - 1))
+    if [ "\$models" -ne ${num_models} ]; then
+        echo "${prep} holds \$models models and the pipeline's Pfam ${num_models}: rebuild it from the same Pfam-A.hmm" >&2
+        exit 1
+    fi
+
     ${reader} \\
         | awk '/^>/ { if (NR > 1) printf "\\n"; print; next } { printf "%s", \$0 } END { printf "\\n" }' \\
         > orfs.flat.faa

@@ -41,6 +41,7 @@ workflow SEEDED_HMMER {
             params.kfpfam_gate,
             params.kfpfam_min_gapped,
             params.kfpfam_block,
+            params.databases.pfam.variables.num_models,
         )
         ch_versions = ch_versions.mix(KFPFAM_FILTER.out.versions)
         // One seeds file per read chunk, copied onto that chunk's Pfam-chunk keys. The key is

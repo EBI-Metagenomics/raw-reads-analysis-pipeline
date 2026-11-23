@@ -131,9 +131,14 @@ def search(hmm, block, num_models):
     return table.getvalue(), rows
 
 
-def run(pairs, seqs, hmm_path, num_models, threads, domtbl_path, parquet_path):
-    """Every model with candidates, written in HMM file order so output doesn't depend on threads."""
-    rows = []
+def run(pairs, seqs, hmm_path, num_models, threads, domtbl_path, parquet_path, whole=False):
+    """Every model with candidates, written in HMM file order so output doesn't depend on threads.
+
+    Seeds name models, and a chunk of a chunked database skips the names of the other chunks. When
+    the file is the whole database (`whole`), a name it lacks means the seeds came from another Pfam release:
+    skipping those would lose every renamed family without a word, so it is an error.
+    """
+    rows, names = [], set()
     with gzip.open(domtbl_path, "wb") as domtbl, ThreadPoolExecutor(threads) as pool, HMMFile(hmm_path) as hmms:
 
         def collect(future):
@@ -143,7 +148,9 @@ def run(pairs, seqs, hmm_path, num_models, threads, domtbl_path, parquet_path):
 
         pending = deque()
         for hmm in hmms:
-            targets = pairs.get(text(hmm.name))
+            name = text(hmm.name)
+            names.add(name)
+            targets = pairs.get(name)
             if targets:
                 # Built here, not in the worker: blocks built across 6 threads ran about 40x slower
                 block = DigitalSequenceBlock(ALPHABET, [seqs[i] for i in sorted(set(targets))])
@@ -152,6 +159,12 @@ def run(pairs, seqs, hmm_path, num_models, threads, domtbl_path, parquet_path):
                     collect(pending.popleft())
         while pending:
             collect(pending.popleft())
+    unknown = sorted(pairs.keys() - names) if whole else []
+    if unknown:
+        raise ValueError(
+            f"{len(unknown)} seeded models are not in {hmm_path}, {', '.join(unknown[:5])} among them: "
+            "the seeds and the HMM file are from different Pfam releases"
+        )
     columns = [list(c) for c in zip(*rows)] or [[] for _ in SCHEMA.names]
     alignments = pa.Table.from_arrays([pa.array(c, f.type) for c, f in zip(columns, SCHEMA)], schema=SCHEMA)
     alignments = alignments.sort_by([("pfam", "ascending"), ("read", "ascending")])
@@ -164,6 +177,7 @@ def main():
     parser.add_argument("--seeds", required=True, help="nail's --seeds-out: model name, then ORF name")
     parser.add_argument("--hmm", required=True)
     parser.add_argument("--num-models", type=int, required=True, help="Z, as in the pipeline's hmmsearch")
+    parser.add_argument("--whole", action="store_true", help="--hmm is the whole database, not a chunk of it")
     parser.add_argument("--threads", type=int, default=1)
     parser.add_argument("--domtbl", required=True, help="Gzipped output")
     parser.add_argument("--parquet", required=True)
@@ -171,7 +185,7 @@ def main():
     pairs, ids = read_seeds(args.seeds)
     seqs = read_orfs(args.orfs, ids)
     del ids
-    run(pairs, seqs, args.hmm, args.num_models, args.threads, args.domtbl, args.parquet)
+    run(pairs, seqs, args.hmm, args.num_models, args.threads, args.domtbl, args.parquet, args.whole)
 
 
 if __name__ == "__main__":

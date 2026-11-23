@@ -2,7 +2,9 @@
 """Core-hours and peak memory of each arm's Pfam steps, from Nextflow traces.
 
 Usage: cost.py ARM=TRACE.txt ...
-Core-hours are realtime x allocated CPUs, for tasks that weren't cached in that arm's run.
+cpu_hours is realtime x %cpu, what the tasks used; core_hours is realtime x allocated CPUs, empty
+when the trace has no cpus column. Only tasks that weren't cached in that arm's run are counted. `failed` is
+the attempts that failed: a killed one leaves no CPU time in the trace, so their cost is not here.
 """
 
 import csv
@@ -10,7 +12,10 @@ import re
 import sys
 from collections import defaultdict
 
-STEP = re.compile(r"FRAGGENESCANRS|SELECTFRAMES|NAIL_SEED|HMMER_PAIRS|HMMER_HMMSEARCH|SEQKIT_TRANSLATE|PARSEHMMSEARCHCOVERAGE")
+STEP = re.compile(
+    r"FRAGGENESCANRS|SELECTFRAMES|NAIL_SEED|KFPFAM_FILTER|HMMER_PAIRS|HMMER_HMMSEARCH|SEQKIT_TRANSLATE|"
+    r"COMBINEHMMSEARCHTBL|MERGEPARQUET|PARSEHMMSEARCHCOVERAGE"
+)
 UNITS = {"ms": 1e-3, "s": 1, "m": 60, "h": 3600, "d": 86400}
 BYTES = {"B": 1, "KB": 1e3, "MB": 1e6, "GB": 1e9, "TB": 1e12}
 
@@ -25,20 +30,32 @@ def gigabytes(text):
 
 
 def main():
-    print("arm\tsample\tstep\ttasks\tcore_hours\tpeak_rss_gb")
+    print("arm\tsample\tstep\ttasks\tcpu_hours\tcore_hours\tpeak_rss_gb\tfailed")
     for spec in sys.argv[1:]:
         arm, path = spec.split("=", 1)
-        rows = defaultdict(lambda: [0, 0.0, 0.0])
+        rows, has_cpus = defaultdict(lambda: [0, 0.0, 0.0, 0.0, 0]), False
         with open(path) as f:
             for r in csv.DictReader(f, delimiter="\t"):
-                step = STEP.search(r["process"])
-                if step and r["status"] == "COMPLETED":
-                    row = rows[(r["tag"], step[0])]
-                    row[0] += 1
-                    row[1] += seconds(r["realtime"]) * int(r["cpus"]) / 3600
-                    row[2] = max(row[2], gigabytes(r["peak_rss"]))
-        for (sample, step), (tasks, hours, rss) in sorted(rows.items()):
-            print(f"{arm}\t{sample}\t{step}\t{tasks}\t{hours:.3f}\t{rss:.2f}")
+                # Nextflow's default fields have neither process nor tag: both are in name, "A:B:STEP (tag)"
+                process, _, tag = r["name"].partition(" (")
+                step = STEP.search(process.rsplit(":", 1)[-1])
+                if not step or r["status"] not in ("COMPLETED", "FAILED"):
+                    continue
+                row = rows[(tag.rstrip(")"), step[0])]
+                hours = seconds(r["realtime"]) / 3600
+                cpu = r["%cpu"].rstrip("%")
+                used = hours * float(cpu) / 100 if cpu not in ("", "-") else 0.0
+                if r["status"] == "FAILED":
+                    row[4] += 1
+                    continue
+                row[0] += 1
+                row[1] += used
+                row[2] += hours * int(r["cpus"]) if r.get("cpus") else 0.0
+                row[3] = max(row[3], gigabytes(r["peak_rss"]))
+                has_cpus = has_cpus or bool(r.get("cpus"))
+        for (sample, step), (tasks, used, core, rss, failed) in sorted(rows.items()):
+            core = f"{core:.3f}" if has_cpus else ""
+            print(f"{arm}\t{sample}\t{step}\t{tasks}\t{used:.3f}\t{core}\t{rss:.2f}\t{failed}")
 
 
 if __name__ == "__main__":

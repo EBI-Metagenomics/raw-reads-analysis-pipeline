@@ -56,8 +56,21 @@ def test_output_does_not_depend_on_threads():
         assert run_on_fixture(Path(a), 1).equals(run_on_fixture(Path(b), 4))
 
 
+def test_seeds_from_another_release_are_an_error():
+    """A name the whole database lacks is an error; one a chunk lacks is another chunk's."""
+    hmm = str(ROOT / "tests/fixtures/dbs/pfam_mini/Pfam-A.hmm")
+    with tempfile.TemporaryDirectory() as d:
+        for whole in (True, False):
+            try:
+                hp.run({"Not_in_this_Pfam": [0]}, [None], hmm, 53275, 1, f"{d}/x.domtbl.gz", f"{d}/x.parquet", whole)
+                assert not whole, "an unknown model was skipped"
+            except ValueError as e:
+                assert whole and "Not_in_this_Pfam" in str(e), e
+
+
 if __name__ == "__main__":
     test_schema_and_alignment_lengths()
     test_read_span_covers_the_right_codons()
     test_output_does_not_depend_on_threads()
+    test_seeds_from_another_release_are_an_error()
     print("ok")
