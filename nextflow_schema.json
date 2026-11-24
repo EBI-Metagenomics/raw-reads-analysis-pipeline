@@ -103,7 +103,12 @@
                 "nail",
                 "kfpfam"
             ],
-            "description": "`hmmsearch` searches every ORF against every model. `nail` finds candidate pairs with nail, `kfpfam` with kfpfam's k-mer prefilter; both then run HMMER on those pairs only and store the alignments."
+            "description": "`hmmsearch` searches every ORF against every model. `nail` finds candidate pairs with nail, `kfpfam` with kfpfam's k-mer prefilter; both then run HMMER on those pairs only and can store the alignments (`pfam_alignments`)."
+        },
+        "pfam_alignments": {
+            "type": "boolean",
+            "default": true,
+            "description": "Write and publish the HMM alignment of every domain, as one zstd Parquet per sample (about 55 bytes a domain). `nail` and `kfpfam` only; off, only the profile and its statistics are published."
         },
         "pfam_nail_seed_pvalue": {
             "type": "number",
@@ -113,7 +118,7 @@
         "kfpfam_sif": {
             "type": "string",
             "default": "",
-            "description": "Singularity image holding kfpfam's `filter`, used when `pfam_search_engine` is `kfpfam`. Built by `hpc/pfam-arms/kfpfam_setup.sh`."
+            "description": "Singularity image holding kfpfam's `filter`, pyhmmer and pyarrow, used when `pfam_search_engine` is `kfpfam`. Built by `hpc/pfam-arms/kfpfam_setup.sh`."
         },
         "kfpfam_prep": {
             "type": "string",

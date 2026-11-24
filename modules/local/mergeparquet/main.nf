@@ -19,21 +19,10 @@ process MERGEPARQUET {
 
     script:
     prefix = task.ext.prefix ?: "${meta.id}"
-    // Sorted and written as HMMER_PAIRS does, so a merged file reads like an unchunked one
+    // Families sorted as each input's row groups are, so a merged file reads like an unchunked one
+    def script = file("${moduleDir}/bin/merge_parquet.py")
     """
-    python - ${parquets} <<'PY'
-    import sys
-    import pyarrow.parquet as pq
-
-    files = sorted(sys.argv[1:])
-    assert files, "no Parquet inputs staged"
-    table = pq.read_table(files)
-    table = table.sort_by([("pfam", "ascending"), ("read", "ascending")])
-    pq.write_table(
-        table, "${prefix}_alignments.parquet",
-        compression="zstd", compression_level=9, use_dictionary=["pfam"],
-    )
-    PY
+    python ${script} --out ${prefix}_alignments.parquet ${parquets}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

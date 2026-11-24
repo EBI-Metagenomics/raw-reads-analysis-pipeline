@@ -89,7 +89,8 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | pfam_orf_filter_threshold     | Coding score for ORFs outside FragGeneScanRs's frame (Default: `-5`)                       |
 | pfam_search_engine            | `hmmsearch`, or `nail` / `kfpfam` for prefiltered candidates checked by HMMER (Default: `hmmsearch`) |
 | pfam_nail_seed_pvalue         | nail's seeding filter `-S`, used with `pfam_search_engine = nail` (Default: `0.01`)        |
-| kfpfam_sif                    | Singularity image holding kfpfam's `filter` (Default: none)                                |
+| pfam_alignments               | `nail`, `kfpfam`: publish domain alignments as zstd Parquet (Default: `true`)              |
+| kfpfam_sif                    | Singularity image holding kfpfam's `filter`, pyhmmer, pyarrow (Default: none)              |
 | kfpfam_prep                   | kfpfam prep directory, built from the Pfam-A.hmm this run searches (Default: none)         |
 | kfpfam_index                  | kfpfam tiled k-mer index; must match the bar and gapped bar below (Default: none)          |
 | kfpfam_bar                    | kfpfam's diagonal bar in bits; Mode A 17, Mode B 20 (Default: `17`)                        |

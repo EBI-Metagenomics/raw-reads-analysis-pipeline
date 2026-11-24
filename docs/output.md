@@ -69,7 +69,7 @@ Output files:
 *	**`ERZ12345_pfam.txt.gz`**: This text file contains a tab-separated table of read counts for each detected Pfam-A profile (or “function”).
 *	**`ERZ12345_pfam.stats.json`**: This `json` file contains a summary of the numebr of reads mapped to Pfam, the number of Pfam models with hits and a sum of the number of hits across all Pfam models.
 *	**`ERZ12345_pfam_orf_filter.stats.json`**: Only with `pfam_orf_filter`. ORFs and residues before and after the filter, reads with and without a gene call, and whether the filter kept all ORFs because too few reads had a call.
-*	**`ERZ12345_pfam_alignments.parquet`**: Only with `pfam_search_engine = nail` or `kfpfam`. One row per domain that passes Pfam's gathering thresholds, written with zstd and sorted by family then read, which costs about 60 bytes a domain, so tens of MB for a run at the 2 M-read cap. Columns:
+*	**`ERZ12345_pfam_alignments.parquet`**: Only with `pfam_search_engine = nail` or `kfpfam`, unless `pfam_alignments` is `false`. One row per domain that passes Pfam's gathering thresholds, written with zstd and sorted by family then read, which costs about 60 bytes a domain, so tens of MB for a run at the 2 M-read cap. Columns:
 
 | Column | What |
 |---|---|

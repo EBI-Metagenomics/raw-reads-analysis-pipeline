@@ -10,10 +10,11 @@ process HMMER_PAIRS {
     input:
     tuple val(meta), path(orfs), path(hmm), path(seeds)
     val num_models
+    val alignments // whether to write them
 
     output:
     tuple val(meta), path("${prefix}.domtbl.gz"), emit: domtbl
-    tuple val(meta), path("${prefix}_alignments.parquet"), emit: alignments
+    tuple val(meta), path("${prefix}_alignments.parquet"), emit: alignments, optional: true
     path "versions.yml", emit: versions
 
     when:
@@ -22,6 +23,7 @@ process HMMER_PAIRS {
     script:
     prefix = task.ext.prefix ?: "${meta.id}"
     def script = file("${moduleDir}/bin/hmmer_pairs.py")
+    def parquet = alignments ? "--parquet ${prefix}_alignments.parquet" : ''
     // an unchunked Pfam must hold every model the seeds name
     def whole = meta.hmm_chunks == 1 ? '--whole' : ''
     """
@@ -31,8 +33,7 @@ process HMMER_PAIRS {
         --hmm ${hmm} \\
         --num-models ${num_models} ${whole} \\
         --threads ${task.cpus} \\
-        --domtbl ${prefix}.domtbl.gz \\
-        --parquet ${prefix}_alignments.parquet
+        --domtbl ${prefix}.domtbl.gz ${parquet}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -45,7 +46,7 @@ process HMMER_PAIRS {
     prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo -n | gzip > ${prefix}.domtbl.gz
-    touch ${prefix}_alignments.parquet
+    ${alignments ? "touch ${prefix}_alignments.parquet" : ''}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
