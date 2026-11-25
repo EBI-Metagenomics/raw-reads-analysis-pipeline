@@ -1,0 +1,36 @@
+{
+ "format": 5,
+ "pfam": "38.2",
+ "mgnify": "2026_07",
+ "flank": 10,
+ "collapse": 0.0,
+ "schemes": [
+  "ko"
+ ],
+ "rows_label_dropped": {
+  "ko": 0
+ },
+ "families": 6,
+ "rows": 6,
+ "rows_before_collapse": 6,
+ "member_rows": 12,
+ "member_rows_unreached": 0,
+ "files": {
+  "families.tsv": {
+   "bytes": 159,
+   "sha256": "a939f5dec7ea62ce4dbc2a4f76e582d52c02cc947d9f025a7252f0af2b9a6cb6"
+  },
+  "hmm/Pfam-A.hmm": {
+   "bytes": 162512,
+   "sha256": "884ace8b0d18e56e341736dfe3f6a394132cae786a71daef8086891bec026623"
+  },
+  "labels.ko.tsv": {
+   "bytes": 79,
+   "sha256": "eff567fc92f4d7b0b6f67a0e951e04cec2701e076bf65b019fa103d2c72a108e"
+  },
+  "rows.bin": {
+   "bytes": 7751,
+   "sha256": "bcd76c03bb848f9f3955b285df6f5cb77fc8f5862ee47774a304a9e2df325284"
+  }
+ }
+}

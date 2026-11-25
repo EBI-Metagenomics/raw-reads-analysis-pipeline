@@ -62,6 +62,13 @@ arm() {
 # recall at less cost.
 if [[ -s kfpfam/index/k4T6.5.tidx ]]; then
     kf="--kfpfam_sif $PWD/kfpfam/kfpfam-filter.sif --kfpfam_prep $PWD/kfpfam/prep"
+    # The MGnify lookup on these arms' alignments, when its image (lookup_setup.sh) and bundle are there. The
+    # bundle must be of the Pfam searched here, or PFAM_LOOKUP stops. Everything upstream is cached.
+    if [[ -s lookup/bundle/manifest.json && -s lookup/kfp-lookup.sif ]]; then
+        kf+=" --pfam_lookup true --pfam_lookup_bundle $(realpath lookup/bundle) --pfam_lookup_sif $PWD/lookup/kfp-lookup.sif"
+    else
+        echo "no lookup/bundle and lookup/kfp-lookup.sif: the kfpfam arms run without the MGnify lookup" >&2
+    fi
     arm kfpfam_a -c unchunked_pfam.config $kf --pfam_search_engine kfpfam \
         --kfpfam_index "$PWD/kfpfam/index/k4T6.5.tidx" \
         --kfpfam_bar 17 --kfpfam_gate 16.5 --kfpfam_min_gapped 21.25

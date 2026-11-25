@@ -22,6 +22,7 @@ include { MAPSEQ_OTU_KRONA } from '../subworkflows/ebi-metagenomics/mapseq_otu_k
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { MULTIQC as MULTIQC_RUN } from '../modules/nf-core/multiqc/main'
 include { MULTIQC as MULTIQC_STUDY } from '../modules/nf-core/multiqc/main'
+include { PFAM_LOOKUP } from '../modules/local/pfam_lookup/main'
 include { PROFILE_HMMSEARCH_PFAM } from '../subworkflows/local/profile_hmmsearch_pfam/main'
 include { samplesheetToList } from 'plugin/nf-schema'
 
@@ -411,6 +412,30 @@ workflow PIPELINE {
             pfam_db,
         )
         ch_versions = ch_versions.mix(PROFILE_HMMSEARCH_PFAM.out.versions)
+
+        // Reads' Pfam alignments against the MGnify lookup bundle
+        if (params.pfam_lookup.toString().toBoolean()) {
+            if (!(params.pfam_search_engine in ['nail', 'kfpfam']) || !params.pfam_alignments.toString().toBoolean()) {
+                error(
+                    "pfam_lookup profiles the Pfam alignments, which only pfam_search_engine 'nail' or 'kfpfam' " +
+                    "writes, with pfam_alignments on."
+                )
+            }
+            if (!(params.pfam_lookup_bundle && params.pfam_lookup_sif)) {
+                error(
+                    "pfam_lookup needs pfam_lookup_bundle, the bundle of kmer-functional-profiler's lookup-index " +
+                    "for the Pfam this run searches, and pfam_lookup_sif, the image from hpc/pfam-arms/lookup_setup.sh."
+                )
+            }
+            PFAM_LOOKUP(
+                PROFILE_HMMSEARCH_PFAM.out.alignments,
+                file(params.pfam_lookup_bundle, checkIfExists: true),
+                params.pfam_lookup_floor,
+                params.pfam_lookup_k,
+                params.pfam_lookup_second,
+            )
+            ch_versions = ch_versions.mix(PFAM_LOOKUP.out.versions)
+        }
 
         pfam_out_ch = PROFILE_HMMSEARCH_PFAM.out.profile
             .join(clean_reads, remainder: true)

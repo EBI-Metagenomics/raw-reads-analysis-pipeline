@@ -46,6 +46,20 @@ escalates on retry. Check `results/cost.tsv` afterwards and bring it down to wha
 is no `disk` request: nail's `--tmp-dir` is the task's work directory on `/hps/nobackup`, so asking
 Slurm for node-local space only stops the job being scheduled.
 
+## MGnify lookup
+
+The kfpfam arms also profile their alignments against MGnify's proteins (`--pfam_lookup`) once
+`lookup/bundle` and `lookup/kfp-lookup.sif` exist:
+
+```bash
+BUNDLE=<kmer-functional-profiler_runs>/kfp-ablations/lookup-index/results/bundle ./lookup_setup.sh
+```
+
+The bundle and the arms must be of one Pfam file. The bundle's is 38.2 unless lookup-index was told
+otherwise, so run the arms with `PFAM_HMM` set to that `Pfam-A.hmm`, and `kfpfam_setup.sh` with the same
+file and `N_MODELS=30134`; `PFAM_LOOKUP` stops at the first family of another version. Re-running
+`run.sh` then reuses every finished step, so the lookup is the only new work.
+
 ## Samples
 
 `samplesheet.csv` and `runs.tsv` are the response's own reads, copied from

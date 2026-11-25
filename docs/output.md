@@ -85,6 +85,11 @@ Output files:
 | `residues` | the aligned residues, gaps removed |
 | `pp` | HMMER's posterior probability characters, one per CIGAR operation |
 
+Only with `pfam_lookup` (and so `nail` or `kfpfam`), each alignment's closest MGnify protein, from the index in `pfam_lookup_bundle`:
+*	**`ERZ12345_pfam_lookup.reads.parquet`**: One row per alignment: `read`, `pfam`, `score`, `self` (the score of the read against itself), `similarity` (`score` / `self`), `ties` (clusters tied for the best), `protein` (the first of them, the representative of an MGnify90 cluster) and one column per label scheme of the index (`ko`, say). Weak calls are kept here; calls are null where the family is not in the index.
+*	**`ERZ12345_pfam_lookup.<scheme>.tsv`**: Per label: reads, and their mean similarity. A read counts once, for its best-scoring alignment, if its similarity is at least `pfam_lookup_floor`. A protein's several labels are one, joined by `+`.
+*	**`ERZ12345_pfam_lookup.summary.json`**: Alignments, reads, reads called and under the floor, labelled reads per scheme, and the index's Pfam and MGnify releases.
+
 With `pfam_search_engine = hmmsearch`, the default, no alignments are published: `hmmsearch` runs with `--noali` and only its domain table is kept, which has the coordinates but no alignment.
 
 ```
@@ -93,7 +98,10 @@ function-summary
     ├── ERZ12345_pfam.txt.gz
     ├── ERZ12345_pfam.stats.json
     ├── ERZ12345_pfam_orf_filter.stats.json
-    └── ERZ12345_pfam_alignments.parquet
+    ├── ERZ12345_pfam_alignments.parquet
+    ├── ERZ12345_pfam_lookup.reads.parquet
+    ├── ERZ12345_pfam_lookup.ko.tsv
+    └── ERZ12345_pfam_lookup.summary.json
 ```
 
 ## Top-level summary output files

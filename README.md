@@ -98,6 +98,12 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | kfpfam_gate                   | kfpfam's window gate in bits (Default: `16.5`)                                             |
 | kfpfam_min_gapped             | gapped score at which a pair goes to HMMER; Mode A 21.25, Mode B 26.25 (Default: `21.25`)  |
 | kfpfam_block                  | ORFs per kfpfam block (Default: `400000`)                                                  |
+| pfam_lookup                   | `nail`, `kfpfam`: profile the alignments against an index of MGnify's proteins (Default: `false`) |
+| pfam_lookup_bundle            | the index, built from the Pfam-A.hmm this run searches (Default: none)                     |
+| pfam_lookup_sif               | Singularity image holding the lookup binary and `bundle.py` (Default: none)                |
+| pfam_lookup_floor             | leave out calls under this share of the read's own score (Default: `0.4`)                  |
+| pfam_lookup_k                 | index rows the lookup's first stage keeps (Default: `2000`)                                |
+| pfam_lookup_second            | of those, rows that go to the banded score (Default: `1000`)                               |
 | decontam_short_chunksize      | Size of reads chunks for short-read decontamination (Default: `1280000000`)                |
 | decontam_long_chunksize       | Size of reads chunks for long-read host decontamination (Default: `12800000`)              |
 | save_trimmed_fail             | Save reads that fail QC trimming (Default: `false`)                                        |

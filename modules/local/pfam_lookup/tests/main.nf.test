@@ -1,0 +1,38 @@
+nextflow_process {
+
+    name "Test Process PFAM_LOOKUP"
+    script "../main.nf"
+    process "PFAM_LOOKUP"
+
+    tag "modules"
+    tag "modules_"
+    tag "pfam_lookup"
+
+    // A stub, as the image is published nowhere. test_pfam_lookup.sh runs the command itself on the same fixture.
+    options "-stub"
+
+    test("outputs, as a stub") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    ['id': 'test'],
+                    file("${projectDir}/tests/fixtures/pfam_lookup/alignments.parquet", checkIfExists: true),
+                ]
+                input[1] = file("${projectDir}/tests/fixtures/pfam_lookup/bundle", checkIfExists: true)
+                input[2] = 0.4
+                input[3] = 2000
+                input[4] = 1000
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert file(process.out.reads[0][1]).name == "test_pfam_lookup.reads.parquet"
+            assert file(process.out.profiles[0][1]).name == "test_pfam_lookup.ko.tsv"
+            assert file(process.out.summary[0][1]).name == "test_pfam_lookup.summary.json"
+        }
+    }
+}

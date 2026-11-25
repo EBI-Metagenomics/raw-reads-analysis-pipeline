@@ -156,6 +156,39 @@
             "default": 400000,
             "description": "ORFs per kfpfam block; larger blocks use more memory."
         },
+        "pfam_lookup": {
+            "type": "boolean",
+            "default": false,
+            "description": "Profile each sample's Pfam alignments against an index of MGnify's proteins (`pfam_lookup_bundle`), for the closest protein and its labels. `nail` and `kfpfam` only, with `pfam_alignments`."
+        },
+        "pfam_lookup_bundle": {
+            "type": "string",
+            "default": "",
+            "description": "Bundle directory of kmer-functional-profiler's `workflows/lookup-index`, built from the same Pfam-A.hmm this run searches: other model versions are an error."
+        },
+        "pfam_lookup_sif": {
+            "type": "string",
+            "default": "",
+            "description": "Singularity image holding the lookup binary and `bundle.py`. Built by `hpc/pfam-arms/lookup_setup.sh`."
+        },
+        "pfam_lookup_floor": {
+            "type": "number",
+            "default": 0.4,
+            "minimum": 0,
+            "description": "Calls scoring under this share of the read's own score are left out of the lookup's profiles."
+        },
+        "pfam_lookup_k": {
+            "type": "integer",
+            "default": 2000,
+            "minimum": 1,
+            "description": "Index rows the lookup's first stage keeps for an alignment."
+        },
+        "pfam_lookup_second": {
+            "type": "integer",
+            "default": 1000,
+            "minimum": 1,
+            "description": "Of those, rows that go to the banded score."
+        },
         "force_download_dbs": {
             "type": "boolean",
             "default": "false"
