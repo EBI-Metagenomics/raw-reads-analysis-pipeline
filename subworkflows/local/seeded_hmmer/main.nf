@@ -29,6 +29,7 @@ workflow SEEDED_HMMER {
     ch_versions = Channel.empty()
     // from the command line it is the text 'false' under Nextflow 26's parser, which is true
     def write_alignments = params.pfam_alignments.toString().toBoolean()
+    def weak_evalue = params.pfam_weak_evalue.toString().toDouble()
 
     if (params.pfam_search_engine == 'kfpfam') {
         // kfpfam's index covers the whole database, so this is one task per read chunk whatever the
@@ -44,6 +45,7 @@ workflow SEEDED_HMMER {
             params.kfpfam_block,
             params.databases.pfam.variables.num_models,
             write_alignments,
+            weak_evalue,
         )
         ch_versions = ch_versions.mix(KFPFAM_HMMER.out.versions)
         ch_domtbl = KFPFAM_HMMER.out.domtbl
@@ -71,6 +73,7 @@ workflow SEEDED_HMMER {
             ch_chunks.join(NAIL_SEED.out.seeds),
             params.databases.pfam.variables.num_models,
             write_alignments,
+            weak_evalue,
         )
         ch_versions = ch_versions.mix(NAIL_SEED.out.versions, HMMER_PAIRS.out.versions)
         ch_domtbl = HMMER_PAIRS.out.domtbl

@@ -69,14 +69,15 @@ Output files:
 *	**`ERZ12345_pfam.txt.gz`**: This text file contains a tab-separated table of read counts for each detected Pfam-A profile (or “function”).
 *	**`ERZ12345_pfam.stats.json`**: This `json` file contains a summary of the numebr of reads mapped to Pfam, the number of Pfam models with hits and a sum of the number of hits across all Pfam models.
 *	**`ERZ12345_pfam_orf_filter.stats.json`**: Only with `pfam_orf_filter`. ORFs and residues before and after the filter, reads with and without a gene call, and whether the filter kept all ORFs because too few reads had a call.
-*	**`ERZ12345_pfam_alignments.parquet`**: Only with `pfam_search_engine = nail` or `kfpfam`, unless `pfam_alignments` is `false`. One row per domain that passes Pfam's gathering thresholds, written with zstd and sorted by family then read, which costs about 60 bytes a domain, so tens of MB for a run at the 2 M-read cap. Columns:
+*	**`ERZ12345_pfam_alignments.parquet`**: Only with `pfam_search_engine = nail` or `kfpfam`, unless `pfam_alignments` is `false`. One row per domain that passes Pfam's gathering thresholds, and with `pfam_weak_evalue` weaker ones too, written with zstd and sorted by family then read, which costs about 60 bytes a domain, so tens of MB for a run at the 2 M-read cap. Columns:
 
 | Column | What |
 |---|---|
 | `read` | read name, as the merged FASTA has it |
 | `frame`, `orf_begin`, `orf_end` | the translated stretch this domain sits on |
 | `read_from`, `read_to` | the aligned residues' nucleotides on the read, 1-based inclusive, forward numbering, so no frame arithmetic is needed to place a domain on its read |
-| `pfam`, `domain` | Pfam accession without its version, and which reported domain this is for that (read, family) |
+| `pfam`, `pfam_version`, `domain` | Pfam accession and its version, as columns only mean something for one version of a model, and which reported domain this is for that (read, family); those under the gathering thresholds are numbered after those above |
+| `above_ga` | whether the domain passes the gathering thresholds. Always true without `pfam_weak_evalue`; **with it, filter on this for the hits the profile counts** |
 | `seq_score`, `dom_score`, `seq_evalue`, `i_evalue` | HMMER's sequence and domain scores, with `-Z` set to the whole database |
 | `hmm_from`, `hmm_to` | the stretch of the model that is aligned |
 | `ali_from`, `ali_to`, `env_from`, `env_to` | the alignment and envelope on the ORF, in residues |

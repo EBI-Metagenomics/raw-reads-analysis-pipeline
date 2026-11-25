@@ -21,18 +21,18 @@ FX = ROOT / "tests/fixtures"
 ORFS, HMM = FX / "hmmer_pairs/orfs.faa.gz", str(FX / "dbs/pfam_mini/Pfam-A.hmm")
 
 
-def run(jobs, out, threads, parquet=True):
+def run(jobs, out, threads, parquet=True, weak=0):
     path = out / "x.parquet"
     with hp.Output(out / "x.domtbl.gz", path if parquet else None) as output, ThreadPoolExecutor(threads) as pool:
         for j in jobs:
-            hp.run(j, 34, threads, pool, output)
+            hp.run(j, 34, threads, pool, output, weak)
     return pq.read_table(path) if parquet else None
 
 
-def run_on_fixture(out, threads, parquet=True):
+def run_on_fixture(out, threads, parquet=True, weak=0):
     pairs, ids = hp.read_seeds(FX / "hmmer_pairs/seeds.tsv")
     seqs = hp.read_orfs(ORFS, ids)
-    return run([hp.seeded(pairs, seqs, HMM)], out, threads, parquet)
+    return run([hp.seeded(pairs, seqs, HMM)], out, threads, parquet, weak)
 
 
 def stream(block):
@@ -101,6 +101,34 @@ def test_alignments_are_optional():
         assert not (Path(b) / "x.parquet").exists()
 
 
+def test_weak_alignments():
+    """They are rows added under the gathering thresholds: the domtbl is the same byte for byte, and so are the other rows."""
+    key = ["pfam", "read", "frame", "orf_begin", "env_from", "env_to"]
+    with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b, tempfile.TemporaryDirectory() as c:
+        ga = run_on_fixture(Path(a), 2).to_pylist()
+        loose = run_on_fixture(Path(b), 2, weak=1000.0).to_pylist()
+        tight = run_on_fixture(Path(c), 1, weak=1e-3).to_pylist()
+        for x in (b, c):
+            assert gzip.open(Path(a) / "x.domtbl.gz").read() == gzip.open(Path(x) / "x.domtbl.gz").read()
+    assert ga and all(r["above_ga"] for r in ga)
+    for rows, limit in ((loose, 1000.0), (tight, 1e-3)):
+        assert [r for r in rows if r["above_ga"]] == ga
+        weak = [r for r in rows if not r["above_ga"]]
+        assert all(r["seq_evalue"] <= limit and r["i_evalue"] <= limit for r in weak)
+        assert len({tuple(r[k] for k in key) for r in rows}) == len(rows), "a domain is there twice"
+        assert len({(r["pfam"], r["read"], r["frame"], r["orf_begin"], r["domain"]) for r in rows}) == len(rows)
+    assert any(not r["above_ga"] for r in loose)
+
+
+def test_the_models_version():
+    """Columns only mean something for one version of a model, so each row says which."""
+    with open(HMM) as f:
+        versions = dict(line.split()[1].split(".") for line in f if line.startswith("ACC "))
+    with tempfile.TemporaryDirectory() as d:
+        for r in run_on_fixture(Path(d), 2).to_pylist():
+            assert r["pfam_version"] == int(versions[r["pfam"]])
+
+
 def test_schema_and_alignment_lengths():
     with tempfile.TemporaryDirectory() as d:
         table = run_on_fixture(Path(d), 2)
@@ -156,4 +184,6 @@ if __name__ == "__main__":
     test_stream_gives_what_seeds_give()
     test_a_bad_stream_is_an_error()
     test_alignments_are_optional()
+    test_weak_alignments()
+    test_the_models_version()
     print("ok")

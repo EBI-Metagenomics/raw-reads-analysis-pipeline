@@ -17,6 +17,7 @@ process KFPFAM_HMMER {
     val block
     val num_models
     val alignments // whether to write them
+    val weak_evalue // the alignments' E-value cut for domains under the gathering thresholds too; 0 for none
 
     output:
     tuple val(meta), path("${prefix}.domtbl.gz"), emit: domtbl
@@ -31,7 +32,7 @@ process KFPFAM_HMMER {
     prefix = task.ext.prefix ?: "${meta.id}"
     def script = file("${moduleDir}/../hmmer_pairs/bin/hmmer_pairs.py")
     def reader = orfs.name.endsWith('.gz') ? "gunzip -c ${orfs}" : "cat ${orfs}"
-    def parquet = alignments ? "--parquet ${prefix}_alignments.parquet" : ''
+    def parquet = alignments ? "--parquet ${prefix}_alignments.parquet --weak-evalue ${weak_evalue}" : ''
     // One job, because the candidate pairs are far larger than anything kept: 11 GB of seeds per 4 M
     // reads at kfpfam's most sensitive setting. The filter writes each block's pairs to the pipe as
     // numbers, 8 bytes each, and HMMER searches them while the next block is filtered, so nothing is

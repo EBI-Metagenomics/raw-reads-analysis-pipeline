@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pfam_seeded_chunk_reads` (4 M): splits the reads before translation for the `nail` and `kfpfam` engines, which search one whole HMM file and so have no database chunking to spread a sample over. Translation, seeding and HMMER are then one task per chunk rather than one per sample. Set it to 0 for one task per sample. The `hmmsearch` path is unchanged.
 - `pfam_search_engine = nail` works with a chunked Pfam database as well as a single `Pfam-A.hmm`. nail searches one whole HMM file, so each chunk is seeded and searched separately, then the domtbls are concatenated and the alignments merged into one Parquet per sample. `-Z` stays the whole database's model count, so E-values match an unchunked search.
 
+- `pfam_weak_evalue` (0, off): for the `nail` and `kfpfam` engines, also writes domains under Pfam's gathering thresholds to `*_pfam_alignments.parquet`, marked by the new `above_ga` column. The domtbl, the profile and its statistics don't change. On 12,000 windows of 50 residues and Pfam 38.2, E 0.0301 (P 1e-6) gives 3,556 domains more than the 4,115 above the thresholds, for 7 core-s of HMMER against 6.
+- `*_pfam_alignments.parquet` gains `pfam_version`, each model's version, so that a reader can refuse columns of another release.
 - `pfam_alignments` (on): whether the `nail` and `kfpfam` engines write and publish each domain's HMM alignment. They go to zstd Parquet as they are found, about 55 bytes a domain, where they were held as Python objects (about 700 bytes) until the end of the task.
 
 ### Fixed

@@ -110,6 +110,12 @@
             "default": true,
             "description": "Write and publish the HMM alignment of every domain, as one zstd Parquet per sample (about 55 bytes a domain). `nail` and `kfpfam` only; off, only the profile and its statistics are published."
         },
+        "pfam_weak_evalue": {
+            "type": "number",
+            "default": 0,
+            "minimum": 0,
+            "description": "Also write domains under Pfam's gathering thresholds to the alignments Parquet (`above_ga` false), if the ORF's and the domain's E-values are at most this, with `-Z` the number of models: 0.025 for Pfam 37.4 is a P-value of 1e-6. The profile and its statistics are not changed. 0 writes none. Needs `pfam_alignments`."
+        },
         "pfam_nail_seed_pvalue": {
             "type": "number",
             "default": 0.01,

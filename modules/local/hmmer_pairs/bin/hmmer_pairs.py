@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """HMMER on candidate (model, ORF) pairs only, at Pfam's gathering thresholds.
 
-Writes a domtbl as `hmmsearch --cut_ga --domtblout` does, and the alignments as Parquet if asked to.
+Writes a domtbl as `hmmsearch --cut_ga --domtblout` does, and the alignments as Parquet if asked to. With
+--weak-evalue the Parquet also has the domains under the gathering thresholds; the domtbl never does.
 
 The pairs come from a file of seeds, or with --stream on stdin from kfpfam's `filter join`, run with
 FILTER_BINARY=1 beside this script on the same ORFs. A stream is searched as it arrives, a few blocks
@@ -44,6 +45,8 @@ SCHEMA = pa.schema(
         ("read_from", pa.int32()),
         ("read_to", pa.int32()),
         ("pfam", pa.string()),
+        ("pfam_version", pa.int16()),
+        ("above_ga", pa.bool_()),
         ("domain", pa.int16()),
         ("seq_score", pa.float32()),
         ("dom_score", pa.float32()),
@@ -123,36 +126,61 @@ def cigar(hmm_line, target_line):
     return "".join(f"{len(m[0])}{m[1]}" for m in re.finditer(r"(.)\1*", ops))
 
 
-def search(query, block, num_models):
-    """One model on its candidates: domtbl bytes, and one row per reported domain."""
-    if not hasattr(LOCAL, "pipeline"):
-        LOCAL.pipeline = Pipeline(ALPHABET, Z=num_models, bit_cutoffs="gathering")
-    LOCAL.pipeline.clear()
-    hits = LOCAL.pipeline.search_hmm(query, block)
+def domain_rows(hit, domains, pfam, version, above_ga, first=1):
+    """A Parquet row for each of a hit's domains, numbered from `first`."""
+    read, frame, begin, end = ORF_NAME.match(text(hit.name)).groups()
+    frame, begin, end = int(frame), int(begin), int(end)
+    for n, domain in enumerate(domains, first):
+        ali = domain.alignment
+        read_from, read_to = read_span(frame, begin, end, ali.target_from, ali.target_to)
+        yield (
+            read, frame, begin, end, read_from, read_to, pfam, version, above_ga, n,
+            hit.score, domain.score, hit.evalue, domain.i_evalue,
+            ali.hmm_from, ali.hmm_to, ali.target_from, ali.target_to,
+            domain.env_from, domain.env_to,
+            cigar(ali.hmm_sequence, ali.target_sequence),
+            ali.target_sequence.replace("-", "").upper(),
+            ali.posterior_probabilities,
+        )  # fmt: skip
+
+
+def pipeline(name, **options):
+    """This thread's pipeline of that name, cleared. One is kept a thread, as building one is slow."""
+    if not hasattr(LOCAL, name):
+        setattr(LOCAL, name, Pipeline(ALPHABET, **options))
+    p = getattr(LOCAL, name)
+    p.clear()
+    return p
+
+
+def search(query, block, num_models, weak_evalue=0):
+    """One model on its candidates: domtbl bytes, and one row per domain.
+
+    At gathering thresholds, and with `weak_evalue` also the domains under them whose ORF and own E-values are
+    at most that. Every candidate is then searched without a cut first, and at the gathering thresholds only the ORFs that
+    search reports: it stops an ORF at the same filters, so the domtbl is as it is without `weak_evalue`.
+    """
+    accession, _, version = text(query.accession).partition(".")
+    version = int(version or 0)
+    weak = []
+    if weak_evalue > 0:
+        every = pipeline("every", Z=num_models, E=float("inf"), domE=float("inf")).search_hmm(query, block)
+        found = {text(hit.name) for hit in every}
+        block = DigitalSequenceBlock(ALPHABET, [seq for seq in block if text(seq.name) in found])
+        weak = [hit for hit in every if hit.evalue <= weak_evalue]
+    hits = pipeline("gathering", Z=num_models, bit_cutoffs="gathering").search_hmm(query, block)
     table = io.BytesIO()
     hits.write(table, format="domains", header=False)
-    pfam = text(query.accession).split(".")[0]
-    rows = []
+    rows, above = [], {}
     for hit in hits:
-        if not hit.reported:
-            continue
-        name = text(hit.name)
-        read, frame, begin, end = ORF_NAME.match(name).groups()
-        for n, domain in enumerate((d for d in hit.domains if d.reported), 1):
-            ali = domain.alignment
-            frame_i, begin_i, end_i = int(frame), int(begin), int(end)
-            read_from, read_to = read_span(frame_i, begin_i, end_i, ali.target_from, ali.target_to)
-            rows.append(
-                (
-                    read, frame_i, begin_i, end_i, read_from, read_to, pfam, n,
-                    hit.score, domain.score, hit.evalue, domain.i_evalue,
-                    ali.hmm_from, ali.hmm_to, ali.target_from, ali.target_to,
-                    domain.env_from, domain.env_to,
-                    cigar(ali.hmm_sequence, ali.target_sequence),
-                    ali.target_sequence.replace("-", "").upper(),
-                    ali.posterior_probabilities,
-                )
-            )
+        if hit.reported:
+            domains = [d for d in hit.domains if d.reported]
+            above[text(hit.name)] = {(d.env_from, d.env_to) for d in domains}
+            rows.extend(domain_rows(hit, domains, accession, version, True))
+    for hit in weak:
+        done = above.get(text(hit.name), set())
+        domains = [d for d in hit.domains if d.i_evalue <= weak_evalue and (d.env_from, d.env_to) not in done]
+        rows.extend(domain_rows(hit, domains, accession, version, False, len(done) + 1))
     return table.getvalue(), rows
 
 
@@ -166,7 +194,7 @@ class Output:
     def __init__(self, domtbl, parquet):
         self.domtbl, self.rows = gzip.open(domtbl, "wb"), []
         self.parquet = parquet and pq.ParquetWriter(
-            parquet, SCHEMA, compression="zstd", compression_level=9, use_dictionary=["pfam"]
+            parquet, SCHEMA, compression="zstd", compression_level=9, use_dictionary=["pfam", "pfam_version", "above_ga"]
         )
 
     def add(self, table, rows):
@@ -192,7 +220,7 @@ class Output:
             self.parquet.close()
 
 
-def run(jobs, num_models, threads, pool, output):
+def run(jobs, num_models, threads, pool, output, weak_evalue=0):
     """Every (model, its candidate ORFs) of jobs, written in their order so output doesn't depend on threads.
 
     A model may be in jobs once: an optimized profile is reconfigured for each target, so two threads
@@ -200,7 +228,7 @@ def run(jobs, num_models, threads, pool, output):
     """
 
     def work(group):
-        return [search(query, block, num_models) for query, block in group]
+        return [search(query, block, num_models, weak_evalue) for query, block in group]
 
     def collect(future):
         for table, rows in future.result():
@@ -318,7 +346,12 @@ def main():
     parser.add_argument("--threads", type=int, default=1)
     parser.add_argument("--domtbl", required=True, help="Gzipped output")
     parser.add_argument("--parquet", help="Alignments, not written if this is left out")
+    parser.add_argument("--weak-evalue", type=float, default=0, metavar="E",
+                        help="domains under the gathering thresholds too, in the Parquet only, at this E-value or less (0: none)")
     args = parser.parse_args()
+    if args.weak_evalue < 0:
+        parser.error("--weak-evalue is an E-value, or 0 for none")
+    weak = args.weak_evalue if args.parquet else 0
     if args.seeds and len(args.hmm) > 1:
         parser.error("--seeds takes one HMM file")
     with Output(args.domtbl, args.parquet) as output, ThreadPoolExecutor(args.threads) as pool:
@@ -326,13 +359,13 @@ def main():
             pairs, ids = read_seeds(args.seeds)
             seqs = read_orfs(args.orfs, ids)
             del ids
-            run(seeded(pairs, seqs, args.hmm[0], args.whole), args.num_models, args.threads, pool, output)
+            run(seeded(pairs, seqs, args.hmm[0], args.whole), args.num_models, args.threads, pool, output, weak)
         else:
             optimized = profiles(args.hmm, args.stream)
             with open_orfs(args.orfs) as orfs:
                 for targets in batches(read_blocks(sys.stdin.buffer, orfs), BATCH):
                     jobs = ((optimized[m], targets[m]) for m in sorted(targets))
-                    run(jobs, args.num_models, args.threads, pool, output)
+                    run(jobs, args.num_models, args.threads, pool, output, weak)
     used = resource.getrusage(resource.RUSAGE_SELF)
     print(f"HMMER: {used.ru_utime + used.ru_stime:.0f} core-s", file=sys.stderr)
 

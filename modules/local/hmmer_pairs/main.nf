@@ -11,6 +11,7 @@ process HMMER_PAIRS {
     tuple val(meta), path(orfs), path(hmm), path(seeds)
     val num_models
     val alignments // whether to write them
+    val weak_evalue // the alignments' E-value cut for domains under the gathering thresholds too; 0 for none
 
     output:
     tuple val(meta), path("${prefix}.domtbl.gz"), emit: domtbl
@@ -23,7 +24,7 @@ process HMMER_PAIRS {
     script:
     prefix = task.ext.prefix ?: "${meta.id}"
     def script = file("${moduleDir}/bin/hmmer_pairs.py")
-    def parquet = alignments ? "--parquet ${prefix}_alignments.parquet" : ''
+    def parquet = alignments ? "--parquet ${prefix}_alignments.parquet --weak-evalue ${weak_evalue}" : ''
     // an unchunked Pfam must hold every model the seeds name
     def whole = meta.hmm_chunks == 1 ? '--whole' : ''
     """
