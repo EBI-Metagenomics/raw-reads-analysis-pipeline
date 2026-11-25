@@ -63,7 +63,7 @@ arm() {
 if [[ -s kfpfam/index/k4T6.5.tidx ]]; then
     kf="--kfpfam_sif $PWD/kfpfam/kfpfam-filter.sif --kfpfam_prep $PWD/kfpfam/prep"
     # The MGnify lookup on these arms' alignments, when its image (lookup_setup.sh) and bundle are there. The
-    # bundle must be of the Pfam searched here, or PFAM_LOOKUP stops. Everything upstream is cached.
+    # bundle must be of the Pfam searched here, or PFAM_LOOKUP stops. Everything before the search is cached.
     if [[ -s lookup/bundle/manifest.json && -s lookup/kfp-lookup.sif ]]; then
         kf+=" --pfam_lookup true --pfam_lookup_bundle $(realpath lookup/bundle) --pfam_lookup_sif $PWD/lookup/kfp-lookup.sif"
     else

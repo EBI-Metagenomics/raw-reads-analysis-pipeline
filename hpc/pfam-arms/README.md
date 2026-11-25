@@ -55,10 +55,11 @@ The kfpfam arms also profile their alignments against MGnify's proteins (`--pfam
 BUNDLE=<kmer-functional-profiler_runs>/kfp-ablations/lookup-index/results/bundle ./lookup_setup.sh
 ```
 
-The bundle and the arms must be of one Pfam file. The bundle's is 38.2 unless lookup-index was told
-otherwise, so run the arms with `PFAM_HMM` set to that `Pfam-A.hmm`, and `kfpfam_setup.sh` with the same
-file and `N_MODELS=30134`; `PFAM_LOOKUP` stops at the first family of another version. Re-running
-`run.sh` then reuses every finished step, so the lookup is the only new work.
+The bundle and the arms must be of one Pfam file, 39.0 unless lookup-index was told otherwise; `PFAM_LOOKUP`
+stops at the first family of another version. An arm last run before `pfam_weak_evalue` (2026-11-25)
+searches again, as the command of `KFPFAM_HMMER` changed; everything before the search is reused. To profile
+alignments that exist already without searching again, use kmer-functional-profiler's
+`hpc/kfp-ablations/lookup-profile`.
 
 ## Samples
 
