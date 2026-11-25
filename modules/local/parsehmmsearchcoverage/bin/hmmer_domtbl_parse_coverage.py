@@ -1,152 +1,122 @@
+"""HMM model coverages of metagenomic reads, from hmmsearch's domain table.
+
+A read's overlapping hits are resolved greedily, best E-value first, so all of its hits are needed at once and the
+table isn't sorted by read. Hits are split by read into temporary files, which are then resolved one at a time: memory
+is that of one file's hits (1/64 of them), where holding the whole table took about 1 GB per million reads.
+"""
+
 import argparse
-import math
-import sys
-import re
-import fileinput
+import gc
 import json
+import marshal
+import sys
+import tempfile
 from collections import defaultdict
+from itertools import accumulate
 
-parser = argparse.ArgumentParser(description='Parse domain table output from HMMer (`hmmsearch`) to calculate HMM model coverages from metagenomic reads.')
-parser.add_argument('-i', "--input_fp", type=str,
-                    default='-',
-                    help="Input fasta/fastq filepath. Use '-' for STDIN (default).")
-parser.add_argument('-o', "--output_fp", type=str,
-                    default='-',
-                    help="Output TSV filepath. Use '-' for STDOUT (default).")
-parser.add_argument('-s', "--stats_output_fp", type=str,
-                    default='',
-                    help="Output JSON filepath for recording mapping stats.")
-
-args = parser.parse_args()
+PARTS = 64
+BUFFER = 4096  # hits of a part held before they are written
 
 
-cols = [
-    'target_name',
-    'target_accession',
-    'tlen',
-    'query_name',
-    'query_accession',
-    'qlen',
-    'overall_evalue',
-    'overall_score',
-    'overall_bias',
-    'domain_n',
-    'domain_total',
-    'domain_c_evalue',
-    'domain_i_evalue',
-    'domain_score',
-    'domain_bias',
-    'hmm_coord_from',
-    'hmm_coord_to',
-    'ali_coord_from',
-    'ali_coord_to',
-    'env_coord_from',
-    'env_coord_to',
-    'acc',
-    'description_of_target',
-]
+def parse(lines):
+    """A tuple per hit: read, line number, E-value, accession, model length, start and end on the read, and on the model.
 
-def extract_from_line(line_dict):
-    d, b, e = int(line_dict['read_frame']), int(line_dict['read_frame_begin']), int(line_dict['read_frame_end'])
-    if d<0:
-        b, e = e, b
-
-    return {
-        'read_frame': (d,b,e),
-        'query_accession': line_dict['query_accession'],
-        'overall_score': float(line_dict['overall_score']),
-        'overall_evalue': float(line_dict['overall_evalue']),
-        'acc': float(line_dict['acc']),
-        'tlen': int(line_dict['tlen']),
-        'qlen': int(line_dict['qlen']),
-        'ali_coord_from': int(line_dict['ali_coord_from']),
-        'ali_coord_to': int(line_dict['ali_coord_to']),
-        'hmm_coord_from': int(line_dict['hmm_coord_from']),
-        'hmm_coord_to': int(line_dict['hmm_coord_to'])
-    }
-
-if __name__ == '__main__':
-    # Parse file
-    read_hits = defaultdict(list)
-    for line in fileinput.input([] if args.input_fp=='-' else args.input_fp):
-        if line[0] == '#':
+    The read's coordinates are only compared with each other, and are 0-based with the end excluded.
+    """
+    for n, line in enumerate(lines):
+        if line.startswith(b"#"):
             continue
-        line_dict = dict(zip(cols, [v.strip() for v in line.strip().split()]))
+        f = line.split(None, 19)
+        read, _, orf = f[0].rpartition(b"_frame=")
+        frame, begin, end = orf.split(b"_")
+        frame, ali_from, ali_to = int(frame), int(f[17]), int(f[18]) + 1
+        if frame < 0:
+            offset = int(end[4:]) + 1 - frame
+            start, stop = offset - 3 * ali_to, offset - 3 * ali_from
+        else:
+            offset = int(begin[6:]) - 5 + frame
+            start, stop = offset + 3 * ali_from, offset + 3 * ali_to
+        yield read, n, float(f[6]), f[4], int(f[5]), start, stop, int(f[15]), int(f[16])
 
-        read_header_split = re.findall(r'^(.*?)_frame=(-?\d+)_begin=(\d+)_end=(\d+)\s*$',
-                                       line_dict['target_name'])[0]
-        line_dict['read_name'] = read_header_split[0]
-        line_dict['read_frame'] = read_header_split[1]
-        line_dict['read_frame_begin'] = read_header_split[2]
-        line_dict['read_frame_end'] = read_header_split[3]
 
-        read_hits[line_dict['read_name']].append(extract_from_line(line_dict))
+def split(hits, files):
+    buffers = [[] for _ in files]
+    for hit in hits:
+        part = hash(hit[0]) % len(files)
+        buffers[part].append(hit)
+        if len(buffers[part]) == BUFFER:
+            marshal.dump(buffers[part], files[part])
+            buffers[part] = []
+    for buffer, file in zip(buffers, files):
+        marshal.dump(buffer, file)
+        marshal.dump([], file)  # the end
+        file.seek(0)
 
-    top_read_hits = {}
-    for k,vs in read_hits.items():
-        # greedy resolution of overlaps
-        deoverlapped = []
-        ali_coverage = set()
-        for d in sorted(vs, key=lambda x:x['overall_evalue']):
-            phase = int(d['read_frame'][0])
-            direction = -1 if phase<0 else 1
-            phase *= direction
-            start, end = d['read_frame'][1:3]
 
-            m = lambda x: (start-1)+direction*(x-1)*3 + (phase-1)
-            nt_base_idxs = list(range(*list(sorted((m(d['ali_coord_from']), m(d['ali_coord_to']+1))))))
+def top_hits(hits):
+    """A read's hits that don't overlap a better one on it, best first."""
+    if len(hits) == 1:
+        return hits
+    top = []
+    for hit in sorted(hits, key=lambda h: h[2]):
+        if all(hit[6] <= t[5] or t[6] <= hit[5] for t in top):
+            top.append(hit)
+    return top
 
-            if not any([i in ali_coverage for i in nt_base_idxs]):
-                deoverlapped.append(d)
-                for i in nt_base_idxs:
-                    ali_coverage.add(i)
 
-        top_read_hits[k] = list(deoverlapped)
+def count(files):
+    """Reads mapped, and per model: reads, depth at each position, and its place in the order models are first seen."""
+    reads_mapped, reads, steps, first = 0, defaultdict(int), {}, {}
+    for file in files:
+        by_read = defaultdict(list)
+        while chunk := marshal.load(file):
+            for hit in chunk:
+                by_read[hit[0]].append(hit)
+        file.close()
+        reads_mapped += len(by_read)
+        for hits in by_read.values():
+            line, seen = hits[0][1], set()
+            for rank, hit in enumerate(top_hits(hits)):
+                _, _, _, model, length, _, _, hmm_from, hmm_to = hit
+                if model not in steps:
+                    steps[model] = [0] * (length + 1)
+                    first[model] = line, rank
+                elif (line, rank) < first[model]:
+                    first[model] = line, rank
+                # depth changes here: positions are 1-based with the end included
+                steps[model][hmm_from - 1] += 1
+                steps[model][hmm_to] -= 1
+                if model not in seen:
+                    seen.add(model)
+                    reads[model] += 1
+    depth = {model: list(accumulate(steps[model][:-1])) for model in sorted(steps, key=first.get)}
+    return reads_mapped, reads, depth
 
-    # get hmm coverage and read counts
-    hmm_hits_coverage = {}
-    hmm_hit_count = defaultdict(set)
-    for k,vs in top_read_hits.items():
-        for d in vs:
-            hmm_hit_count[d['query_accession']].add(k)
-            if not d['query_accession'] in hmm_hits_coverage:
-                hmm_hits_coverage[d['query_accession']] = {i+1:0 for i in range(d['qlen'])}
-            for i in range(d['hmm_coord_from'], d['hmm_coord_to']+1):
-                hmm_hits_coverage[d['query_accession']][i] += 1
-    hmm_hit_count = {k:len(vs) for k,vs in hmm_hit_count.items()}
 
-    # Collect and write
-    hmm_hits_coverage_stats = {}
-    for k,d in hmm_hits_coverage.items():
-        if not len(d)>0:
-            continue
-        depth = sum(list(d.values()))/len(d)
-        breadth = sum([v>0 for _,v in d.items()])/len(d)
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("-i", "--input_fp", default="-", help="Domain table, '-' for stdin (default)")
+    parser.add_argument("-o", "--output_fp", default="-", help="Output TSV, '-' for stdout (default)")
+    parser.add_argument("-s", "--stats_output_fp", default="", help="Output JSON of mapping stats")
+    args = parser.parse_args()
+    gc.disable()  # nothing is cyclic, and it walks the hits held
 
-        depth_ = 709 if depth>709 else depth  # prevents and float overflow with math.exp
-        expected = 1-(1/math.log2(1+math.exp(depth_)))
+    files = [tempfile.TemporaryFile(dir=".") for _ in range(PARTS)]
+    with sys.stdin.buffer if args.input_fp == "-" else open(args.input_fp, "rb") as lines:
+        split(parse(lines), files)
+    reads_mapped, reads, coverage = count(files)
 
-        hmm_hits_coverage_stats[k] = {
-            'depth': depth,
-            'breadth': breadth,
-            'count': hmm_hit_count[k],
-            'expected_breadth': expected,
-            'ratio': breadth/expected,
-        }
-
-    outfile = sys.stdout if args.output_fp=='-' else open(args.output_fp, 'wt')
-    outfile.write(f"# function\tread_count\tcoverage_depth\tcoverage_breadth\n")
-    for k,d in sorted(hmm_hits_coverage_stats.items(), key=lambda x:-x[1]['depth']):
-        outfile.write(f"{k}\t{d['count']}\t{d['depth']}\t{d['breadth']}\n")
-    outfile.close()
+    rows = [(model, sum(d) / len(d), sum(v > 0 for v in d) / len(d)) for model, d in coverage.items() if d]
+    with sys.stdout if args.output_fp == "-" else open(args.output_fp, "wt") as out:
+        out.write("# function\tread_count\tcoverage_depth\tcoverage_breadth\n")
+        for model, depth, breadth in sorted(rows, key=lambda r: -r[1]):
+            out.write(f"{model.decode()}\t{reads[model]}\t{depth}\t{breadth}\n")
 
     if args.stats_output_fp:
-        stats = {
-            'reads_mapped': len(top_read_hits),
-            'hmm_count': len(hmm_hit_count),
-            'read_hit_count': sum(list(hmm_hit_count.values()))
-        }
-        with open(args.stats_output_fp, 'wt') as f:
+        stats = {"reads_mapped": reads_mapped, "hmm_count": len(reads), "read_hit_count": sum(reads.values())}
+        with open(args.stats_output_fp, "wt") as f:
             json.dump(stats, f)
 
 
+if __name__ == "__main__":
+    main()

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `bbmap/reformat` and `bbmap/reformat_standardise` replaced with the shared modules from [ebi-metagenomics/nf-modules](https://github.com/EBI-Metagenomics/nf-modules), with the channel and `modules.config` changes that required ([#26](https://github.com/EBI-Metagenomics/raw-reads-analysis-pipeline/pull/26)).
+- `PARSEHMMSEARCHCOVERAGE` no longer holds every hit in memory (36 GB for 34 M mapped reads, and a first attempt killed at 32 GB): hits are split by read into temporary files. It asks for 4 GB, then 8 GB, rather than 32 GB, and is three to four times as fast. Its output is the same, byte for byte.
 - GitHub Actions now runs the nf-test suite on `master` under the Docker profile.
 - End-to-end tests assert on `.fastp.json` content and line counts instead of md5 checksums, which were not stable across runs.
 
