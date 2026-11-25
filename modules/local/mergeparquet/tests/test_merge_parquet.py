@@ -10,7 +10,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bin"))
-from merge_parquet import family_ranges, merge  # noqa: E402
+from merge_parquet import merge, range_starts  # noqa: E402
 
 KEYS = [("pfam", "ascending"), ("read", "ascending")]
 
@@ -27,7 +27,8 @@ def test_merge():
             files.append(f"{d}/{i}.parquet")
             pq.write_table(t, files[-1], row_group_size=50)
         merge(files, f"{d}/out.parquet", rows=60)
-        assert len(list(family_ranges(files, 60))) > 3
+        assert len(range_starts(files, 60)) > 3
+        assert not [x for x in Path(d).iterdir() if x.is_dir()], "temporary files left"
         assert pq.read_table(f"{d}/out.parquet").equals(pa.concat_tables(tables).combine_chunks().sort_by(KEYS))
         pq.write_table(tables[0].slice(0, 0), files[0])
         merge(files[:1], f"{d}/empty.parquet")

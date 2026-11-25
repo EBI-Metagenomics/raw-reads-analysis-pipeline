@@ -1,45 +1,78 @@
 #!/usr/bin/env python3
 """Alignment Parquets of one sample into one, sorted by family then read.
 
-A few million domains are read at a time, a range of families from every input, so memory hardly
-grows with the sample: 4.6 GB at 24 M domains, where all at once took up to 25 GB on Codon.
+Each input is read once, a row group at a time, and spilled to temporary files that hold a range of
+families each, a few million domains. They are then sorted one by one, so memory doesn't grow with
+the sample unless one family is larger than a range.
 """
 
 import argparse
+import tempfile
+from bisect import bisect_left
 from collections import Counter
+from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.ipc
 import pyarrow.parquet as pq
 
-ROWS = 2_000_000  # domains per pass, unless one family has more
+ROWS = 2_000_000  # domains sorted at a time, unless one family has more
+KEYS = [("pfam", "ascending"), ("read", "ascending")]
 
 
-def family_ranges(files, rows):
-    """(first, last) family of each pass."""
-    counts = Counter()
+def row_groups(files, columns=None):
+    # pre_buffer would keep what it has read of the file
     for f in files:
-        for batch in pq.ParquetFile(f).iter_batches(columns=["pfam"]):
-            for x in batch.column(0).value_counts().to_pylist():
-                counts[x["values"]] += x["counts"]
-    first, total = None, 0
+        with pq.ParquetFile(f, pre_buffer=False) as p:
+            for i in range(p.num_row_groups):
+                yield p.read_row_group(i, columns, use_threads=False)
+
+
+def range_starts(files, rows):
+    """First family of each range."""
+    counts = Counter()
+    for table in row_groups(files, ["pfam"]):
+        for x in table["pfam"].value_counts().to_pylist():
+            counts[x["values"]] += x["counts"]
+    starts, total = [], 0
     for family in sorted(counts):
-        if total and total + counts[family] > rows:
-            yield first, last
+        if not starts or total + counts[family] > rows:
+            starts.append(family)
             total = 0
-        if not total:
-            first = family
-        last, total = family, total + counts[family]
-    if total:
-        yield first, last
+        total += counts[family]
+    return starts
+
+
+def spill(files, starts, schema, paths):
+    """Every row to the file of its family's range."""
+    options = pa.ipc.IpcWriteOptions(compression="zstd", use_threads=False)
+    writers = [pa.ipc.new_stream(str(p), schema, options=options) for p in paths]
+    for table in row_groups(files):
+        table = table.sort_by(KEYS)
+        families = table["pfam"]
+        edges = [bisect_left(range(len(table)), s, key=lambda i: families[i].as_py()) for s in starts] + [len(table)]
+        for writer, start, end in zip(writers, edges, edges[1:]):
+            if end > start:
+                writer.write_table(table.slice(start, end - start))
+    for writer in writers:
+        writer.close()
 
 
 def merge(files, out, rows=ROWS):
     schema = pq.read_schema(files[0])
-    with pq.ParquetWriter(out, schema, compression="zstd", compression_level=9, use_dictionary=["pfam"]) as writer:
-        ranges = list(family_ranges(files, rows))
-        for first, last in ranges:
-            table = pq.read_table(files, filters=[("pfam", ">=", first), ("pfam", "<=", last)], use_threads=False)
-            writer.write_table(table.sort_by([("pfam", "ascending"), ("read", "ascending")]))
-        if not ranges:
+    starts = range_starts(files, rows)
+    with (
+        tempfile.TemporaryDirectory(dir=Path(out).parent) as d,
+        pq.ParquetWriter(out, schema, compression="zstd", compression_level=9, use_dictionary=[c for c in ("pfam", "pfam_version", "above_ga") if c in schema.names]) as writer,
+    ):
+        paths = [Path(d) / f"{i}.arrow" for i in range(len(starts))]
+        spill(files, starts, schema, paths)
+        for path in paths:
+            with pa.OSFile(str(path)) as f:
+                table = pa.ipc.open_stream(f).read_all()
+            path.unlink()
+            writer.write_table(table.sort_by(KEYS))
+        if not paths:
             writer.write_table(schema.empty_table())
 
 
