@@ -1,0 +1,294 @@
+# Metro map of ebi-metagenomics/raw-reads-analysis-pipeline.
+# Render: python3 assets/visuals/make_metromap.py assets/visuals/rawr_metromap.toml \
+#             --font MavenPro.ttf --png assets/visuals/rawr_metromap.png
+#
+# Short and long reads run together through input preparation and QC (the trunk).
+# They split for decontamination: bwa-mem2 for short reads, minimap2 for long reads.
+# They join again at read merging. There the read lines end, and one line starts for
+# each analysis: mOTUs (clean reads), rRNA (merged FASTA) and Pfam (merged FASTA).
+# The analysis lines meet again for the reports.
+
+[title]
+org = "ebi-metagenomics/"
+name = "raw-reads-analysis-pipeline"
+subtitle = "MGnify v6 taxonomic and functional profiles of raw reads"
+
+[style]
+numbered_stages = true
+
+[legend]
+optional = "Optional (depends on parameters / samplesheet)"
+note = "Functional profiling is off by default (--skip_functional)."
+
+[[lines]]
+id = "short"
+label = "Short reads (Illumina, ...)"
+color = "#1C7ED6"
+end = "station"  # ends at read merging
+
+[[lines]]
+id = "long"
+label = "Long reads (ONT, PacBio)"
+color = "#FAB005"
+end = "station"  # ends at read merging
+
+[[lines]]
+id = "motus"
+label = "mOTUs taxonomy"
+color = "#0CA678"
+start = "station"  # starts at read merging
+
+[[lines]]
+id = "pfam"
+label = "Pfam functional profile"
+color = "#AE3EC9"
+start = "station"
+
+[[lines]]
+id = "rrna"
+label = "rRNA (SSU / LSU) taxonomy"
+color = "#E03131"
+start = "station"
+
+# Fold the map into a U: Input goes down on the left, Reporting goes up on the right.
+[layout]
+down = ["input"]
+up = ["reporting"]
+
+# Lanes from top to bottom. A nested list is one track that two lines share at different places.
+[[lanes]]
+id = "upper"
+lines = [["short", "motus"]]
+
+[[lanes]]
+id = "trunk"
+lines = [["short", "motus"], "pfam", ["long", "rrna"]]
+
+[[lanes]]
+id = "lower"
+lines = [["long", "rrna"]]
+
+# Stages from left to right.
+[[stages]]
+id = "input"
+title = "Input &\nstandardisation"
+
+[[stages]]
+id = "qc"
+title = "Reads QC & decontamination"
+
+[[stages]]
+id = "taxonomy"
+title = "Taxonomic profiling"
+
+[[stages]]
+id = "function"
+title = "Functional profiling"
+
+[[stages]]
+id = "reporting"
+title = "Reporting"
+
+# 1. Input & standardisation
+[[stations]]
+stage = "input"
+lane = "trunk"
+lines = ["short", "long"]
+tool = "boto3"
+desc = "Download from\nEBI FIRE"
+note = "(--use_fire_download)"
+optional = true
+
+[[stations]]
+stage = "input"
+lane = "trunk"
+lines = ["short", "long"]
+tool = "BBMap reformat"
+desc = "Standardise\nheaders &\nde-interleave"
+note = "(--skip_standardise)"
+optional = true
+
+[[stations]]
+stage = "input"
+lane = "trunk"
+lines = ["short"]
+tool = "BBMap repair"
+desc = "Remove\nunpaired reads"
+note = "(--skip_standardise)"
+optional = true
+
+# 2. Reads QC & decontamination
+[[stations]]
+stage = "qc"
+lane = "trunk"
+col = 1
+lines = ["short", "long"]
+tool = "fastp"
+desc = "Trimming &\nfiltering"
+note = "(--skip_qc)"
+optional = true
+
+[[stations]]
+stage = "qc"
+lane = "upper"
+col = 2
+tool = "bwa-mem2"
+desc = "PhiX\nremoval"
+note = "(--remove_phix,\nIllumina only)"
+optional = true
+
+[[stations]]
+stage = "qc"
+lane = "upper"
+col = 3
+tool = "bwa-mem2"
+desc = "Human host\nremoval"
+note = "(--remove_host)"
+optional = true
+
+[[stations]]
+stage = "qc"
+lane = "lower"
+col = 3
+tool = "minimap2"
+desc = "Human host\nremoval"
+note = "(--remove_host)"
+optional = true
+
+[[stations]]
+stage = "qc"
+lane = "trunk"
+col = 4
+lines = ["short", "long", "motus", "pfam", "rrna"]
+tool = "fastp\nBBMap reformat"
+desc = "Merge pairs &\nconvert to\nFASTA"
+
+# 3. Taxonomic profiling: mOTUs on the clean reads
+[[stations]]
+stage = "taxonomy"
+lane = "upper"
+col = 1
+tool = "mOTUs"
+desc = "Taxonomic\nprofile"
+note = "(unmerged reads)"
+optional = true
+input = { label = "DB", caption = "mOTUs" }
+
+[[stations]]
+stage = "taxonomy"
+lane = "upper"
+col = 4
+tool = "Krona"
+desc = "Krona plot"
+optional = true
+
+# 3. Taxonomic profiling: rRNA on the merged reads
+[[stations]]
+stage = "taxonomy"
+lane = "lower"
+col = 1
+tool = "Infernal\ncmsearch"
+desc = "rRNA\ndetection"
+note = "(--skip_taxonomic)"
+optional = true
+input = { label = "CM", caption = "Rfam" }
+
+[[stations]]
+stage = "taxonomy"
+lane = "lower"
+col = 2
+tool = "Easel\nesl-sfetch"
+desc = "Extract SSU\n& LSU"
+optional = true
+
+[[stations]]
+stage = "taxonomy"
+lane = "lower"
+col = 3
+tool = "MAPseq"
+desc = "SILVA\nclassification"
+optional = true
+input = { label = "DB", caption = "SILVA\nSSU / LSU" }
+
+[[stations]]
+stage = "taxonomy"
+lane = "lower"
+col = 4
+tool = "Krona"
+desc = "Krona plot"
+optional = true
+
+# 4. Functional profiling on the merged reads
+[[stations]]
+stage = "function"
+lane = "trunk"
+lines = ["pfam"]
+tool = "SeqKit shuffle"
+desc = "Subsample\nreads"
+note = "(--hmmsearch_subsampling)"
+optional = true
+
+[[stations]]
+stage = "function"
+lane = "trunk"
+lines = ["pfam"]
+tool = "SeqKit translate"
+desc = "6-frame\ntranslation"
+note = "(--skip_functional)"
+optional = true
+
+[[stations]]
+stage = "function"
+lane = "trunk"
+lines = ["pfam"]
+tool = "HMMER\nhmmsearch"
+desc = "Pfam-A\nsearch"
+optional = true
+input = { label = "HMM", caption = "Pfam-A" }
+
+[[stations]]
+stage = "function"
+lane = "trunk"
+lines = ["pfam"]
+tool = "mgnify-pipelines-\ntoolkit"
+desc = "Pfam coverage\nprofile"
+optional = true
+
+# 5. Reporting
+[[stations]]
+stage = "reporting"
+lane = "trunk"
+lines = ["motus", "pfam", "rrna"]
+tool = "MultiQC"
+desc = "QC reports\n& run status"
+note = "(per run &\nstudy)"
+
+[[inputs]]
+label = "CSV"
+caption = "Samplesheet"
+
+[[inputs]]
+label = "FASTQ"
+caption = "Raw reads"
+
+[[outputs]]
+label = "TXT"
+caption = "mOTUs\nprofile"
+
+[[outputs]]
+label = "TXT"
+caption = "SILVA SSU /\nLSU profiles"
+
+[[outputs]]
+label = "TXT"
+caption = "Pfam\nprofile"
+
+[[outputs]]
+label = "HTML"
+caption = "Krona &\nMultiQC"
+row = 2
+
+[[outputs]]
+label = "CSV"
+caption = "Run status"
+row = 2
