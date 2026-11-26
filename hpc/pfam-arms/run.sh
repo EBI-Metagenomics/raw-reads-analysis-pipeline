@@ -11,6 +11,7 @@
 # Re-submitting resumes. Each arm reuses the others' QC, decontamination and translation.
 # Read:
 #   results/compare.tsv   per sample and arm, against `current`: read and family differences, worst families
+#   results/compare_weefams.tsv  the same for kfpfam_top_weefams against current_weefams (weefams_setup.sh)
 #   results/families.tsv  reads per family in each arm
 #   results/cost.tsv      core-hours and peak memory per Pfam step
 #   results/<arm>/<sample>/function-summary/pfam/  each arm's published files, with filter stats
@@ -79,6 +80,15 @@ else
     echo "no kfpfam index: run kfpfam_setup.sh to add the kfpfam arms" >&2
 fi
 
+# Weefams (weefams_setup.sh): kfpfam's top mode on reads, and hmmsearch on every ORF as its truth. hmmsearch costs
+# what the library's columns cost against Pfam's (39.0 holds about 10 M), so look at the weefams' count first.
+if [[ -s weefams/index/top.tidx ]]; then
+    export WEEFAMS_DIR=$PWD/weefams WEEFAMS_MODELS=$(grep -c '^NAME ' weefams/weefams.hmm)
+    echo "weefam arms search $WEEFAMS_MODELS weefams"
+    arm kfpfam_top_weefams -c weefams.config --kfpfam_sif "$PWD/kfpfam/kfpfam-filter.sif" --pfam_search_engine kfpfam
+    arm current_weefams -c weefams.config
+fi
+
 arm nail -c unchunked_pfam.config --pfam_search_engine nail
 # nail at its loose seeding filter, so nail and kfpfam A are compared at matched recall rather
 # than at matched defaults. V2 measured about 334 candidate pairs per read here against 65.
@@ -107,7 +117,18 @@ for sample in $(tail -n +2 samplesheet.csv | cut -d, -f1); do
     cat "results/$sample.families.tsv" >> results/families.tsv
     rm "results/$sample.families.tsv"
 done
+# the weefam arms against each other: weefams are not Pfam's families
+WEE=
+[[ -s weefams/index/top.tidx ]] && WEE="current_weefams kfpfam_top_weefams"
+if [[ -n $WEE ]]; then
+    : > results/compare_weefams.tsv
+    for sample in $(tail -n +2 samplesheet.csv | cut -d, -f1); do
+        args=()
+        for a in $WEE; do args+=("$a=results/$a/$sample/function-summary/pfam/${sample}_pfam.txt.gz"); done
+        python3 "$PIPELINE/bin/compare_profiles.py" "$sample" "${args[@]}" >> results/compare_weefams.tsv
+    done
+fi
 cost=()
-for a in $ARMS; do cost+=("$a=results/$a/pipeline_info/execution_trace_arm.txt"); done
+for a in $ARMS $WEE; do cost+=("$a=results/$a/pipeline_info/execution_trace_arm.txt"); done
 python3 cost.py "${cost[@]}" > results/cost.tsv
 echo finished

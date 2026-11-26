@@ -93,3 +93,18 @@ on 150 nt reads need not hold at 72 or 250. `compare.tsv` is where to look for t
 - `results/compare.tsv`: whether `of_those_below_0.8` and `worst` hold up across samples, and whether they get worse with read length, because coding scores add up over an ORF.
 - `results/cost.tsv`: core-hours and peak memory per step, to set `conf/modules.config`'s resources for `NAIL_SEED` and `HMMER_PAIRS`.
 - `results/<arm>/<sample>/function-summary/pfam/*_pfam_orf_filter.stats.json`: share of residues kept, and whether a sample fell back to all ORFs.
+
+## Weefams
+
+Two more arms profile the reads with mgnifams-explore's weefams instead of Pfam, once `weefams/` exists:
+`kfpfam_top_weefams` (kfpfam's top mode, as on reads) and `current_weefams` (`hmmsearch` on every ORF, its truth).
+
+```bash
+WEEFAMS=<runs>/weefams/full/results/wcollect/weefams.hmm KFP=<kmer-functional-profiler checkout> sbatch weefams_setup.sh
+```
+
+It needs `kfpfam/kfpfam-filter.sif` from `kfpfam_setup.sh`, of kfpfam 75e543d or later. It writes `weefams/weefams.hmm` with
+an `ACC` line for each weefam (its name: the pipeline counts reads by accession, and weefams have none), the prep with
+top's gapped bars, and `weefams/index/top.tidx`, built as hm-annotate's PREP builds top. `weefams.config` points the
+Pfam step at them; the MGnify lookup is off, as its bundle is of Pfam. `results/compare_weefams.tsv` compares the two arms.
+`current_weefams` costs what the library's columns cost against Pfam's, so check the number of weefams before it runs.
