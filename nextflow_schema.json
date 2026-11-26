@@ -156,6 +156,11 @@
             "default": 400000,
             "description": "ORFs per kfpfam block; larger blocks use more memory."
         },
+        "kfpfam_forward_slack": {
+            "type": ["number", "string"],
+            "default": 8,
+            "description": "HMMER after kfpfam: an ORF this many bits under a model's gathering sequence threshold by HMMER's Forward filter gets no domain definition (8 bits lost no domain on read ORFs, for 19% less HMMER). Empty for none."
+        },
         "pfam_lookup": {
             "type": "boolean",
             "default": false,

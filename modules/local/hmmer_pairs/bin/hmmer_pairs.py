@@ -14,6 +14,7 @@ find them by, for 30 residues.
 import argparse
 import gzip
 import io
+import math
 import re
 import resource
 import struct
@@ -145,20 +146,34 @@ def domain_rows(hit, domains, pfam, version, above_ga, first=1):
 
 
 def pipeline(name, **options):
-    """This thread's pipeline of that name, cleared. One is kept a thread, as building one is slow."""
+    """This thread's pipeline of that name, cleared, with its own Forward filter back. One is kept a thread,
+    as building one is slow."""
     if not hasattr(LOCAL, name):
         setattr(LOCAL, name, Pipeline(ALPHABET, **options))
+        setattr(LOCAL, name + "_f3", getattr(LOCAL, name).F3)
     p = getattr(LOCAL, name)
     p.clear()
+    p.F3 = getattr(LOCAL, name + "_f3")
     return p
 
 
-def search(query, block, num_models, weak_evalue=0):
+def forward_cut(query, bits):
+    """HMMER's Forward filter (F3) as a P-value that stops an ORF whose Forward score, after the bias filter,
+    is under `bits`: it gets no domain definition, most of the cost of a candidate."""
+    e = query.evalue_parameters
+    return 1.0 if bits <= e.f_tau else math.exp(-e.f_lambda * (bits - e.f_tau))
+
+
+def search(query, block, num_models, weak_evalue=0, forward_slack=None):
     """One model on its candidates: domtbl bytes, and one row per domain.
 
     At gathering thresholds, and with `weak_evalue` also the domains under them whose ORF and own E-values are
     at most that. Every candidate is then searched without a cut first, and at the gathering thresholds only the ORFs that
     search reports: it stops an ORF at the same filters, so the domtbl is as it is without `weak_evalue`.
+
+    `forward_slack`: at the gathering thresholds, an ORF this many bits under the model's sequence threshold by
+    Forward gets no domain definition, so it is not reported. At 8 bits, on 309,149 read ORFs against every fourth model
+    of Pfam 38.2, no domain was lost and HMMER took 19% less. The weak search is not cut.
     """
     accession, _, version = text(query.accession).partition(".")
     version = int(version or 0)
@@ -168,7 +183,10 @@ def search(query, block, num_models, weak_evalue=0):
         found = {text(hit.name) for hit in every}
         block = DigitalSequenceBlock(ALPHABET, [seq for seq in block if text(seq.name) in found])
         weak = [hit for hit in every if hit.evalue <= weak_evalue]
-    hits = pipeline("gathering", Z=num_models, bit_cutoffs="gathering").search_hmm(query, block)
+    p = pipeline("gathering", Z=num_models, bit_cutoffs="gathering")
+    if forward_slack is not None and query.cutoffs.gathering_available():
+        p.F3 = min(p.F3, forward_cut(query, query.cutoffs.gathering[0] - forward_slack))
+    hits = p.search_hmm(query, block)
     table = io.BytesIO()
     hits.write(table, format="domains", header=False)
     rows, above = [], {}
@@ -220,7 +238,7 @@ class Output:
             self.parquet.close()
 
 
-def run(jobs, num_models, threads, pool, output, weak_evalue=0):
+def run(jobs, num_models, threads, pool, output, weak_evalue=0, forward_slack=None):
     """Every (model, its candidate ORFs) of jobs, written in their order so output doesn't depend on threads.
 
     A model may be in jobs once: an optimized profile is reconfigured for each target, so two threads
@@ -228,7 +246,7 @@ def run(jobs, num_models, threads, pool, output, weak_evalue=0):
     """
 
     def work(group):
-        return [search(query, block, num_models, weak_evalue) for query, block in group]
+        return [search(query, block, num_models, weak_evalue, forward_slack) for query, block in group]
 
     def collect(future):
         for table, rows in future.result():
@@ -348,6 +366,9 @@ def main():
     parser.add_argument("--parquet", help="Alignments, not written if this is left out")
     parser.add_argument("--weak-evalue", type=float, default=0, metavar="E",
                         help="domains under the gathering thresholds too, in the Parquet only, at this E-value or less (0: none)")
+    parser.add_argument("--forward-slack", type=float, metavar="BITS",
+                        help="no domain definition for an ORF this many bits under a model's sequence threshold by "
+                        "HMMER's Forward filter, at the gathering thresholds (default: none)")
     args = parser.parse_args()
     if args.weak_evalue < 0:
         parser.error("--weak-evalue is an E-value, or 0 for none")
@@ -359,13 +380,14 @@ def main():
             pairs, ids = read_seeds(args.seeds)
             seqs = read_orfs(args.orfs, ids)
             del ids
-            run(seeded(pairs, seqs, args.hmm[0], args.whole), args.num_models, args.threads, pool, output, weak)
+            run(seeded(pairs, seqs, args.hmm[0], args.whole), args.num_models, args.threads, pool, output, weak,
+                args.forward_slack)
         else:
             optimized = profiles(args.hmm, args.stream)
             with open_orfs(args.orfs) as orfs:
                 for targets in batches(read_blocks(sys.stdin.buffer, orfs), BATCH):
                     jobs = ((optimized[m], targets[m]) for m in sorted(targets))
-                    run(jobs, args.num_models, args.threads, pool, output, weak)
+                    run(jobs, args.num_models, args.threads, pool, output, weak, args.forward_slack)
     used = resource.getrusage(resource.RUSAGE_SELF)
     print(f"HMMER: {used.ru_utime + used.ru_stime:.0f} core-s", file=sys.stderr)
 

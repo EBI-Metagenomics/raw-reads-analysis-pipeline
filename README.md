@@ -98,6 +98,7 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | kfpfam_gate                   | kfpfam's window gate in bits (Default: `16.5`)                                             |
 | kfpfam_min_gapped             | gapped score at which a pair goes to HMMER; Mode A 21.25, Mode B 26.25 (Default: `21.25`)  |
 | kfpfam_block                  | ORFs per kfpfam block (Default: `400000`)                                                  |
+| kfpfam_forward_slack          | HMMER: no domain definition for an ORF this many bits under by Forward (Default: `8`; empty for none) |
 | pfam_lookup                   | `nail`, `kfpfam`: profile the alignments against an index of MGnify's proteins (Default: `false`) |
 | pfam_lookup_bundle            | the index, built from the Pfam-A.hmm this run searches (Default: none)                     |
 | pfam_lookup_sif               | Singularity image holding the lookup binary and `bundle.py` (Default: none)                |

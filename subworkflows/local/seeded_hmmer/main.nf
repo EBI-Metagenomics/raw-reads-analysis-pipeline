@@ -46,6 +46,7 @@ workflow SEEDED_HMMER {
             params.databases.pfam.variables.num_models,
             write_alignments,
             weak_evalue,
+            params.kfpfam_forward_slack,
         )
         ch_versions = ch_versions.mix(KFPFAM_HMMER.out.versions)
         ch_domtbl = KFPFAM_HMMER.out.domtbl

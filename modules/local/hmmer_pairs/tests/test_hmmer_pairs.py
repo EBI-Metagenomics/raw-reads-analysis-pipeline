@@ -21,18 +21,18 @@ FX = ROOT / "tests/fixtures"
 ORFS, HMM = FX / "hmmer_pairs/orfs.faa.gz", str(FX / "dbs/pfam_mini/Pfam-A.hmm")
 
 
-def run(jobs, out, threads, parquet=True, weak=0):
+def run(jobs, out, threads, parquet=True, weak=0, slack=None):
     path = out / "x.parquet"
     with hp.Output(out / "x.domtbl.gz", path if parquet else None) as output, ThreadPoolExecutor(threads) as pool:
         for j in jobs:
-            hp.run(j, 34, threads, pool, output, weak)
+            hp.run(j, 34, threads, pool, output, weak, slack)
     return pq.read_table(path) if parquet else None
 
 
-def run_on_fixture(out, threads, parquet=True, weak=0):
+def run_on_fixture(out, threads, parquet=True, weak=0, slack=None):
     pairs, ids = hp.read_seeds(FX / "hmmer_pairs/seeds.tsv")
     seqs = hp.read_orfs(ORFS, ids)
-    return run([hp.seeded(pairs, seqs, HMM)], out, threads, parquet, weak)
+    return run([hp.seeded(pairs, seqs, HMM)], out, threads, parquet, weak, slack)
 
 
 def stream(block):
@@ -176,6 +176,18 @@ def test_seeds_from_another_release_are_an_error():
                 assert whole and "Not_in_this_Pfam" in str(e), e
 
 
+def test_forward_slack():
+    """8 bits changes nothing here; a slack that puts the Forward cut far above the threshold reports nothing, and
+    the threads' pipelines get their own Forward filter back afterwards."""
+    with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+        a, b = Path(a), Path(b)
+        want = run_on_fixture(a, 2)
+        assert run_on_fixture(b, 2, slack=8).equals(want) and domtbl(a) == domtbl(b)
+        assert run_on_fixture(b, 2, slack=-1000).num_rows == 0
+        assert run_on_fixture(b, 2).equals(want)
+        assert run_on_fixture(b, 2, weak=10, slack=8).equals(run_on_fixture(a, 2, weak=10))
+
+
 if __name__ == "__main__":
     test_schema_and_alignment_lengths()
     test_read_span_covers_the_right_codons()
@@ -186,4 +198,5 @@ if __name__ == "__main__":
     test_alignments_are_optional()
     test_weak_alignments()
     test_the_models_version()
+    test_forward_slack()
     print("ok")
