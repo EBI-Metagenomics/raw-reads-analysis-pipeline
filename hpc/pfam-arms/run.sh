@@ -10,6 +10,8 @@
 # Submit from this directory: cd hpc/pfam-arms && sbatch run.sh
 # The standard run, kfpfam top with the MGnify lookup (lookup_setup.sh, then kfpfam_setup.sh):
 #   RUN_ARMS=kfpfam_top sbatch run.sh
+# CONFIGS=<pipelines-nextflow-configs checkout>: Codon's config for this pipeline too (its local host, phiX,
+# Rfam and SILVA databases, so nothing is downloaded), under site.config; the work directory stays work/ here.
 # Re-submitting resumes. Each arm reuses the others' QC, decontamination and translation.
 # Read:
 #   results/compare.tsv   per sample and arm, against `current`: read and family differences, worst families
@@ -28,8 +30,13 @@ PIPELINE=../..
 # files the site config serves (a glob is fine) and this builds it once, beside this script.
 # An HMM file is its models one after another, so concatenating the chunks gives the database
 # the hmmsearch arms search, and -Z below is counted from the result rather than assumed.
+# Only the nail arms need it: RUN_ARMS without them (kfpfam_top alone) skips this.
+nail_arms=1
+if [[ -n ${RUN_ARMS:-} && " $RUN_ARMS " != *" nail "* && " $RUN_ARMS " != *" nail_loose "* && " $RUN_ARMS " != *" both "* ]]; then
+    nail_arms=0
+fi
 PFAM_HMM=${PFAM_HMM:-$PWD/pfam_unchunked/Pfam-A.hmm}
-if [[ ! -s $PFAM_HMM ]]; then
+if (( nail_arms )) && [[ ! -s $PFAM_HMM ]]; then
     [[ -n ${PFAM_CHUNKS:-} ]] || {
         echo "set PFAM_HMM to one Pfam-A.hmm, or PFAM_CHUNKS to the chunk HMMs to join" >&2
         exit 1
@@ -38,17 +45,25 @@ if [[ ! -s $PFAM_HMM ]]; then
     cat $PFAM_CHUNKS > "$PFAM_HMM.part"
     mv "$PFAM_HMM.part" "$PFAM_HMM"
 fi
-export PFAM_HMM_DIR=$(dirname "$PFAM_HMM")
-export PFAM_HMM_NAME=$(basename "$PFAM_HMM")
-export PFAM_NUM_MODELS=$(grep -c '^NAME ' "$PFAM_HMM")
-echo "nail arms search $PFAM_HMM, $PFAM_NUM_MODELS models"
+if (( nail_arms )); then
+    export PFAM_HMM_DIR=$(dirname "$PFAM_HMM")
+    export PFAM_HMM_NAME=$(basename "$PFAM_HMM")
+    export PFAM_NUM_MODELS=$(grep -c '^NAME ' "$PFAM_HMM")
+    echo "nail arms search $PFAM_HMM, $PFAM_NUM_MODELS models"
+fi
+
+codon=()
+if [[ -n ${CONFIGS:-} ]]; then
+    codon=(-c "$CONFIGS/pipelines/raw-reads-analysis-pipeline/codon.config")
+    [[ -s ${codon[1]} ]] || { echo "no ${codon[1]}: CONFIGS is not a pipelines-nextflow-configs checkout" >&2; exit 1; }
+fi
 
 # RUN_ARMS: the arms to run, by name ('kfpfam_top' for the standard run alone); all of them if unset
 arm() {
     local name=$1
     shift
     [[ -z ${RUN_ARMS:-} || " $RUN_ARMS " == *" $name "* ]] || return 0
-    nextflow run "$PIPELINE" -profile singularity -c site.config -resume \
+    nextflow run "$PIPELINE" -profile singularity ${codon[@]+"${codon[@]}"} -c site.config -resume -work-dir work \
         --samplesheet samplesheet.csv --outdir "results/$name" \
         --skip_functional false --skip_taxonomic true \
         --hmmsearch_subsampling=-1 \

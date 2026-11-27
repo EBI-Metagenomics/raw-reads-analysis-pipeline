@@ -58,7 +58,7 @@ cp <kfp runs>/kfp-ablations/images/kfp-lookup.tar lookup/
 BUNDLE=<kfp runs>/kfp-ablations/lookup-index/results/bundle sbatch lookup_setup.sh
 cp <kfp runs>/kfp-ablations/images/kfpfam-filter.tar kfpfam/
 KFPFAM=<kfpfam, prep-any-hmm> KFP=<kmer-functional-profiler, pfam-anchor> sbatch kfpfam_setup.sh
-RUN_ARMS=kfpfam_top sbatch run.sh
+CONFIGS=<pipelines-nextflow-configs checkout> RUN_ARMS=kfpfam_top sbatch run.sh
 ```
 
 `kfpfam_setup.sh` builds top from `lookup/bundle/hmm/Pfam-A.hmm` (or `PFAM_HMM`) into `kfpfam/`, with a copy
@@ -67,7 +67,9 @@ to `kfpfam/stale.<date>/`. Top's settings are the pipeline's kfpfam defaults: se
 theta 9, bar 15, gate 14.5, HMMER at 21.25 or the model's gapped bar (`prep/gapped.txt`, which
 `KFPFAM_HMMER` uses when it is there), band 15 at any diagonal. The arm publishes
 `results/kfpfam_top/<sample>/function-summary/pfam/`: `*_pfam_alignments.parquet` and
-`*_pfam_lookup.{reads.parquet,ko.tsv,summary.json}`. `RUN_ARMS` names the arms to run (all if unset); the
+`*_pfam_lookup.{reads.parquet,ko.tsv,summary.json}`. `CONFIGS` adds Codon's config for this pipeline under `site.config`, so the host, phiX, Rfam and SILVA
+databases are its local copies rather than downloads; the work directory stays `work/` here. Only the nail arms
+need `pfam_unchunked/Pfam-A.hmm` (or `PFAM_CHUNKS`). `RUN_ARMS` names the arms to run (all if unset); the
 comparison at the end needs `current`, and is skipped without it. Against `current`, kfpfam_top is a
 different Pfam release (38.1 against the site's), so read its `compare.tsv` rows with that in mind.
 
