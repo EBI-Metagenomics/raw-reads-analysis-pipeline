@@ -8,7 +8,7 @@ process PFAM_LOOKUP {
     container "${params.pfam_lookup_sif}"
 
     input:
-    tuple val(meta), path(alignments)
+    tuple val(meta), path(alignments), val(part) // part I/N: a run of families of about equal alignments
     path bundle
     val floor
     val k // rows the first stage keeps
@@ -17,8 +17,9 @@ process PFAM_LOOKUP {
 
     output:
     tuple val(meta), path("${prefix}.reads.parquet"), emit: reads
+    // a part of several writes only its calls: PFAM_LOOKUP_MERGE writes the profiles and summary from all of them
     tuple val(meta), path("${prefix}.*.tsv"), emit: profiles, optional: true // one per label scheme of the bundle
-    tuple val(meta), path("${prefix}.summary.json"), emit: summary
+    tuple val(meta), path("${prefix}.summary.json"), emit: summary, optional: true
     path "versions.yml", emit: versions
 
     when:
@@ -38,6 +39,7 @@ process PFAM_LOOKUP {
         --k ${k} \\
         --second ${second} \\
         --margin ${margin} \\
+        --part ${part} \\
         --threads ${task.cpus} ${args}
 
     cat <<-END_VERSIONS > versions.yml
@@ -50,7 +52,7 @@ process PFAM_LOOKUP {
     stub:
     prefix = task.ext.prefix ?: "${meta.id}_pfam_lookup"
     """
-    touch ${prefix}.reads.parquet ${prefix}.ko.tsv ${prefix}.summary.json
+    touch ${prefix}.reads.parquet
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

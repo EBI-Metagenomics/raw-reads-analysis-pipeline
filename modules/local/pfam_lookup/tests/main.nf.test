@@ -19,6 +19,7 @@ nextflow_process {
                 input[0] = [
                     ['id': 'test'],
                     file("${projectDir}/tests/fixtures/pfam_lookup/alignments.parquet", checkIfExists: true),
+                    '1/1',
                 ]
                 input[1] = file("${projectDir}/tests/fixtures/pfam_lookup/bundle", checkIfExists: true)
                 input[2] = 0.4

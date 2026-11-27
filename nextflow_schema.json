@@ -200,6 +200,11 @@
             "minimum": 0,
             "description": "And of those, only rows within this of the alignment's best column score (BLOSUM62); 0 for none."
         },
+        "pfam_lookup_chunk_size": {
+            "type": "string",
+            "default": "250.MB",
+            "description": "A sample's lookup is split into runs of families of about this much of its alignments Parquet, then merged."
+        },
         "force_download_dbs": {
             "type": "boolean",
             "default": "false"

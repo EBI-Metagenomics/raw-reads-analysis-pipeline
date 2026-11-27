@@ -23,6 +23,7 @@ include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pi
 include { MULTIQC as MULTIQC_RUN } from '../modules/nf-core/multiqc/main'
 include { MULTIQC as MULTIQC_STUDY } from '../modules/nf-core/multiqc/main'
 include { PFAM_LOOKUP } from '../modules/local/pfam_lookup/main'
+include { PFAM_LOOKUP_MERGE } from '../modules/local/pfam_lookup_merge/main'
 include { PROFILE_HMMSEARCH_PFAM } from '../subworkflows/local/profile_hmmsearch_pfam/main'
 include { samplesheetToList } from 'plugin/nf-schema'
 
@@ -427,15 +428,34 @@ workflow PIPELINE {
                     "for the Pfam this run searches, and pfam_lookup_sif, the image from hpc/pfam-arms/lookup_setup.sh."
                 )
             }
+            // Parts of about pfam_lookup_chunk_size of alignments, each a run of families, so that a part reads and
+            // decodes only its own families' blocks of the bundle; then merged, as a read's best call may be in any part
+            def lookup_bundle = file(params.pfam_lookup_bundle, checkIfExists: true)
+            def ch_lookup_parts = PROFILE_HMMSEARCH_PFAM.out.alignments.flatMap { meta, aln ->
+                def bytes = (aln instanceof List ? aln : [aln]).sum { f -> f.size() }
+                def n = Math.max(1, Math.ceil(bytes / MemoryUnit.of(params.pfam_lookup_chunk_size.toString()).toBytes()) as int)
+                (1..n).collect { i -> tuple(meta + [lookup_part: i, lookup_parts: n], aln, "${i}/${n}") }
+            }
             PFAM_LOOKUP(
-                PROFILE_HMMSEARCH_PFAM.out.alignments,
-                file(params.pfam_lookup_bundle, checkIfExists: true),
+                ch_lookup_parts,
+                lookup_bundle,
                 params.pfam_lookup_floor,
                 params.pfam_lookup_k,
                 params.pfam_lookup_second,
                 params.pfam_lookup_margin,
             )
-            ch_versions = ch_versions.mix(PFAM_LOOKUP.out.versions)
+            PFAM_LOOKUP_MERGE(
+                PFAM_LOOKUP.out.reads
+                    .map { meta, reads ->
+                        def sample = meta.findAll { k, _v -> !(k in ['lookup_part', 'lookup_parts']) }
+                        tuple(groupKey(sample, meta.lookup_parts), reads)
+                    }
+                    .groupTuple()
+                    .map { key, parts -> tuple(key.getGroupTarget(), parts) },
+                lookup_bundle,
+                params.pfam_lookup_floor,
+            )
+            ch_versions = ch_versions.mix(PFAM_LOOKUP.out.versions, PFAM_LOOKUP_MERGE.out.versions)
         }
 
         pfam_out_ch = PROFILE_HMMSEARCH_PFAM.out.profile
