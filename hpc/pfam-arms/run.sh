@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=pfam-arms
 #SBATCH --output=%x.%j.log
-#SBATCH --time=14-00:00:00
+#SBATCH --time=2-00:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=8G
@@ -23,7 +23,7 @@ set -euo pipefail
 [[ -f run.sh && -f site.config && -f unchunked_pfam.config ]] || { echo "submit from hpc/pfam-arms" >&2; exit 1; }
 command -v nextflow >/dev/null || { echo "nextflow not on PATH" >&2; exit 1; }
 export NXF_OPTS='-Xms1g -Xmx4g' NXF_VER=25.10.4
-PIPELINE=../..
+PIPELINE=${PIPELINE:-../..}  # a pipeline checkout; this one by default
 
 # The nail arms search one whole Pfam-A.hmm, where the hmmsearch arms use the site's chunks.
 # Set PFAM_HMM to a single Pfam-A.hmm if you have one; otherwise set PFAM_CHUNKS to the chunk
