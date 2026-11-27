@@ -83,7 +83,8 @@ arm() {
 # kfpfam's top mode, the standard for reads, with the MGnify lookup on its alignments: on the Pfam its
 # index was built from (kfpfam/Pfam-A.hmm, kfpfam_setup.sh), which is the lookup bundle's own, Pfam 38.1.
 # The pipeline's kfpfam defaults are top's (bar 15, gate 14.5, HMMER at 21.25), and KFPFAM_HMMER takes the
-# gapped bars from the prep. One whole Pfam, like the nail arms: the index covers the whole database.
+# gapped bars from the prep. One whole Pfam, like the nail arms: the index covers the whole database. Read
+# chunks of 10 M, not the pipeline's 4 M: a 4 M-read task took about 15 minutes, and memory stays flat.
 if [[ -s kfpfam/index/top.tidx ]]; then
     kf="--kfpfam_sif $PWD/kfpfam/kfpfam-filter.sif --kfpfam_prep $PWD/kfpfam/prep --kfpfam_index $PWD/kfpfam/index/top.tidx"
     # The bundle must be of the Pfam searched here, or PFAM_LOOKUP stops. Everything before the search is cached.
@@ -93,7 +94,7 @@ if [[ -s kfpfam/index/top.tidx ]]; then
         echo "no lookup/bundle and lookup/kfp-lookup.sif: the kfpfam arm runs without the MGnify lookup" >&2
     fi
     PFAM_HMM_DIR=$PWD/kfpfam PFAM_HMM_NAME=Pfam-A.hmm PFAM_NUM_MODELS=$(grep -c '^NAME ' kfpfam/Pfam-A.hmm) \
-        arm kfpfam_top -c unchunked_pfam.config $kf --pfam_search_engine kfpfam
+        arm kfpfam_top -c unchunked_pfam.config $kf --pfam_search_engine kfpfam --pfam_seeded_chunk_reads 10000000
 else
     echo "no kfpfam/index/top.tidx: run kfpfam_setup.sh to add the kfpfam arm" >&2
 fi
