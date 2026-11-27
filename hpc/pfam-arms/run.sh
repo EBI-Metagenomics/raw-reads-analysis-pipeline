@@ -12,6 +12,9 @@
 #   RUN_ARMS=kfpfam_top sbatch run.sh
 # CONFIGS=<pipelines-nextflow-configs checkout>: Codon's config for this pipeline too (its local host, phiX,
 # Rfam and SILVA databases, so nothing is downloaded), under site.config; the work directory stays work/ here.
+# The reads come from ENA's FIRE (--use_fire_download, as B11): samplesheet.csv's paths have no scheme, so
+# without it they are read as local files. It needs the Nextflow secrets FIRE_ACCESS_KEY and FIRE_SECRET_KEY
+# (`nextflow secrets list`); FIRE_DOWNLOAD=false for a samplesheet of local or ftp:// paths.
 # Re-submitting resumes. Each arm reuses the others' QC, decontamination and translation.
 # Read:
 #   results/compare.tsv   per sample and arm, against `current`: read and family differences, worst families
@@ -67,7 +70,8 @@ arm() {
         --samplesheet samplesheet.csv --outdir "results/$name" \
         --skip_functional false --skip_taxonomic true \
         --hmmsearch_subsampling=-1 \
-        --trace_report_suffix arm --singularity_cachedir singularity_cache "$@"
+        --trace_report_suffix arm --singularity_cachedir singularity_cache \
+        --use_fire_download "${FIRE_DOWNLOAD:-true}" "$@"
 }
 
 # Seeded arms first: they are the cheap ones, and whichever runs first pays for the shared QC,

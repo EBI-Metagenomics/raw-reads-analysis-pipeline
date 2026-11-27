@@ -13,7 +13,7 @@ its models one after another, so that is the same database the hmmsearch arms se
 counted from the result rather than assumed, so the arms stay comparable. Neither variable is needed
 on a re-submission once the file exists.
 
-The first run downloads the host and phiX databases, and the FASTQ files from ENA. B11 measured, at the 2 M cap over eleven samples, 550 core-hours for `current`, 358 for `filter`, 27 for `nail` and 17 for `both`. Subsampling is off now and the eleven libraries hold about twenty times those reads, so scale accordingly: `current` alone is of the order of 10,000 core-hours. The arms run seeded-first for that reason, kfpfam ahead of nail — read the cheap arms' real numbers before committing to the hmmsearch pair at full depth.
+The first run downloads the host and phiX databases (unless `CONFIGS` is set), and the FASTQ files from ENA's FIRE (`--use_fire_download`, which needs the Nextflow secrets `FIRE_ACCESS_KEY` and `FIRE_SECRET_KEY`; the samplesheet's paths have no scheme, so they are not read without it). B11 measured, at the 2 M cap over eleven samples, 550 core-hours for `current`, 358 for `filter`, 27 for `nail` and 17 for `both`. Subsampling is off now and the eleven libraries hold about twenty times those reads, so scale accordingly: `current` alone is of the order of 10,000 core-hours. The arms run seeded-first for that reason, kfpfam ahead of nail — read the cheap arms' real numbers before committing to the hmmsearch pair at full depth.
 
 ## Chunking and resources
 
