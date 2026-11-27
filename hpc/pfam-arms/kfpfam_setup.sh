@@ -1,32 +1,36 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=kfpfam-setup
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
-#SBATCH --time=2:00:00
+#SBATCH --mem=32G
+#SBATCH --time=4:00:00
 #SBATCH --output=kfpfam-setup.%j.log
 #
-# One-off setup for the kfpfam arms: the image, the Pfam prep directory and one tiled index per
-# mode. Run it on the HPC before run.sh, from this directory. Everything lands in kfpfam/ beside
-# this script, and nothing here is part of the benchmark's measured cost.
+# One-off setup for the kfpfam arm: the image, the Pfam prep directory and kfpfam's top index, the standard
+# mode for reads. Run it on the HPC before run.sh, from this directory, after lookup_setup.sh. Everything
+# lands in kfpfam/ beside this script, with the Pfam-A.hmm it was built from; nothing here is part of
+# the benchmark's measured cost.
 #
-#   KFPFAM=~/src/kfpfam PFAM_HMM=pfam_unchunked/Pfam-A.hmm ./kfpfam_setup.sh
+#   KFPFAM=~/src/kfpfam KFP=~/src/kmer-functional-profiler sbatch kfpfam_setup.sh
 #
-#   KFPFAM   a kfpfam checkout (its docker/filter.Dockerfile and measure/prep.py are used)
-#   PFAM_HMM the same Pfam-A.hmm the arms search, so model names and indices line up with the
-#            pipeline's -Z and with HMMER_PAIRS; run.sh builds one from the site's chunks. A prep
-#            and index built from any other file are moved aside and rebuilt.
-#   N_MODELS optional: how many models it must hold, the pipeline's num_models (53275, Pfam 39.0)
-#   CLANS    optional: Pfam-A.clans.tsv.gz. prep.py uses it for one column of models.tsv, and
-#            neither the filter nor this pipeline reads that column, so it defaults to empty.
+#   KFPFAM   a kfpfam checkout, branch prep-any-hmm (its docker/filter.Dockerfile, if there is no image tar)
+#   KFP      a kmer-functional-profiler checkout, branch pfam-anchor: top is built by hm-annotate's tables.py
+#            and seeds.py, as its PREP does
+#   PFAM_HMM the Pfam-A.hmm the kfpfam arm searches: by default the lookup bundle's own copy
+#            (lookup/bundle/hmm/Pfam-A.hmm, Pfam 38.1), so the reads' alignments are the bundle's Pfam.
+#            A prep and index built from any other file are moved aside and rebuilt.
+#   N_MODELS optional: how many models PFAM_HMM must hold
 #
-# The index encodes its own k-mer bit threshold, so each mode needs its own: Mode A (nail's cost,
-# higher recall) uses 6.5 with bar 17 and HMMER at 21.25, Mode B (nail's recall, less cost) uses
-# 7.5 with bar 20 and HMMER at 26.25. run.sh passes those numbers; this builds both indexes.
+# Top: seeds of shape 10110001 at theta 9 (a per-model threshold), a gapped bar per model in
+# prep/gapped.txt (KFPFAM_HMMER uses it when it is there), and the pipeline's kfpfam defaults (bar 15,
+# gate 14.5, HMMER at 21.25). The same build as hm-annotate's PREP for --kfpfam_mode top.
 set -euo pipefail
 : "${KFPFAM:?set KFPFAM to a kfpfam checkout}"
-: "${PFAM_HMM:?set PFAM_HMM to the Pfam-A.hmm the arms search}"
-CLANS=${CLANS:-}
-N_MODELS=${N_MODELS:-53275}
+: "${KFP:?set KFP to a kmer-functional-profiler checkout}"
+PFAM_HMM=${PFAM_HMM:-$PWD/lookup/bundle/hmm/Pfam-A.hmm}
+[[ -s $PFAM_HMM ]] || { echo "no $PFAM_HMM: run lookup_setup.sh first, or set PFAM_HMM" >&2; exit 1; }
+PFAM_HMM=$(realpath "$PFAM_HMM")
+HA=$(realpath "$KFP")/workflows/hmm-annotate
+[[ -s $HA/seeds.py ]] || { echo "no $HA/seeds.py: KFP is not a kmer-functional-profiler checkout" >&2; exit 1; }
 OUT=$PWD/kfpfam
 SIF=$OUT/kfpfam-filter.sif
 mkdir -p "$OUT"
@@ -53,15 +57,14 @@ MSG
     fi
 fi
 
-run () { singularity exec --bind "$PWD:$PWD" --pwd "$PWD" "$SIF" "$@"; }
+run () { singularity exec --bind "$PWD:$PWD" --bind "$HA:$HA" --pwd "$OUT" "$SIF" "$@"; }
 
 # The pipeline joins seeds to models by name, so prep must hold PFAM_HMM's models, in its order. The
 # first Codon build was from 39.0 while the pipeline searched 38.2, and 183 families were lost silently.
-# Build from the file the arms search, not from current_release, which moves.
 zcat -f "$PFAM_HMM" | awk '$1 == "NAME" { n = $2 } $1 == "ACC" { split($2, a, "."); print a[1] "\t" n }' > "$OUT/models.expected"
 n=$(wc -l < "$OUT/models.expected")
-if (( n != N_MODELS )); then
-    echo "$PFAM_HMM holds $n models, not the pipeline's $N_MODELS: it is another Pfam release (set N_MODELS if it is the one the arms search)" >&2
+if [[ -n ${N_MODELS:-} ]] && (( n != N_MODELS )); then
+    echo "$PFAM_HMM holds $n models, not $N_MODELS: it is another Pfam release" >&2
     exit 1
 fi
 # names can agree between releases whose profiles don't, so the file itself is compared too
@@ -74,37 +77,29 @@ if [[ -s $OUT/prep/models.tsv && $(cat "$OUT/prep/hmm.sha256" 2>/dev/null) != "$
     [[ ! -d $OUT/index ]] || mv "$OUT/index" "$old/"
 fi
 
-if [[ ! -s $OUT/prep/models.tsv ]]; then
-    hmm=$(realpath "$PFAM_HMM")
-    gz=$hmm
-    [[ $hmm == *.gz ]] || { gzip -c "$hmm" > "$OUT/Pfam-A.hmm.gz"; gz=$OUT/Pfam-A.hmm.gz; }
-    if [[ -z $CLANS ]]; then
-        # prep.py wants the file, but only to fill models.tsv's `clan` column: the filter loads
-        # profile.f32 and offs.u32 alone, and the pipeline reads the `name` column.
-        : | gzip -c > "$OUT/clans.tsv.gz"
-        CLANS=$OUT/clans.tsv.gz
-    fi
-    run python3 /opt/kfpfam/prep.py "$gz" "$(realpath "$CLANS")" "$OUT/prep"
+if [[ ! -s $OUT/index/top.tidx ]]; then
+    rm -rf "$OUT/prep" "$OUT/index" && mkdir -p "$OUT/index"
+    export RAYON_NUM_THREADS=${SLURM_CPUS_PER_TASK:-4}
+    # kept in kfpfam/, which the containers see: run.sh's kfpfam arm searches this copy, the index's own
+    zcat -f "$PFAM_HMM" > "$OUT/Pfam-A.hmm"
+    # what hm-annotate's PREP does for --kfpfam_mode top
+    run python3 /opt/kfpfam/prep.py Pfam-A.hmm - prep
     if ! cmp -s "$OUT/models.expected" <(tail -n +2 "$OUT/prep/models.tsv" | cut -f1,2); then
         echo "prep.py's models are not $PFAM_HMM's" >&2
         exit 1
     fi
+    run python3 "$HA/tables.py" thresholds --hmm Pfam-A.hmm --models prep/models.tsv --cutoff gathering --out thresholds.tsv
+    run python3 "$HA/seeds.py" bars --models prep/models.tsv --thresholds thresholds.tsv --ga ga.tsv --gapped prep/gapped.txt --slack 0
+    run filter seeds prep ga.tsv seeds.f32 10110001
+    run python3 "$HA/seeds.py" choose --table seeds.f32 --shape 10110001 --theta 9 --out T.txt
+    run env FILTER_T_FILE=T.txt filter build prep 10110001 0 index/top.idx
+    run filter tile prep index/top.idx index/top.tidx.part
+    mv "$OUT/index/top.tidx.part" "$OUT/index/top.tidx"
+    rm -f "$OUT/index/top.idx" "$OUT/seeds.f32"
     echo "$sum" > "$OUT/prep/hmm.sha256"   # last, so a build that failed is not taken for a good one
 fi
 
-for spec in "6.5 k4T6.5" "7.5 k4T7.5"; do
-    set -- $spec
-    bits=$1 name=$2
-    [[ -s $OUT/index/$name.tidx ]] && continue
-    echo "building $name"
-    mkdir -p "$OUT/index"
-    run filter build "$OUT/prep" 4 "$bits" "$OUT/index/$name.idx"
-    run filter tile "$OUT/prep" "$OUT/index/$name.idx" "$OUT/index/$name.tidx.part"
-    mv "$OUT/index/$name.tidx.part" "$OUT/index/$name.tidx"
-    rm -f "$OUT/index/$name.idx"
-done
-
+echo "Pfam:      $OUT/Pfam-A.hmm (from $PFAM_HMM), $n models"
 echo "prep:      $OUT/prep"
-echo "index A:   $OUT/index/k4T6.5.tidx"
-echo "index B:   $OUT/index/k4T7.5.tidx"
+echo "index:     $OUT/index/top.tidx"
 echo "image:     $SIF"

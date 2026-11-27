@@ -49,6 +49,11 @@ process KFPFAM_HMMER {
     """
     set -o pipefail
 
+    # top's prep holds a gapped bar per model (kfpfam_setup.sh); a prep without one uses min_gapped alone
+    if [ -s ${prep}/gapped.txt ]; then
+        export FILTER_GAPPED_FILE=${prep}/gapped.txt
+    fi
+
     models=\$((\$(wc -l < ${prep}/models.tsv) - 1))
     if [ "\$models" -ne ${num_models} ]; then
         echo "${prep} holds \$models models and the pipeline's Pfam ${num_models}: rebuild it from the same Pfam-A.hmm" >&2

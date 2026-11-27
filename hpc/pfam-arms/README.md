@@ -1,6 +1,6 @@
 # Pfam arms: V5 of the ORF filter and nail plan
 
-Runs the pipeline four times on `samplesheet.csv`: `current` (`hmmsearch` on all ORFs), `filter`, `nail` and `both`. Parameters other than these options stay at the pipeline's defaults, except that taxonomic profiling is skipped and Pfam subsampling is off (`--hmmsearch_subsampling -1`), so every merged read is searched.
+Runs the pipeline on `samplesheet.csv` once per arm: `current` (`hmmsearch` on all ORFs), `filter`, `nail` and `both`. Parameters other than these options stay at the pipeline's defaults, except that taxonomic profiling is skipped and Pfam subsampling is off (`--hmmsearch_subsampling -1`), so every merged read is searched.
 
 ```bash
 cd hpc/pfam-arms && PFAM_CHUNKS='/path/to/pfam/chunks/*/Pfam-A.hmm' sbatch run.sh
@@ -46,20 +46,33 @@ escalates on retry. Check `results/cost.tsv` afterwards and bring it down to wha
 is no `disk` request: nail's `--tmp-dir` is the task's work directory on `/hps/nobackup`, so asking
 Slurm for node-local space only stops the job being scheduled.
 
-## MGnify lookup
+## The standard run: kfpfam top and the MGnify lookup
 
-The kfpfam arms also profile their alignments against MGnify's proteins (`--pfam_lookup`) once
-`lookup/bundle` and `lookup/kfp-lookup.sif` exist:
+kfpfam's top mode is the standard for reads, and its alignments go straight to the MGnify lookup
+(`--pfam_lookup`). It searches the Pfam the lookup bundle was built from, Pfam 38.1, so the reads'
+alignments and the bundle agree; the other arms keep the site's Pfam. Once per bundle, from this directory:
 
 ```bash
-BUNDLE=<kmer-functional-profiler_runs>/kfp-ablations/lookup-index/results/bundle ./lookup_setup.sh
+mkdir -p lookup kfpfam
+cp <kfp runs>/kfp-ablations/images/kfp-lookup.tar lookup/
+BUNDLE=<kfp runs>/kfp-ablations/lookup-index/results/bundle sbatch lookup_setup.sh
+cp <kfp runs>/kfp-ablations/images/kfpfam-filter.tar kfpfam/
+KFPFAM=<kfpfam, prep-any-hmm> KFP=<kmer-functional-profiler, pfam-anchor> sbatch kfpfam_setup.sh
+RUN_ARMS=kfpfam_top sbatch run.sh
 ```
 
-The bundle and the arms must be of one Pfam file, 39.0 unless lookup-index was told otherwise; `PFAM_LOOKUP`
-stops at the first family of another version. An arm last run before `pfam_weak_evalue` (2026-11-25)
-searches again, as the command of `KFPFAM_HMMER` changed; everything before the search is reused. To profile
-alignments that exist already without searching again, use kmer-functional-profiler's
-`hpc/kfp-ablations/lookup-profile`.
+`kfpfam_setup.sh` builds top from `lookup/bundle/hmm/Pfam-A.hmm` (or `PFAM_HMM`) into `kfpfam/`, with a copy
+of that file, which the arm searches. A prep of another file (39.0's, for the old A and B arms) is moved
+to `kfpfam/stale.<date>/`. Top's settings are the pipeline's kfpfam defaults: seeds of shape 10110001 at
+theta 9, bar 15, gate 14.5, HMMER at 21.25 or the model's gapped bar (`prep/gapped.txt`, which
+`KFPFAM_HMMER` uses when it is there), band 15 at any diagonal. The arm publishes
+`results/kfpfam_top/<sample>/function-summary/pfam/`: `*_pfam_alignments.parquet` and
+`*_pfam_lookup.{reads.parquet,ko.tsv,summary.json}`. `RUN_ARMS` names the arms to run (all if unset); the
+comparison at the end needs `current`, and is skipped without it. Against `current`, kfpfam_top is a
+different Pfam release (38.1 against the site's), so read its `compare.tsv` rows with that in mind.
+
+`PFAM_LOOKUP` stops at the first family of another version than the bundle's. To profile alignments that
+exist already without searching again, use kmer-functional-profiler's `hpc/kfp-ablations/lookup-profile`.
 
 ## Samples
 

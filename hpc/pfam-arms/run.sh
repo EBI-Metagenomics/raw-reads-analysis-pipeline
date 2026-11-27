@@ -8,6 +8,8 @@
 #SBATCH --export=ALL
 # V5 of docs/plans/pfam-orf-filter-nail.md: four arms of Pfam profiling on samplesheet.csv.
 # Submit from this directory: cd hpc/pfam-arms && sbatch run.sh
+# The standard run, kfpfam top with the MGnify lookup (lookup_setup.sh, then kfpfam_setup.sh):
+#   RUN_ARMS=kfpfam_top sbatch run.sh
 # Re-submitting resumes. Each arm reuses the others' QC, decontamination and translation.
 # Read:
 #   results/compare.tsv   per sample and arm, against `current`: read and family differences, worst families
@@ -41,9 +43,11 @@ export PFAM_HMM_NAME=$(basename "$PFAM_HMM")
 export PFAM_NUM_MODELS=$(grep -c '^NAME ' "$PFAM_HMM")
 echo "nail arms search $PFAM_HMM, $PFAM_NUM_MODELS models"
 
+# RUN_ARMS: the arms to run, by name ('kfpfam_top' for the standard run alone); all of them if unset
 arm() {
     local name=$1
     shift
+    [[ -z ${RUN_ARMS:-} || " $RUN_ARMS " == *" $name "* ]] || return 0
     nextflow run "$PIPELINE" -profile singularity -c site.config -resume \
         --samplesheet samplesheet.csv --outdir "results/$name" \
         --skip_functional false --skip_taxonomic true \
@@ -57,27 +61,22 @@ arm() {
 # arms are worth running at full depth at all. kfpfam goes first of all: its prefilter is the
 # cheapest, so a failure there surfaces before anything expensive is queued.
 
-# kfpfam's two modes, on one whole Pfam like the nail arms: the index covers the whole database,
-# and chunks would only split HMMER_PAIRS. The index carries its own k-mer bit threshold, so each
-# mode has its own and the numbers must match it: A is nail's cost at higher recall, B is nail's
-# recall at less cost.
-if [[ -s kfpfam/index/k4T6.5.tidx ]]; then
-    kf="--kfpfam_sif $PWD/kfpfam/kfpfam-filter.sif --kfpfam_prep $PWD/kfpfam/prep"
-    # The MGnify lookup on these arms' alignments, when its image (lookup_setup.sh) and bundle are there. The
-    # bundle must be of the Pfam searched here, or PFAM_LOOKUP stops. Everything before the search is cached.
+# kfpfam's top mode, the standard for reads, with the MGnify lookup on its alignments: on the Pfam its
+# index was built from (kfpfam/Pfam-A.hmm, kfpfam_setup.sh), which is the lookup bundle's own, Pfam 38.1.
+# The pipeline's kfpfam defaults are top's (bar 15, gate 14.5, HMMER at 21.25), and KFPFAM_HMMER takes the
+# gapped bars from the prep. One whole Pfam, like the nail arms: the index covers the whole database.
+if [[ -s kfpfam/index/top.tidx ]]; then
+    kf="--kfpfam_sif $PWD/kfpfam/kfpfam-filter.sif --kfpfam_prep $PWD/kfpfam/prep --kfpfam_index $PWD/kfpfam/index/top.tidx"
+    # The bundle must be of the Pfam searched here, or PFAM_LOOKUP stops. Everything before the search is cached.
     if [[ -s lookup/bundle/manifest.json && -s lookup/kfp-lookup.sif ]]; then
         kf+=" --pfam_lookup true --pfam_lookup_bundle $(realpath lookup/bundle) --pfam_lookup_sif $PWD/lookup/kfp-lookup.sif"
     else
-        echo "no lookup/bundle and lookup/kfp-lookup.sif: the kfpfam arms run without the MGnify lookup" >&2
+        echo "no lookup/bundle and lookup/kfp-lookup.sif: the kfpfam arm runs without the MGnify lookup" >&2
     fi
-    arm kfpfam_a -c unchunked_pfam.config $kf --pfam_search_engine kfpfam \
-        --kfpfam_index "$PWD/kfpfam/index/k4T6.5.tidx" \
-        --kfpfam_bar 17 --kfpfam_gate 16.5 --kfpfam_min_gapped 21.25
-    arm kfpfam_b -c unchunked_pfam.config $kf --pfam_search_engine kfpfam \
-        --kfpfam_index "$PWD/kfpfam/index/k4T7.5.tidx" \
-        --kfpfam_bar 20 --kfpfam_gate 16.5 --kfpfam_min_gapped 26.25
+    PFAM_HMM_DIR=$PWD/kfpfam PFAM_HMM_NAME=Pfam-A.hmm PFAM_NUM_MODELS=$(grep -c '^NAME ' kfpfam/Pfam-A.hmm) \
+        arm kfpfam_top -c unchunked_pfam.config $kf --pfam_search_engine kfpfam
 else
-    echo "no kfpfam index: run kfpfam_setup.sh to add the kfpfam arms" >&2
+    echo "no kfpfam/index/top.tidx: run kfpfam_setup.sh to add the kfpfam arm" >&2
 fi
 
 # Weefams (weefams_setup.sh): kfpfam's top mode on reads, and hmmsearch on every ORF as its truth. hmmsearch costs
@@ -100,10 +99,11 @@ arm both -c unchunked_pfam.config --pfam_search_engine nail --pfam_orf_filter tr
 arm current
 arm filter --pfam_orf_filter true
 
+[[ -s results/current/pipeline_info/execution_trace_arm.txt ]] || { echo "no current arm: nothing to compare against"; echo finished; exit 0; }
 # `current` first, so compare_profiles.py measures every other arm against it
 ARMS="current filter nail both nail_loose"
-if [[ -s kfpfam/index/k4T6.5.tidx ]]; then
-    ARMS="$ARMS kfpfam_a kfpfam_b"
+if [[ -s kfpfam/index/top.tidx ]]; then
+    ARMS="$ARMS kfpfam_top"
 fi
 
 : > results/compare.tsv
