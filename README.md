@@ -105,6 +105,7 @@ ERR00000003,/path/to/sample3/reads.fastq.gz,,true,OXFORD_NANOPORE
 | pfam_lookup_floor             | leave out calls under this share of the read's own score (Default: `0.4`)                  |
 | pfam_lookup_k                 | index rows the lookup's first stage keeps (Default: `2000`)                                |
 | pfam_lookup_second            | of those, rows that go to the banded score (Default: `1000`)                               |
+| pfam_lookup_margin            | and of those, only rows within this of the best column score; 0 for none (Default: `40`)   |
 | decontam_short_chunksize      | Size of reads chunks for short-read decontamination (Default: `1280000000`)                |
 | decontam_long_chunksize       | Size of reads chunks for long-read host decontamination (Default: `12800000`)              |
 | save_trimmed_fail             | Save reads that fail QC trimming (Default: `false`)                                        |

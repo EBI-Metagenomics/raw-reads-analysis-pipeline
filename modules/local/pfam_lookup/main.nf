@@ -13,6 +13,7 @@ process PFAM_LOOKUP {
     val floor
     val k // rows the first stage keeps
     val second // of those, rows that go to the banded score
+    val margin // and of those, only rows within this of the best column score; 0 for none
 
     output:
     tuple val(meta), path("${prefix}.reads.parquet"), emit: reads
@@ -36,6 +37,7 @@ process PFAM_LOOKUP {
         --floor ${floor} \\
         --k ${k} \\
         --second ${second} \\
+        --margin ${margin} \\
         --threads ${task.cpus} ${args}
 
     cat <<-END_VERSIONS > versions.yml

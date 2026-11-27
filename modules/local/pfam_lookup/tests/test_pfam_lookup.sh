@@ -13,7 +13,7 @@ params.pfam_lookup_sif = ''
 include { PFAM_LOOKUP } from '$root/modules/local/pfam_lookup/main'
 workflow {
     def fx = '$root/tests/fixtures/pfam_lookup'
-    PFAM_LOOKUP([[id: 'test'], file("\$fx/alignments.parquet")], file("\$fx/bundle"), 0.4, 2000, 1000)
+    PFAM_LOOKUP([[id: 'test'], file("\$fx/alignments.parquet")], file("\$fx/bundle"), 0.4, 2000, 1000, 40)
 }
 NF
 cat > "$tmp/nextflow.config" <<CFG

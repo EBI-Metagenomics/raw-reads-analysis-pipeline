@@ -433,6 +433,7 @@ workflow PIPELINE {
                 params.pfam_lookup_floor,
                 params.pfam_lookup_k,
                 params.pfam_lookup_second,
+                params.pfam_lookup_margin,
             )
             ch_versions = ch_versions.mix(PFAM_LOOKUP.out.versions)
         }

@@ -194,6 +194,12 @@
             "minimum": 1,
             "description": "Of those, rows that go to the banded score."
         },
+        "pfam_lookup_margin": {
+            "type": "integer",
+            "default": 40,
+            "minimum": 0,
+            "description": "And of those, only rows within this of the alignment's best column score (BLOSUM62); 0 for none."
+        },
         "force_download_dbs": {
             "type": "boolean",
             "default": "false"
